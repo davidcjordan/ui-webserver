@@ -14,20 +14,21 @@
           <img src="/static/back-blue-button-xs.jpg" style="height:96px;"">
         </button>
       </div>
-        <div class="section">
+      <div class="section">
+        <form action = "{{ url_for('active') }}" method = "post">
           <div class="center-choices">
             <p>Singles/Doubles:</p>
             <label>
-              <input type="radio" name="player_count" value="singles" checked>
+              <input type="radio" name="player_count" value="1" checked>
               <img src="/static/singles.png">
             </label>
             <label>
-              <input type="radio" name="player_count" value="doubles">
+              <input type="radio" name="player_count" value="2">
               <img src="/static/doubles.png">
             </label>
             <p>Game Type:</p>
             <label>
-              <input type="radio" name="game_type" value="stadard" checked>
+              <input type="radio" name="game_type" value="standard" checked>
               <img src="/static/standard.png">
             </label>
             <label>
@@ -36,12 +37,12 @@
             </label>
           </div>
           <div  class="start-stop">
-            <button type="submit" onclick="window.location.href='{{ url_for('active') }}';">
+            <button type="submit" >
               <img src="/static/start.png" style="height:320px;">
             </button>
           </div>
-        </div>
-        {{ generated_footer }}
+        </form>
       </div>
+      {{ generated_footer }}
   </body>
 </html>
