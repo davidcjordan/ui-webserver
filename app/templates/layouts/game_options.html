@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Boomer-Control</title>
+    <link rel="stylesheet" type="text/css" href="/static/boomer.css">
+  </head>
+  <body>
+    <div class="container">
+      {{ generated_header }}
+      <div class="nav">
+        <button type="submit" onclick="window.location.href='/back';">
+          <img src="/static/back-blue-button-xs.jpg" style="height:96px;"">
+        </button>
+      </div>
+        <div class="section">
+          <div class="center-choices">
+            <p>Singles/Doubles:</p>
+            <label>
+              <input type="radio" name="player_count" value="singles" checked>
+              <img src="/static/singles.png">
+            </label>
+            <label>
+              <input type="radio" name="player_count" value="doubles">
+              <img src="/static/doubles.png">
+            </label>
+            <p>Game Type:</p>
+            <label>
+              <input type="radio" name="game_type" value="stadard" checked>
+              <img src="/static/standard.png">
+            </label>
+            <label>
+              <input type="radio" name="game_type" value="tie_breaker">
+              <img src="/static/tie_breaker.png">
+            </label>
+          </div>
+          <div  class="start-stop">
+            <button type="submit" onclick="window.location.href='{{ url_for('active') }}';">
+              <img src="/static/start.png" style="height:320px;">
+            </button>
+          </div>
+        </div>
+        {{ generated_footer }}
+      </div>
+  </body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Boomer-Control</title>
+    <link rel="stylesheet" type="text/css" href="/static/boomer.css">
+  </head>
+  <body>
+    <div class="container">
+      {{ generated_header }}
+      <div class="nav">
+        <button type="submit" onclick="window.location.href='/back';">
+          <img src="/static/back-blue-button-xs.jpg" style="height:96px;"">
+        </button>
+      </div>
+        <div class="section">
+          <div class="center-choices">
+{{ generated_drills }}
+          </div>
+          <div  class="start-stop">
+            <button type="submit" onclick="window.location.href='{{ url_for('active') }}';">
+              <img src="/static/start.png" style="height:320px;">
+            </button>
+          </div>
+        </div>
+        {{ generated_footer }}
+      </div>
+  </body>
+</html>

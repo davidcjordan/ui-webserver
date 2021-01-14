@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Boomer-Control</title>
+      <link rel="stylesheet" href="/static/boomer.css">
+  </head>
+  <body>
+    <div class="container">
+      {{ generated_header }}
+      <div class="nav">
+      </div>
+      <div class="section">
+        <div>
+          <button class="block_b" type="submit" onclick="window.location.href='game_options'">Game
+          </button>
+          <button class="block_b" type="submit" onclick="window.location.href='{{ url_for('drill_selection') }}';">Drill
+          </button>
+        </div>
+        <div>
+            <button class="block_b" type="submit" onclick="window.location.href='{{ url_for('workout_selection') }}';">Workout
+            </button>
+        </div>
+      </div>
+      {{ generated_footer }}
+    </div>
+  </body>
+</html>

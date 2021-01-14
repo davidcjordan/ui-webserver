@@ -1,0 +1,5 @@
+.vscode
+__pycache__
+/static/experimental.css
+/static/singles-doubles-source.jpg
+/templates/div_test.html
