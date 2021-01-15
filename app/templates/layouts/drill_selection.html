@@ -17,7 +17,10 @@
         <div class="section">
           <form action = "{{ url_for('active') }}" method = "post">
             <div class="center-choices">
+              <div class="radio-text-buttons">
+                <p>Select Drill:</p>
 {{ generated_drills }}
+              </div>
             </div>
             <div  class="start-stop">
               <button type="submit">

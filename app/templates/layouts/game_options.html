@@ -17,24 +17,26 @@
       <div class="section">
         <form action = "{{ url_for('active') }}" method = "post">
           <div class="center-choices">
-            <p>Singles/Doubles:</p>
-            <label>
-              <input type="radio" name="player_count" value="1" checked>
-              <img src="/static/singles.png">
-            </label>
-            <label>
-              <input type="radio" name="player_count" value="2">
-              <img src="/static/doubles.png">
-            </label>
-            <p>Game Type:</p>
-            <label>
-              <input type="radio" name="game_type" value="standard" checked>
-              <img src="/static/standard.png">
-            </label>
-            <label>
-              <input type="radio" name="game_type" value="tie_breaker">
-              <img src="/static/tie_breaker.png">
-            </label>
+            <div class="radio-image-buttons">
+              <p>Singles/Doubles:</p>
+              <label>
+                <input type="radio" name="player_count" value="1" checked>
+                <img src="/static/singles.png">
+              </label>
+              <label>
+                <input type="radio" name="player_count" value="2">
+                <img src="/static/doubles.png">
+              </label>
+              <p>Game Type:</p>
+              <label>
+                <input type="radio" name="game_type" value="standard" checked>
+                <img src="/static/standard.png">
+              </label>
+              <label>
+                <input type="radio" name="game_type" value="tie_breaker">
+                <img src="/static/tie_breaker.png">
+              </label>
+            </div>
           </div>
           <div  class="start-stop">
             <button type="submit" >

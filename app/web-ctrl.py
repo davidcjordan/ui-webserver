@@ -26,7 +26,6 @@ STATUS_ACTIVE = "Active"
 MODE_NONE = " --"
 MODE_GAME = "Game --"
 MODE_DRILL_NOT_SELECTED = "Drills --"
-MODE_DRILL_SELECTED = "Drill: "
 MODE_WORKOUT_NOT_SELECTED = "Workout --"
 MODE_WORKOUT_SELECTED = "Workout: "
 
@@ -88,7 +87,7 @@ def active():
                 mode_string += "Game"
 
         if DRILL_SELECTION_URL in previous_url:
-            mode_string = MODE_DRILL_SELECTED + request.form['drill_id']
+            mode_string = "'" + request.form['drill_id'] + "'" + " Drill"
             
     customized_footer = original_footer.replace("{{ status }}", STATUS_ACTIVE)
     customized_footer = customized_footer.replace("{{ mode }}", mode_string)
@@ -108,21 +107,24 @@ def drill_selection():
     previous_url = "/" + inspect.currentframe().f_code.co_name
 
     drill_names = ["Side to Side", "Backhand", "The Dribble"]
-    # button_def = Markup('<button type="radio" name="drill_id" value="{{value}}" {{checked}}>{{drill_name}}</button>\n')
-    button_def = \
-        Markup('<label><button type="radio" name="drill_id" value="{{value}}" {{checked}}>{{drill_name}}</button></label>\n')
-    drill_button_list = ""
-    # drill_button_list += "<fieldset>\n"
 
-    for id, drill_name in enumerate(drill_names):
-        drill_button_value = button_def.replace("{{value}}", drill_name)
+    button_def = \
+        Markup('<div>\n\
+            <input type="radio" id="{{drill_id}}" name="drill_id" value="{{value}}" {{checked}}>\n\
+            <label for="{{drill_id}}">{{drill_text}}</label>\n\
+            </div>')
+
+    drill_button_list = Markup("<fieldset>\n")
+    for id, drill_text in enumerate(drill_names):
+        this_drill_selection = button_def.replace("{{value}}", drill_text)
+        this_drill_selection = this_drill_selection.replace("{{drill_text}}", drill_text)
+        this_drill_selection = this_drill_selection.replace("{{drill_id}}", "drill_"+str(id+1))
         if id == 0:
-            drill_button_value = drill_button_value.replace("{{checked}}", "checked")
+            this_drill_selection = this_drill_selection.replace("{{checked}}", "checked")
         else:
-            drill_button_value = drill_button_value.replace("{{checked}}", "")
-        drill_button = drill_button_value.replace("{{drill_name}}", drill_name)
-        drill_button_list += drill_button
-    # drill_button_list += "</fieldset>\n"
+            this_drill_selection = this_drill_selection.replace("{{checked}}", "")
+        drill_button_list += this_drill_selection
+    drill_button_list += Markup("</fieldset>\n")
 
     customized_footer = original_footer.replace("{{ status }}", STATUS_IDLE)
     customized_footer = customized_footer.replace("{{ mode }}", MODE_DRILL_NOT_SELECTED)
@@ -145,19 +147,6 @@ def workout_selection():
     return render_template("WORKOUT_SELECTION_TEMPLATE.html", \
         generated_header=customized_header, \
         generated_footer=customized_footer)
-
-'''
-@app.route("/div_test/", methods=DEFAULT_METHODS)
-def div_test():
-    return render_template("div_test.html", generated_header=customized_header, generated_footer=customized_footer)
-'''
-
-'''
-def redirect_url(default='index'):
-    return request.args.get('next') or \
-           request.referrer or \
-           url_for(default)
-'''
 
 
 if __name__ == '__main__':
