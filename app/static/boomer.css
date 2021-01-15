@@ -69,21 +69,29 @@ body {
 }
 
 /* used to select game types
-/* HIDE RADIO 
-  position: absolute; 
-  height: 0;
-  */
+/* HIDE RADIO */
 .radio-image-buttons input[type=radio] {
   opacity: 0;
   width: 0;
+  height: 0;
+  display: inline;
+}
+.radio-image-buttons fieldset {
+  padding: 2px;
+  border: 100px;
+  border-color: red;
+  background: #575656;
 }
 .radio-image-buttons input[type=radio] + img {
-  padding: 10px 10px;
-  cursor: pointer;
-  height:96px;
- }
+   height:100px;
+   padding: 4px 4px;
+   display: inline; 
+}
+.radio-image-buttons input[type=radio] +label {
+  display: inline; 
+}
 .radio-image-buttons input[type=radio]:checked + img {
-  outline: 5px solid #f00;
+  outline: 12px solid lightgreen;
 }
 
 /* used to make numbers large on level, elevation, etc */
@@ -91,7 +99,7 @@ input[type='number']{
   font: 32px Arial,sans-serif; 
   height: 72px !important;
   padding: 10px 10px;
-  background: black; 
+  background-color: black; 
 }
 
 .block_b {
@@ -120,14 +128,17 @@ input[type='number']{
 .radio-text-buttons input[type="radio"] {
   opacity: 0;
   width: 0;
+  height: 0;
 }
-
-radio-text-buttons input[type='radio'], label{   
+.radio-text-buttons input[type='radio'] + label{   
   vertical-align: baseline;
   padding: 10px;
   margin: 10px;
 }
-
+.radio-text-buttons fieldset {
+  padding: None;
+  border: None;
+}
 .radio-text-buttons label {
   display: inline-block;
   text-align: left;

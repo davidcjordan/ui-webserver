@@ -18,24 +18,30 @@
         <form action = "{{ url_for('active') }}" method = "post">
           <div class="center-choices">
             <div class="radio-image-buttons">
-              <p>Singles/Doubles:</p>
-              <label>
-                <input type="radio" name="player_count" value="1" checked>
-                <img src="/static/singles.png">
-              </label>
-              <label>
-                <input type="radio" name="player_count" value="2">
-                <img src="/static/doubles.png">
-              </label>
-              <p>Game Type:</p>
-              <label>
-                <input type="radio" name="game_type" value="standard" checked>
-                <img src="/static/standard.png">
-              </label>
-              <label>
-                <input type="radio" name="game_type" value="tie_breaker">
-                <img src="/static/tie_breaker.png">
-              </label>
+              <fieldset>
+                <p>Singles/Doubles:</p>
+                <label>
+                  <input type="radio" id="singles" name="player_count" value="1" checked>
+                  <img src="/static/singles.png">
+                  <!-- <label for="singles">Singles</label> -->
+                </label>
+                <label>
+                  <input type="radio" id="doubles" name="player_count" value="2">
+                  <img src="/static/doubles.png">
+                  <!-- <label for="doubles">Doubles</label> -->
+                </label>
+              </fieldset> 
+              <fieldset>
+                <p>Game Type:</p>
+                <label>
+                  <input type="radio" name="game_type" value="standard" checked>
+                  <img src="/static/standard.png">
+                </label>
+                <label>
+                  <input type="radio" name="game_type" value="tie_breaker">
+                  <img src="/static/tie_breaker.png">
+                </label>
+              </fieldset>
             </div>
           </div>
           <div  class="start-stop">
