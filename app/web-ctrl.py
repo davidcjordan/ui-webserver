@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
 #from flask import Flask, flash, redirect, render_template, request, session, abort
-from flask import Flask, render_template, Response, request, redirect, url_for, Markup
+from flask import Flask, render_template, Response, request, redirect, url_for, Markup, send_from_directory
+from flask_socketio import SocketIO, emit
 
 import inspect
+import os  # for sending favicon 
 
-IP_PORT = 44 # picked what is hopefully an unused port
+IP_PORT = 1111 # picked what is hopefully an unused port  (can't use 44)
 DEFAULT_METHODS = ['POST', 'GET']
 
 # note: Flask looks for following in the 'templates' directory
@@ -32,7 +34,17 @@ MODE_WORKOUT_SELECTED = "Workout: "
 previous_url = None
 back_url = None
 
+
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app)
+
+
+@socketio.on('change_params')                          # Decorator to catch an event called "my event":
+def change_params(data):                        # test_message() is the event callback function.
+    print('Received data: ', data)
+    # emit('my response', {'data': 'got it!'})      # Trigger a new event called "my response" 
+
 
 @app.route(MAIN_URL, methods=DEFAULT_METHODS)
 def index():
@@ -74,6 +86,17 @@ def active():
     global back_url, previous_url
     back_url = previous_url
 
+    if ("/" + inspect.currentframe().f_code.co_name == previous_url):
+        already_on_active_page = True
+        print("post when on active page; request: {}".format(request.data))
+        # multi_dict = request.args
+        # for key in multi_dict:
+            # print(multi_dict.get(key))
+            # print(multi_dict.getlist(key))
+    else:
+        already_on_active_page = False
+    already_on_active_page = False
+
     if request.method=='POST':
         if GAME_OPTIONS_URL in previous_url:
             if (request.form['player_count'] == "2"):
@@ -85,19 +108,21 @@ def active():
                 mode_string += "Tie Breaker"
             else:
                 mode_string += "Game"
-
-        if DRILL_SELECTION_URL in previous_url:
+        elif DRILL_SELECTION_URL in previous_url:
             mode_string = "'" + request.form['drill_id'] + "'" + " Drill"
+        else:
+            mode_string = "NEED TO FIX"
             
-    customized_footer = original_footer.replace("{{ status }}", STATUS_ACTIVE)
-    customized_footer = customized_footer.replace("{{ mode }}", mode_string)
-
-    # the following isn't really necessary, but done for symmetry
     previous_url = "/" + inspect.currentframe().f_code.co_name
-
-    return render_template(ACTIVE_TEMPLATE, \
+    if not already_on_active_page:
+        customized_footer = original_footer.replace("{{ status }}", STATUS_ACTIVE)
+        customized_footer = customized_footer.replace("{{ mode }}", mode_string)
+        return render_template(ACTIVE_TEMPLATE, \
         generated_header=customized_header, \
         generated_footer=customized_footer)
+    else:
+        return None
+
 
 @app.route(DRILL_SELECTION_URL, methods=DEFAULT_METHODS)
 def drill_selection():
@@ -148,6 +173,11 @@ def workout_selection():
         generated_header=customized_header, \
         generated_footer=customized_footer)
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
 
 if __name__ == '__main__':
     global customized_header, original_footer
@@ -166,4 +196,5 @@ if __name__ == '__main__':
         original_footer = Markup(file.read())
     original_footer = original_footer.replace("{{ copyright }}", my_copyright)
 
-    app.run(host="0.0.0.0", port=IP_PORT, debug = True)
+    # app.run(host="0.0.0.0", port=IP_PORT, debug = True)
+    socketio.run(app, host='localhost', port=IP_PORT, debug = True)

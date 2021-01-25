@@ -1,0 +1,87 @@
+/*
+  ? is the following necessary?
+  *,
+  *:before,
+  *:after {
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+  }
+*/
+
+/* The important part */
+[type="number"]::-webkit-inner-spin-button,
+[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	height: auto;
+}
+
+  /* the following was from the actual css file */
+  /*
+	display: inline-block;
+	overflow: visible;
+	height: 2.1em;
+	background: #fff;
+	padding: 1px;
+  */
+.stepper {
+	border: 1px solid #eee;
+}
+
+.stepper label {
+	font-size: 2em;
+	font-weight: bold;
+}
+.stepper input {
+	font-size: 2em;
+	font-weight: bold;
+	width: 2em;
+	text-align: center;
+	border: 2px solid #eee;
+	background: transparent;
+	color: black;
+}
+
+.stepper button {
+	font-size: 2em;
+	font-weight: bold;
+	border: 2px solid #eee;
+	padding: 0.2em !important;
+	color: black;
+}
+
+/* the following was the original */
+/*
+.stepper {
+	border: 1px solid #eee;
+	display: inline-block;
+	overflow: visible;
+	height: 2.1em;
+	background: #fff;
+	padding: 1px;
+}
+
+.stepper input {
+	width: 3em;
+	height: 100%;
+	text-align: center;
+	border: 0;
+	background: transparent;
+	color: #000;
+}
+
+.stepper button {
+	width: 1.4em;
+	font-weight: 300;
+	height: 100%;
+	line-height: 0.1em;
+	font-size: 1.4em;
+	padding: 0.2em !important;
+	background: #eee;
+	color: #333;
+	border: none;
+}
+*/
