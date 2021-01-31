@@ -37,14 +37,10 @@ back_url = None
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app)
-
-
-@socketio.on('change_params')                          # Decorator to catch an event called "my event":
-def change_params(data):                        # test_message() is the event callback function.
-    print('Received data: ', data)
-    # emit('my response', {'data': 'got it!'})      # Trigger a new event called "my response" 
-
+# didn't find how to have multiple allowed origins
+# socketio = SocketIO(app, cors_allowed_origins="https://cdnjs.cloudflare.com http://localhost")
+# socketio = SocketIO(app, cors_allowed_origins="http://localhost")
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 @app.route(MAIN_URL, methods=DEFAULT_METHODS)
 def index():
@@ -179,6 +175,16 @@ def favicon():
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
+@socketio.on('message')
+def handle_message(data):
+    print('received message: ' + data)
+
+@socketio.on('change_params')                          # Decorator to catch an event called "my event":
+def change_params(data):                        # test_message() is the event callback function.
+    print('Received data: ', data)
+    # emit('my response', {'data': 'got it!'})      # Trigger a new event called "my response" 
+
+
 if __name__ == '__main__':
     global customized_header, original_footer
     
@@ -197,4 +203,4 @@ if __name__ == '__main__':
     original_footer = original_footer.replace("{{ copyright }}", my_copyright)
 
     # app.run(host="0.0.0.0", port=IP_PORT, debug = True)
-    socketio.run(app, host='localhost', port=IP_PORT, debug = True)
+    socketio.run(app, host="0.0.0.0", port=IP_PORT, debug = True)

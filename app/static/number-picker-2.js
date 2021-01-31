@@ -23,23 +23,35 @@ for (i = 0; i < inc.length; i++) {
 // Stepper Increment Function with Min/Max
 function stepperInput(id, s, m) {
   var el = document.getElementById(id);
+  // console.log("ID %s -- Step: %f  -- min/max: %f", id, s, m);
+  var updated = new Boolean(false);
   if (s > 0) {
-    if (parseInt(el.value) < m) {
-      el.value = parseInt(el.value) + s;
+    var currentValue = parseFloat(el.value);
+    if (currentValue < m) {
+      el.value = currentValue + s;
+      updated = true;
     }
   } else {
-    if (parseInt(el.value) > m) {
-      el.value = parseInt(el.value) + s;
+    if (currentValue > m) {
+      el.value = currentValue + s;
+      updated = true;
     }
   }  
   // post data to webserver to update base
-  let data = {};
-  data[el.name] = el.value;
-  fetch("/active", {
-    method: "POST", 
-    body: JSON.stringify(data)
-  }).then(respns => {
-    console.log("POST %s: %f -- response: %s", el.name, el.value, respns);
-  });
+  if (updated) {
+    let data = {};
+    data[el.name] = el.value;
+    // -- Before using websockets, then did a post, as follows:
+    // fetch("/active", {
+    //   method: "POST", 
+    //   body: JSON.stringify(data)
+    // }).then(respns => {
+    //   console.log("POST %s: %f -- response: %s", el.name, el.value, respns);
+    // });
+    var socket = io();
+    // socket.emit('change_params', {data: 'Sending change_params'});
+    socket.emit('change_params', JSON.stringify(data));
+    console.log("Emitted: change_params");
+  }
 }
 
