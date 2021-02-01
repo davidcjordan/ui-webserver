@@ -40,7 +40,7 @@ function stepperInput(id, s, m) {
   // post data to webserver to update base
   if (updated) {
     let data = {};
-    data[el.name] = el.value;
+    data[el.name] = Number(el.value);
     // -- Before using websockets, then did a post, as follows:
     // fetch("/active", {
     //   method: "POST", 
@@ -48,8 +48,7 @@ function stepperInput(id, s, m) {
     // }).then(respns => {
     //   console.log("POST %s: %f -- response: %s", el.name, el.value, respns);
     // });
-    var socket = io();
-    // socket.emit('change_params', {data: 'Sending change_params'});
+    // var socket = io();
     socket.emit('change_params', JSON.stringify(data));
     console.log("Emitted: change_params");
   }

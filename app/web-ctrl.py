@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 
-#from flask import Flask, flash, redirect, render_template, request, session, abort
+#from flask import ? session, abort
 from flask import Flask, render_template, Response, request, redirect, url_for, Markup, send_from_directory
 from flask_socketio import SocketIO, emit
 
 import inspect
 import os  # for sending favicon 
 
+# the following requires: export PYTHONPATH='/Users/tom/Documents/Projects/Boomer/control_ipc_utils'
+from ctrl_messaging_routines import send_msg #, is_active
+from control_ipc_defines import *
+import json
+
+
 IP_PORT = 1111 # picked what is hopefully an unused port  (can't use 44)
 DEFAULT_METHODS = ['POST', 'GET']
 
-# note: Flask looks for following in the 'templates' directory
+# Flask looks for following in the 'templates' directory
 MAIN_URL = '/'
 GAME_OPTIONS_URL = '/game_options'
 ACTIVE_URL = '/active'
@@ -40,8 +46,13 @@ app.config['SECRET_KEY'] = 'secret!'
 # didn't find how to have multiple allowed origins
 # socketio = SocketIO(app, cors_allowed_origins="https://cdnjs.cloudflare.com http://localhost")
 # socketio = SocketIO(app, cors_allowed_origins="http://localhost")
+# socketio = SocketIO(app, cors_allowed_origins="http://127.0.0.1")
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+@app.route('/test')
+def test_io_send():
+    return render_template('test.html')
+ 
 @app.route(MAIN_URL, methods=DEFAULT_METHODS)
 def index():
     global customized_header, original_footer
@@ -179,10 +190,16 @@ def favicon():
 def handle_message(data):
     print('received message: ' + data)
 
-@socketio.on('change_params')                          # Decorator to catch an event called "my event":
-def change_params(data):                        # test_message() is the event callback function.
-    print('Received data: ', data)
-    # emit('my response', {'data': 'got it!'})      # Trigger a new event called "my response" 
+@socketio.on('change_params')     # Decorator to catch an event named change_params
+def change_params(data):          # change_params() is the event callback function.
+    print('Received data: ', data)      # data is a json string: {"speed":102}
+    item_to_change = json.loads(data)
+    send_msg(PUT_METHOD, LDSH_RSRC, item_to_change)
+    emit('score_update', {"p_pts": 2, "b_pts": 1, "p_games": 3, "b_games": 2, "p_sets": 5, "b_sets": 4})
+
+@socketio.on('emit_test')
+def emit_test(data):
+    emit('score_update', {"p_pts": 2, "b_pts": 1, "p_games": 3, "b_games": 2, "p_sets": 5, "b_sets": 4})
 
 
 if __name__ == '__main__':

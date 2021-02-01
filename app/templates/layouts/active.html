@@ -39,13 +39,21 @@
     <div>
       {{ generated_footer }}
     </div>
+    <!--  if javascript was in header, then the javascripts didnt work.  Reconmendation is they should be here -->
     <script src="/static/number-picker-2.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
+    <!-- <script src="/socket.io/socket.io.js"></script> -->
     <script type="text/javascript" charset="utf-8">
       var socket = io();
-      socket.on('connect', function() {
-        socket.emit('message', 'Connected!');
+      socket.on('score_update', function(data) {
+        Object.keys(data).forEach(function(key) {
+          console.log('Key : ' + key + ', Value : ' + data[key])
+        })
       });
+
+      // socket.on('connect', function() {
+      //   socket.emit('message', 'Connected!');
+      // });
     </script>
   </body>
 </html>

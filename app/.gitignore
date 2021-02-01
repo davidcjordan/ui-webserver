@@ -2,4 +2,4 @@
 __pycache__
 /static/experimental.css
 /static/singles-doubles-source.jpg
-/templates/div_test.html
+/templates/*test.html
