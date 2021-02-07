@@ -3,36 +3,32 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Boomer-Control: game options</title>
+    <title>Boomer-Control: Settings</title>
     <link rel="stylesheet" type="text/css" href="/static/boomer.css">
   </head>
   <body>
     <div class="container">
       {{ generated_header }}
       <div class="section">
-        <form action = "{{ url_for('game') }}" method = "post">
+        <form action = "{{ url_for('setting') }}" method = "post">
           <div class="statistics-display">
             <br>
           </div>  
           <div class="selections">
-            <div class="radio-image-buttons">
-            <fieldset>
-                <legend>Game Scoring</legend>
+            <divs">
+              <fieldset>
                 <label>
-                  <input type="radio" name="game_type" value="standard" checked/>Standard
-                  <img src="/static/standard.png">
+                  <input type="radio" name="grunts" value=1 checked/>On
                 </label>
                 <label>
-                  <input type="radio" name="game_type" value="tie_breaker"/>Tie Breaker
-                  <img src="/static/tie_breaker.png">
+                  <input type="radio" name="grunts" value=0 />Off
                 </label>
               </fieldset>
             </div>
           </div>
           <div  class="start-stop">
             <button type="submit" >
-              <!-- <img src="/static/start.png" style="height:90px;"> -->
-              <img src="/static/start.png">
+              <img src="/static/save.png">
             </button>
           </div>
         </form>

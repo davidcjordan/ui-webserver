@@ -1,4 +1,7 @@
 
+:root {
+  --icon-button-size: 100px;
+}
 * {
   font-family: sans-serif;
   color: white;
@@ -6,66 +9,102 @@
 
 body {
   font: 32px Arial,sans-serif; 
-  margin: 2px;
   background-color: black;
 }
 .container {
   background: grey;
 }
 .header {
-  margin: 0px;
   background-color: #555758;
+  max-height: 90px;
 }
 .header-icon, .header-h1 {
   display: inline-block;
   vertical-align: middle;
 }
 .header-icon {
-  padding: 4px 4px;
+  margin: 10px;
 }
 .header-h1 {
-  padding: 4px 4px;
+  width: 80%;
+  text-align: center;
 }
+/* min-height: 500px; */
 .nav, .section {
   padding: 20px;
-  min-height: 500px;
   box-sizing: border-box;
   display: inline-block;
   vertical-align: top;
 }
+/* nav not being used anymore */
 .nav {            
   width: 18%;             
   background: #acb3b9;            
 }
+/* touchscreen height is 800; header=90; footer=50; -> section is 640 */
 .section {
-  width: 78%;
+  width: 100%;
+  min-height: 640px;
 }
 
 /* vertical-align: middle; */
-.center-choices, .start-stop {
+.statistics-display, .selections, .start-stop {
   display: inline-block;
+  vertical-align: top;      
 }
-.center-choices {
-  width: 60%;            
+.statistics-display {
+  width: 30%;            
+}
+.selections {
+  width: 50%;            
 }
 .start-stop {
-  width: 30%;        
+  width: 18%;  
 }
+.start-stop button {
+  width: var(--icon-button-size);
+  height: var(--icon-button-size);
+}
+.start-stop img {
+  width: var(--icon-button-size);
+  height: var(--icon-button-size);
+}
+
 
 .footer-left, .footer-center, .footer-right {
   display: inline-block;
   margin: 0px;
-  width: 32%;
-  background: #555758;            
+  background: #555758;  
+  width: 32%;         
+  min-height: 50px; 
 }
 .footer-left {
   text-align: left;
 }
 .footer-center {
-  background: #acb3b9;            
+  background: #acb3b9;
 }
 .footer-right {
   text-align: right;
+}
+
+/* what does this do??: display: table */
+.pause-resume-button {
+  border: 1px;
+  border-color: white;
+  border-radius: 0%;
+}
+.pause-resume-button.pause {
+  background: url("/static/pause.png") no-repeat 5px center;
+  background-size: var(--icon-button-size) var(--icon-button-size);
+  height: var(--icon-button-size);
+  width: var(--icon-button-size);
+}
+.pause-resume-button.resume {
+  background: url("/static/start.png") no-repeat 5px center;
+  background-size: var(--icon-button-size) var(--icon-button-size);
+  height: var(--icon-button-size);
+  width: var(--icon-button-size);
 }
 
 /* used to select game types
@@ -82,10 +121,11 @@ body {
   border-color: red;
   background: #575656;
 }
+/* used to have   height:100px; */
 .radio-image-buttons input[type=radio] + img {
-   height:100px;
-   padding: 4px 4px;
-   display: inline; 
+  height: var(--icon-button-size);
+  padding: 4px 4px;
+  display: inline; 
 }
 .radio-image-buttons input[type=radio] +label {
   display: inline; 
@@ -94,7 +134,7 @@ body {
   outline: 12px solid lightgreen;
 }
 
-/* used to make numbers large on level, elevation, etc */
+/* used to make numbers large number-picker:  level, height, etc */
 input[type='number']{
   font: 32px Arial,sans-serif; 
   height: 72px !important;
@@ -112,13 +152,6 @@ input[type='number']{
   border-radius: 8px;
   display: inline-block;
   transition: all 0.3s ease 0s;
-}
-/* hover doesn't work on ios/android */
-.block_b:hover {
-  background-color: #ddd;
-  color: black;
-  border-radius: 50px;
-  border-color: #494949;
 }
 
 /* for drill and workout selection */

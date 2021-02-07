@@ -9,8 +9,6 @@
   <body>
     <div class="container">
       {{ generated_header }}
-      <div class="nav">
-      </div>
       <div class="section">
         <div>
           <button class="block_b" type="submit" onclick="window.location.href='game_options'">Game
@@ -19,7 +17,7 @@
           </button>
         </div>
         <div>
-            <button class="block_b" type="submit" onclick="window.location.href='{{ url_for('workout_selection') }}';">Workout
+            <button class="block_b" type="submit" onclick="window.location.href='{{ url_for('settings') }}';">Settings
             </button>
         </div>
       </div>

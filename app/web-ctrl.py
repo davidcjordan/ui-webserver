@@ -19,15 +19,19 @@ DEFAULT_METHODS = ['POST', 'GET']
 # Flask looks for following in the 'templates' directory
 MAIN_URL = '/'
 GAME_OPTIONS_URL = '/game_options'
-ACTIVE_URL = '/active'
+GAME_URL = '/game'
 DRILL_SELECTION_URL = '/drill_selection'
-WORKOUT_SELECTION_URL = '/workout_selection'
+DRILL_URL = '/drill'
+# WORKOUT_SELECTION_URL = '/workout_selection'
+SETTINGS_URL = '/settings'
 
 MAIN_TEMPLATE = 'index.html'
 GAME_OPTIONS_TEMPLATE = '/layouts/game_options.html'
-ACTIVE_TEMPLATE = '/layouts/active.html'
+GAME_TEMPLATE = '/layouts/game.html'
 DRILL_SELECTION_TEMPLATE = '/layouts/drill_selection.html'
-WORKOUT_SELECTION_TEMPLATE = '/layouts/workout_selection.html'
+DRILL_TEMPLATE = '/layouts/drill.html'
+# WORKOUT_SELECTION_TEMPLATE = '/layouts/workout_selection.html'
+SETTINGS_TEMPLATE = '/layouts/settings.html'
 
 STATUS_IDLE = "Idle"
 STATUS_ACTIVE = "Active"
@@ -36,6 +40,7 @@ MODE_GAME = "Game --"
 MODE_DRILL_NOT_SELECTED = "Drills --"
 MODE_WORKOUT_NOT_SELECTED = "Workout --"
 MODE_WORKOUT_SELECTED = "Workout: "
+MODE_SETTINGS = "Boomer Options"
 
 previous_url = None
 back_url = None
@@ -64,6 +69,7 @@ def index():
         generated_header=customized_header, \
         generated_footer=customized_footer)
 
+'''
 @app.route('/back')
 def go_to_main():
     global back_url
@@ -74,6 +80,7 @@ def go_to_main():
     # the same error happens when using the following on a webpage
     #       href='{{ url_for('back') }}'
     return redirect(back_url)
+'''
 
 @app.route(GAME_OPTIONS_URL, methods=DEFAULT_METHODS)
 def game_options():
@@ -87,8 +94,8 @@ def game_options():
         generated_header=customized_header, \
         generated_footer=customized_footer)
 
-@app.route(ACTIVE_URL, methods=DEFAULT_METHODS)
-def active():
+@app.route(GAME_URL, methods=DEFAULT_METHODS)
+def game():
     global customized_header, original_footer
     global back_url, previous_url
     back_url = previous_url
@@ -105,26 +112,16 @@ def active():
     already_on_active_page = False
 
     if request.method=='POST':
-        if GAME_OPTIONS_URL in previous_url:
-            if (request.form['player_count'] == "2"):
-                mode_string = "Doubles "
-            else:
-                mode_string = "Singles "
-
-            if (request.form['game_type'] == "tie_breaker"):
-                mode_string += "Tie Breaker"
-            else:
-                mode_string += "Game"
-        elif DRILL_SELECTION_URL in previous_url:
-            mode_string = "'" + request.form['drill_id'] + "'" + " Drill"
+        if (request.form['game_type'] == "tie_breaker"):
+            mode_string = "Tie Breaker"
         else:
-            mode_string = "NEED TO FIX"
+            mode_string = "Game"
             
     previous_url = "/" + inspect.currentframe().f_code.co_name
     if not already_on_active_page:
         customized_footer = original_footer.replace("{{ status }}", STATUS_ACTIVE)
         customized_footer = customized_footer.replace("{{ mode }}", mode_string)
-        return render_template(ACTIVE_TEMPLATE, \
+        return render_template(GAME_TEMPLATE, \
         generated_header=customized_header, \
         generated_footer=customized_footer)
     else:
@@ -166,17 +163,34 @@ def drill_selection():
         generated_drills = drill_button_list, \
         generated_footer=customized_footer)
 
-@app.route(WORKOUT_SELECTION_URL, methods=DEFAULT_METHODS)
-def workout_selection():
+@app.route(DRILL_URL, methods=DEFAULT_METHODS)
+def drill():
+    global customized_header, original_footer
+    global back_url, previous_url
+    back_url = previous_url
+
+    if request.method=='POST':
+        mode_string = "'" + request.form['drill_id'] + "'" + " Drill"
+            
+    previous_url = "/" + inspect.currentframe().f_code.co_name
+    customized_footer = original_footer.replace("{{ status }}", STATUS_ACTIVE)
+    customized_footer = customized_footer.replace("{{ mode }}", mode_string)
+    return render_template(DRILL_TEMPLATE, \
+        generated_header=customized_header, \
+        generated_footer=customized_footer)
+
+
+@app.route(SETTINGS_URL, methods=DEFAULT_METHODS)
+def settings():
     global customized_header, original_footer
     global back_url, previous_url
     back_url = '/'
     previous_url = "/" + inspect.currentframe().f_code.co_name
 
     customized_footer = original_footer.replace("{{ status }}", STATUS_IDLE)
-    customized_footer = customized_footer.replace("{{ mode }}", MODE_WORKOUT_NOT_SELECTED)
+    customized_footer = customized_footer.replace("{{ mode }}", MODE_SETTINGS)
 
-    return render_template("WORKOUT_SELECTION_TEMPLATE.html", \
+    return render_template(SETTINGS_TEMPLATE, \
         generated_header=customized_header, \
         generated_footer=customized_footer)
 
@@ -192,10 +206,18 @@ def handle_message(data):
 
 @socketio.on('change_params')     # Decorator to catch an event named change_params
 def change_params(data):          # change_params() is the event callback function.
-    print('Received data: ', data)      # data is a json string: {"speed":102}
+    print('change_params data: ', data)      # data is a json string: {"speed":102}
     item_to_change = json.loads(data)
-    send_msg(PUT_METHOD, LDSH_RSRC, item_to_change)
-    emit('score_update', {"p_pts": 2, "b_pts": 1, "p_games": 3, "b_games": 2, "p_sets": 5, "b_sets": 4})
+    print('change opts: {}'.format(item_to_change))
+    # send_msg(PUT_METHOD, OPTS_RSRC, item_to_change)
+
+@socketio.on('pause')
+def pause():
+    print('received pause.')
+
+@socketio.on('resume')
+def resume():
+    print('received resume.')
 
 @socketio.on('emit_test')
 def emit_test(data):
