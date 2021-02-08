@@ -4,3 +4,4 @@ __pycache__
 /static/singles-doubles-source.jpg
 /templates/*test.html
 /static/old*
+/static/rejected*

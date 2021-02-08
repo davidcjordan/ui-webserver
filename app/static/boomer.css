@@ -1,14 +1,27 @@
 
 :root {
-  --icon-button-size: 100px;
+  --icon-button-size: 120px;
 }
+/* reset margins */
+/*
+html, body, div, span, h1, img, ol, ul, li,
+fieldset, form, label, legend, footer, header,
+nav, section {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+*/
 * {
   font-family: sans-serif;
   color: white;
 }
 
 body {
-  font: 32px Arial,sans-serif; 
+  font: 40px sans-serif; 
   background-color: black;
 }
 .container {
@@ -27,6 +40,10 @@ body {
 }
 .header-h1 {
   width: 80%;
+  margin-block-start: 0em !important;
+  margin-block-end: 0em !important;
+  margin-inline-start: 0px !important;
+  margin-inline-end: 0px !important;
   text-align: center;
 }
 /* min-height: 500px; */
@@ -136,8 +153,8 @@ body {
 
 /* used to make numbers large number-picker:  level, height, etc */
 input[type='number']{
-  font: 32px Arial,sans-serif; 
-  height: 72px !important;
+  font: 32px; 
+  height: 72px;
   padding: 10px 10px;
   background-color: black; 
 }
@@ -191,7 +208,6 @@ input[type='number']{
   border-radius: 20px;
   border-color: #494949;
 }
-
 
 
 @media screen and (max-width: 600px) {

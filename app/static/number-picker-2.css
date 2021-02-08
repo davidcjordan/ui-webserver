@@ -30,11 +30,12 @@
 .stepper {
 	border: 1px solid #eee;
 }
-
+/*
 .stepper label {
 	font-size: 2em;
 	font-weight: bold;
 }
+*/
 .stepper input {
 	font-size: 2em;
 	font-weight: bold;

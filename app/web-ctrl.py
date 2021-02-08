@@ -111,12 +111,19 @@ def game():
         already_on_active_page = False
     already_on_active_page = False
 
+    mode_string = "FIX ME"
+
+    # print("{} on {}, data: {}".format(request.method, inspect.currentframe().f_code.co_name, request.data))
     if request.method=='POST':
-        if (request.form['game_type'] == "tie_breaker"):
-            mode_string = "Tie Breaker"
-        else:
-            mode_string = "Game"
-            
+        if 'serve_mode' in request.form:
+            print("serve_mode: {}".format(request.form['serve_mode']))
+        if 'scoring' in request.form:
+            print("scoring: {}".format(request.form['scoring']))
+        if 'running' in request.form:
+            print("running: {}".format(request.form['running']))
+        if 'point_delay' in request.form:
+            print("point_delay: {}".format(request.form['point_delay']))
+        
     previous_url = "/" + inspect.currentframe().f_code.co_name
     if not already_on_active_page:
         customized_footer = original_footer.replace("{{ status }}", STATUS_ACTIVE)
