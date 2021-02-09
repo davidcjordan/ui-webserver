@@ -25,8 +25,8 @@ function stepperInput(id, s, m) {
   var el = document.getElementById(id);
   // console.log("ID %s -- Step: %f  -- min/max: %f", id, s, m);
   var updated = new Boolean(false);
+  var currentValue = parseFloat(el.value);
   if (s > 0) {
-    var currentValue = parseFloat(el.value);
     if (currentValue < m) {
       el.value = currentValue + s;
       updated = true;
@@ -49,8 +49,13 @@ function stepperInput(id, s, m) {
     //   console.log("POST %s: %f -- response: %s", el.name, el.value, respns);
     // });
     // var socket = io();
-    socket.emit('change_params', JSON.stringify(data));
-    console.log("Emitted: change_params");
+    if (typeof socket !== 'undefined') {
+      socket.emit('change_params', JSON.stringify(data));
+      console.log("Emitted: change_params");
+    }
+    else {
+      console.log("Number picker: socket not defined");
+    }
   }
 }
 
