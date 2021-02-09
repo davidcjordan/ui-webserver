@@ -70,13 +70,13 @@ body {
   vertical-align: top;      
 }
 .statistics-display {
-  width: 30%;            
+  width: 44%;            
 }
 .selections {
-  width: 50%;            
+  width: 45%;            
 }
 .start-stop {
-  width: 18%;  
+  width: 9%;  
 }
 .start-stop button {
   width: var(--icon-button-size);
@@ -149,14 +149,6 @@ body {
 }
 .radio-image-buttons input[type=radio]:checked + img {
   outline: 12px solid lightgreen;
-}
-
-/* used to make numbers large number-picker:  level, height, etc */
-input[type='number']{
-  font: 32px; 
-  height: 72px;
-  padding: 10px 10px;
-  background-color: black; 
 }
 
 .block_b {

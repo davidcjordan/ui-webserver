@@ -26,6 +26,7 @@
 	height: 2.1em;
 	background: #fff;
 	padding: 1px;
+	line-height: 10px;
   */
 .stepper {
 	border: 1px solid #eee;
@@ -36,21 +37,26 @@
 	font-weight: bold;
 }
 */
+/* used to have:
+	width: 2em;
+	height: 72px;
+  padding: 10px 10px;
+*/
 .stepper input {
 	font-size: 2em;
 	font-weight: bold;
-	width: 2em;
+	width: 1.8em;
 	text-align: center;
-	border: 2px solid #eee;
+	border: 1px solid #eee;
 	background: transparent;
 	color: black;
 }
-
+/* used to have padding: 0.2em !important; */
 .stepper button {
 	font-size: 2em;
+	width: 1.1em;
 	font-weight: bold;
-	border: 2px solid #eee;
-	padding: 0.2em !important;
+	border: 3px solid #eee;
 	color: black;
 }
 

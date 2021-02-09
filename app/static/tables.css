@@ -1,0 +1,40 @@
+.Table {
+  display: table;
+}
+/* used to have: font-size: larger; */
+.Title {
+  display: table-caption;
+  text-align: center;
+  font-weight: bold;
+  line-height: 10px;
+}
+.Heading {
+  display: table-row;
+  font-weight: bold;
+  text-align: center;
+  line-height: 10px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+.Row {
+  display: table-row;
+}
+.Col1Row1Cell {
+  display: table-cell;
+  border: none;
+}
+.Col1Cell {
+  display: table-cell;
+  border: solid;
+  border-width: thin;
+  text-align: right;
+}
+.Cell
+{
+  display: table-cell;
+  border: solid;
+  border-width: thin;
+  text-align: center;
+  padding-left: 5px;
+  padding-right: 5px;
+}

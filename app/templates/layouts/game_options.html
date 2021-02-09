@@ -18,30 +18,30 @@
           </div>  
           <div class="selections">
             <fieldset class="radio-slider-buttons">
+              <label>Serves: </label>
               <input type="radio" id="alt_serve" name="serve_mode" value=0 checked>
                 <label for="alt_serve">Alternate</label>
               <input type="radio" id="all_serve" name="serve_mode"value=1>
                 <label for="all_serve">All</label>
               <input type="radio" id="no_serve" name="serve_mode" value=2>
                 <label for="no_serve">None</label>
-              <label>Serves to you</label>
             </fieldset>
             <fieldset class="radio-slider-buttons">
+              <label>Scoring:</label>
               <input type="radio" id="standard_scoring" name="scoring" value=0 checked>
                 <label for="standard_scoring">Standard</label>
               <input type="radio" id="tiebreaker_scoring"name="scoring" value=1>
                 <label for="tiebreaker_scoring">Tie Breaker</label>
-              <label>Scoring</label>
             </fieldset>
             <fieldset class="radio-slider-buttons">
+              <label>Running:</label>
               <input type="radio" id="less_running" name="running" value=1>
                 <label for="less_running">Less</label>
               <input type="radio" id="standard_running"name="running" value=0 checked>
                 <label for="standard_running">Standard</label>
-              <label>Running</label>
             </fieldset>
             <div class="stepper">
-              <label for="point_delay_stepper">Delay after point:</label>
+              <label for="point_delay_stepper">After Point<br>Delay:</label>
               <button type="button">–</button>
               <input type="number" id="point_delay_stepper" name="point_delay" value="0" min="-5" max="5" step="1" readonly>
               <button type="button">+</button>

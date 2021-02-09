@@ -6,12 +6,71 @@
     <title>Boomer-Control: game active</title>
     <link rel="stylesheet" href="/static/boomer.css">
     <link rel="stylesheet" href="/static/number-picker-2.css">
+    <link rel="stylesheet" href="/static/tables.css">
 </head>
   <body>
     <div class="container">
       {{ generated_header }}
       <div class="section">
         <div class="statistics-display">
+          <div class="Table">
+            <!-- <div class="Title">
+              <p>Game Score</p>
+            </div> -->
+            <div class="Heading">
+              <div class="Col1Row1Cell">
+                <p></p>
+              </div>
+              <div class="Cell">
+                <p>Set</p>
+              </div>
+              <div class="Cell">
+                <p>Game</p>
+              </div>
+              <div class="Cell">
+                <p>Points</p>
+              </div>
+              <div class="Cell">
+                <p>Tie</p>
+                <p>Points</p>
+              </div>
+            </div>
+            <div class="Row">
+              <div class="Col1Cell">
+                <p>Boomer</p>
+              </div>
+              <div class="Cell">
+                <p id="bs">bs</p>
+              </div>
+              <div class="Cell">
+                <p id="bg">bg</p>
+              </div>
+              <div class="Cell">
+                <p id="bp">bp</p>
+              </div>
+              <div class="Cell">
+                <p id="bt">bt</p>
+              </div>
+            </div>
+            <div class="Row">
+              <div class="Col1Cell">
+                <p>Player</p>
+              </div>
+              <div class="Cell">
+                <p id="ps">ps</p>
+              </div>
+              <div class="Cell">
+                <p id="pg">pg</p>
+              </div>
+              <div class="Cell">
+                <p id="pp">pp</p>
+              </div>
+              <div class="Cell">
+                <p id="pt">pt</p>
+              </div>
+            </div>
+          </div>
+          <p id="server">TBD's serve</p>
         </div>
         <div class="selections">
           <div class="stepper">
@@ -23,11 +82,11 @@
         </div>
         <div class="start-stop">
           <button type="button" id="pause-resume" class="pause-resume-button pause">
-            <!-- <img src="/static/pause.png" class="pause-resume-button pause"> -->
           </button>
           <button type="submit" onclick="window.location.href='/game_options';">
             <img src="/static/stop.png" style="height:90px;"">
           </button>
+          <button type="button" id="test">Test</button>
         </div>
       </div>
     </div>
@@ -42,7 +101,23 @@
       var socket = io();
       socket.on('score_update', function(data) {
         Object.keys(data).forEach(function(key) {
-          console.log('Key : ' + key + ', Value : ' + data[key])
+          // console.log('Key : ' + key + ', Value : ' + data[key])
+          var IdToUpdate = document.getElementById(key);
+          if (IdToUpdate) {
+            if (key !== 'server') {
+              IdToUpdate.innerHTML = data[key];
+            }
+            else {
+              if (data[key] == 'b') {
+                IdToUpdate.innerHTML = "Boomer's serve"
+              } else {
+                IdToUpdate.innerHTML = "Player's serve"
+              }
+            }
+          }
+          else {
+            console.log("No element with ID: " + key)
+          }
         })
       });
 
@@ -57,6 +132,17 @@
         target.classList.toggle("pause");
         target.classList.toggle("resume");
       }, false);
+
+      document.getElementById("test").addEventListener("click", function (e) {
+        socket.emit("test");
+        console.log("emitted test")
+      }, false);
+
+      var pollingVar = setInterval(pollingTimer, 1000);
+
+      function pollingTimer() {
+        socket.emit("test");
+      }
       // socket.on('connect', function() {
       //   socket.emit('message', 'Connected!');
       // });

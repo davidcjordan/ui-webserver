@@ -11,6 +11,7 @@ import os  # for sending favicon
 from ctrl_messaging_routines import send_msg #, is_active
 from control_ipc_defines import *
 import json
+from random import randint
 
 
 IP_PORT = 1111 # picked what is hopefully an unused port  (can't use 44)
@@ -226,9 +227,10 @@ def pause():
 def resume():
     print('received resume.')
 
-@socketio.on('emit_test')
-def emit_test(data):
-    emit('score_update', {"p_pts": 2, "b_pts": 1, "p_games": 3, "b_games": 2, "p_sets": 5, "b_sets": 4})
+@socketio.on('test')
+def test():
+    emit('score_update', {"pp": randint(0,3), \
+        "bp": 1, "pg": 3, "bg": 2, "ps": 5, "bs": 4, "pt": 6, "bt": 7, "server": "b"})
 
 
 if __name__ == '__main__':
