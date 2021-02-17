@@ -8,6 +8,8 @@ import inspect
 import os  # for sending favicon 
 
 # the following requires: export PYTHONPATH='/Users/tom/Documents/Projects/Boomer/control_ipc_utils'
+import sys
+sys.path.append('/Users/tom/Documents/Projects/Boomer/control_ipc_utils')
 from ctrl_messaging_routines import send_msg #, is_active
 from control_ipc_defines import *
 import json
@@ -61,13 +63,13 @@ def test_io_send():
  
 @app.route(MAIN_URL, methods=DEFAULT_METHODS)
 def index():
-    global customized_header, original_footer
     global back_url, previous_url
     back_url = previous_url = "/"
+    
     customized_footer = original_footer.replace("{{ status }}", STATUS_IDLE)
     customized_footer = customized_footer.replace("{{ mode }}", MODE_NONE)
     return render_template(MAIN_TEMPLATE, \
-        generated_header=customized_header, \
+        generated_header=customized_header_wo_home, \
         generated_footer=customized_footer)
 
 '''
@@ -85,19 +87,17 @@ def go_to_main():
 
 @app.route(GAME_OPTIONS_URL, methods=DEFAULT_METHODS)
 def game_options():
-    global customized_header, original_footer
     global back_url, previous_url
     back_url = '/'
     previous_url = "/" + inspect.currentframe().f_code.co_name
     customized_footer = original_footer.replace("{{ status }}", STATUS_IDLE)
     customized_footer = customized_footer.replace("{{ mode }}", MODE_GAME)
     return render_template(GAME_OPTIONS_TEMPLATE, \
-        generated_header=customized_header, \
+        generated_header=customized_header_w_home, \
         generated_footer=customized_footer)
 
 @app.route(GAME_URL, methods=DEFAULT_METHODS)
 def game():
-    global customized_header, original_footer
     global back_url, previous_url
     back_url = previous_url
 
@@ -130,7 +130,7 @@ def game():
         customized_footer = original_footer.replace("{{ status }}", STATUS_ACTIVE)
         customized_footer = customized_footer.replace("{{ mode }}", mode_string)
         return render_template(GAME_TEMPLATE, \
-        generated_header=customized_header, \
+        generated_header=customized_header_wo_home, \
         generated_footer=customized_footer)
     else:
         return None
@@ -138,7 +138,6 @@ def game():
 
 @app.route(DRILL_SELECTION_URL, methods=DEFAULT_METHODS)
 def drill_selection():
-    global customized_header, original_footer
     global back_url, previous_url
     back_url = '/'
     previous_url = "/" + inspect.currentframe().f_code.co_name
@@ -167,13 +166,12 @@ def drill_selection():
     customized_footer = customized_footer.replace("{{ mode }}", MODE_DRILL_NOT_SELECTED)
 
     return render_template(DRILL_SELECTION_TEMPLATE, \
-        generated_header=customized_header, \
+        generated_header=customized_header_w_home, \
         generated_drills = drill_button_list, \
         generated_footer=customized_footer)
 
 @app.route(DRILL_URL, methods=DEFAULT_METHODS)
 def drill():
-    global customized_header, original_footer
     global back_url, previous_url
     back_url = previous_url
 
@@ -184,7 +182,7 @@ def drill():
     customized_footer = original_footer.replace("{{ status }}", STATUS_ACTIVE)
     customized_footer = customized_footer.replace("{{ mode }}", mode_string)
     return render_template(DRILL_TEMPLATE, \
-        generated_header=customized_header, \
+        generated_header=customized_header_wo_home, \
         generated_footer=customized_footer)
 
 
@@ -199,7 +197,7 @@ def settings():
     customized_footer = customized_footer.replace("{{ mode }}", MODE_SETTINGS)
 
     return render_template(SETTINGS_TEMPLATE, \
-        generated_header=customized_header, \
+        generated_header=customized_header_w_home, \
         generated_footer=customized_footer)
 
 @app.route('/favicon.ico')
@@ -239,11 +237,18 @@ if __name__ == '__main__':
     # TODO: customize header from a file
     display_title = "Red Oak Sports Club  --  Boomer 1"
     display_icon = "/static/red-oaks-icon.png"
+    home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
+            <img src="/static/home.png" style="height:64px;"> \
+          </button>')
+
 
     with open('./app/templates/includes/header.html', 'r', encoding="utf-8") as file:
         customized_header = Markup(file.read())
     customized_header = customized_header.replace("{{ installation_title }}", display_title)
     customized_header = customized_header.replace("{{ installation_icon }}", display_icon)
+    customized_header_w_home = customized_header.replace("{{ home_button }}", home_button)
+    customized_header_wo_home = customized_header.replace("{{ home_button }}", "")
+    
 
     my_copyright = "© tennisrobot.com"
     with open('./app/templates/includes/footer.html', 'r', encoding="utf-8") as file:

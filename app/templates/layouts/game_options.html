@@ -41,13 +41,21 @@
                 <label for="standard_running">Standard</label>
             </fieldset>
             <div class="stepper">
-              <label for="point_delay_stepper">After Point<br>Delay:</label>
+              <label for="point_delay_stepper">Delay:</label>
               <button type="button">–</button>
-              <input type="number" id="point_delay_stepper" name="point_delay" value="0" min="-5" max="5" step="1" readonly>
+              <input type="number" id="point_delay_stepper" name="point_delay" value="0" min="0" max="10" step="1" readonly>
               <button type="button">+</button>
+              <!-- <p>After Point</p> -->
             </div>
+            <fieldset class="radio-slider-buttons">
+              <label>Grunts:</label>
+              <input type="radio" id="grunts_off" name="grunts" value=0>
+                <label for="grunts_off">Off</label>
+              <input type="radio" id="grunts_on"name="grunts" value=1 checked>
+                <label for="grunts_on">On</label>
+            </fieldset>
           </div>
-          <div  class="start-stop">
+          <div class="start-stop">
             <button type="submit" >
               <!-- <img src="/static/start.png" style="height:90px;"> -->
               <img src="/static/start.png">
