@@ -34,7 +34,8 @@
     <div class="stepper">
       <label for="point_delay_stepper">Delay:</label>
       <button type="button">–</button>
-      <input type="number" id="point_delay_stepper" name="point_delay" value="0" min="0" max="10" step="1" readonly>
+      <input type="number" id="point_delay_stepper" name="point_delay" value={{point_delay_dflt}} min={{point_delay_min}}
+        max={{point_delay_max}} step={{point_delay_step}} readonly>
       <button type="button">+</button>
       <!-- <p>After Point</p> -->
     </div>

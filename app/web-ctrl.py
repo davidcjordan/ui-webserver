@@ -97,6 +97,10 @@ def game_options():
       installation_icon = custom_installation_icon, \
       optional_form_begin = Markup('<form action ="' + GAME_URL + '" method="post">'), \
       optional_form_end = Markup('</form>'), \
+      point_delay_dflt = GAME_POINT_DELAY_DEFAULT, \
+      point_delay_min = GAME_POINT_DELAY_MIN, \
+      point_delay_max = GAME_POINT_DELAY_MAX, \
+      point_delay_step = GAME_POINT_DELAY_STEP, \
       footer_left = "Status: " + STATUS_IDLE, \
       footer_center = "Mode: " + MODE_GAME)
 
@@ -121,6 +125,10 @@ def game():
    return render_template(GAME_TEMPLATE, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
+      level_dflt = LEVEL_DEFAULT/LEVEL_UI_FACTOR, \
+      level_min = LEVEL_MIN/LEVEL_UI_FACTOR, \
+      level_max = LEVEL_MAX/LEVEL_UI_FACTOR, \
+      level_step = LEVEL_UI_STEP/LEVEL_UI_FACTOR, \
       footer_left = "Status: " + STATUS_ACTIVE, \
       footer_center = "Mode: " + MODE_GAME)
 
