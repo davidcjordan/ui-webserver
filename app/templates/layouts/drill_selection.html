@@ -1,35 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Boomer-Control</title>
-    <link rel="stylesheet" type="text/css" href="/static/boomer.css">
-  </head>
-  <body>
-    <div class="container">
-      {{ generated_header }}
-      <div class="nav">
-        <button type="submit" onclick="window.location.href='/back';">
-          <img src="/static/back-blue-button-xs.jpg" style="height:96px;">
-        </button>
-      </div>
-        <div class="section">
-          <form action = "{{ url_for('active') }}" method = "post">
-            <div class="selections">
+{% extends "layouts/base.html" %}
+
+{% block selections %}
               <div class="radio-text-buttons">
                 <p>Select Drill:</p>
 {{ generated_drills }}
               </div>
-            </div>
-            <div  class="start-stop">
-              <button type="submit">
-                <img src="/static/start.png" style="height:320px;">
-              </button>
-            </div>
-          </form>
-        </div>
-        {{ generated_footer }}
-      </div>
-  </body>
-</html>
+{% endblock %}
+
+{% block control %}
+  <div class="start-stop">
+    <button type="submit">
+      <img src="/static/start.png">
+    </button>
+  </div>
+{% endblock %}
+            

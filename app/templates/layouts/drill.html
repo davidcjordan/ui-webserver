@@ -1,57 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Boomer-Control</title>
-    <link rel="stylesheet" href="/static/boomer.css">
-    <link rel="stylesheet" href="/static/number-picker-2.css">
-</head>
-  <body>
-    <div class="container">
-      {{ generated_header }}
-      <div class="section">
-        <div class="selections">
-          <!-- <form> -->
-          <div class="stepper">
-            <label for="level">Level:</label>
-            <button>–</button>
-            <input type="number" id="level-stepper" name="level" value="3" min="2" max="7" step="0.5" readonly>
-            <button>+</button>
-          </div>
-          <div class="stepper">
-            <label for="speed">Speed:</label>
-            <button>–</button>
-            <input type="number" id="speed-stepper" name="speed" value="100" min="80" max="120" step="2" readonly>
-            <button>+</button>
-          </div>
-          <!-- </form> -->
-        </div>
-        <div class="start-stop">
-          <button type="submit" onclick="window.location.href='/back';">
-            <img src="/static/stop.png" style="height:300px;"">
-          </button>
-        </div>
-      </div>
-    </div>
-    <div>
-      {{ generated_footer }}
-    </div>
-    <!--  if javascript was in header, then the javascripts didnt work.  Reconmendation is they should be here -->
-    <script src="/static/number-picker-2.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
-    <!-- <script src="/socket.io/socket.io.js"></script> -->
-    <script type="text/javascript" charset="utf-8">
-      var socket = io();
-      socket.on('score_update', function(data) {
-        Object.keys(data).forEach(function(key) {
-          console.log('Key : ' + key + ', Value : ' + data[key])
-        })
-      });
+{% extends "layouts/base.html" %}
 
-      // socket.on('connect', function() {
-      //   socket.emit('message', 'Connected!');
-      // });
-    </script>
-  </body>
-</html>
+{% block selections %}
+<div class="selections">
+  <div class="stepper">
+    <label for="level">Level:</label>
+    <button>–</button>
+      <input type="number" id="level-stepper" name="level" value="3" min="2" max="7" step="0.5" readonly>
+    <button>+</button>
+  </div>
+  <div class="stepper">
+    <label for="speed">Speed:</label>
+    <button>–</button>
+    <input type="number" id="speed-stepper" name="speed" value="100" min="80" max="120" step="2" readonly>
+    <button>+</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block control %}
+<div class="start-stop">
+  <button type="button" id="pause-resume" class="pause-resume-button pause">
+  </button>
+  <button type="submit" onclick="window.location.href='{{ url_for('drill_selection') }}';">
+    <img src="/static/stop.png">
+  </button>
+</div>
+{% endblock %}
+
+{% block page_specific_js %} 
+<script type="text/javascript" charset="utf-8"> var socket = io(); </script>
+<script src="/static/pause_resume.js"></script>
+<script type="text/javascript" charset="utf-8">
+      var pollingVar = setInterval(pollingTimer, 1000);
+      function pollingTimer() {
+        socket.emit("test");
+      }
+</script>
+{% endblock %} 

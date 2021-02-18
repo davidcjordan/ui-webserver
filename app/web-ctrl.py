@@ -139,6 +139,7 @@ def drill_selection():
    back_url = '/'
    previous_url = "/" + inspect.currentframe().f_code.co_name
 
+# The following is to be replaced with fetching from a database of drills based on tags
    drill_names = ["Side to Side", "Backhand", "The Dribble"]
 
    button_def = \
@@ -159,28 +160,31 @@ def drill_selection():
       drill_button_list += this_drill_selection
    drill_button_list += Markup("</fieldset>\n")
 
-   customized_footer = original_footer.replace("{{ status }}", STATUS_IDLE)
-   customized_footer = customized_footer.replace("{{ mode }}", MODE_DRILL_NOT_SELECTED)
-
    return render_template(DRILL_SELECTION_TEMPLATE, \
-      generated_header=customized_header_w_home, \
+      home_button = my_home_button, \
+      installation_title = custom_installation_title, \
+      installation_icon = custom_installation_icon, \
+      optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
       generated_drills = drill_button_list, \
-      generated_footer=customized_footer)
+      optional_form_end = Markup('</form>'), \
+      footer_left = "Status: " + STATUS_IDLE, \
+      footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
 @app.route(DRILL_URL, methods=DEFAULT_METHODS)
 def drill():
    global back_url, previous_url
    back_url = previous_url
 
+   mode_string = "FIX-ME"
    if request.method=='POST':
       mode_string = "'" + request.form['drill_id'] + "'" + " Drill"
          
    previous_url = "/" + inspect.currentframe().f_code.co_name
-   customized_footer = original_footer.replace("{{ status }}", STATUS_ACTIVE)
-   customized_footer = customized_footer.replace("{{ mode }}", mode_string)
    return render_template(DRILL_TEMPLATE, \
-      generated_header=customized_header_wo_home, \
-      generated_footer=customized_footer)
+      installation_title = custom_installation_title, \
+      installation_icon = custom_installation_icon, \
+      footer_left = "Status: " + STATUS_ACTIVE, \
+      footer_center = "Mode: " + mode_string)
 
 
 @app.route('/favicon.ico')
