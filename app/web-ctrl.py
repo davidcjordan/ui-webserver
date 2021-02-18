@@ -63,142 +63,117 @@ def test_io_send():
  
 @app.route(MAIN_URL, methods=DEFAULT_METHODS)
 def index():
-    global back_url, previous_url
-    back_url = previous_url = "/"
-    
-    customized_footer = original_footer.replace("{{ status }}", STATUS_IDLE)
-    customized_footer = customized_footer.replace("{{ mode }}", MODE_NONE)
-    return render_template(MAIN_TEMPLATE, \
-        generated_header=customized_header_wo_home, \
-        generated_footer=customized_footer)
+   global back_url, previous_url
+   back_url = previous_url = "/"
+   
+   return render_template(MAIN_TEMPLATE, \
+      # home_button = "", \
+      installation_title = custom_installation_title, \
+      installation_icon = custom_installation_icon, \
+      footer_left = "Status: Idle", \
+      footer_center = "Mode: --")
 
 '''
 @app.route('/back')
 def go_to_main():
-    global back_url
-    if back_url is None:
-        back_url = '/'
-    # return redirect(url_for(back_url))
-    # url_for() causes a werkzeug-routing-builderror-could-not-build-url-for-endpoint
-    # the same error happens when using the following on a webpage
-    #       href='{{ url_for('back') }}'
-    return redirect(back_url)
+   global back_url
+   if back_url is None:
+      back_url = '/'
+   # return redirect(url_for(back_url))
+   # url_for() causes a werkzeug-routing-builderror-could-not-build-url-for-endpoint
+   # the same error happens when using the following on a webpage
+   #       href='{{ url_for('back') }}'
+   return redirect(back_url)
 '''
 
 @app.route(GAME_OPTIONS_URL, methods=DEFAULT_METHODS)
 def game_options():
-    global back_url, previous_url
-    back_url = '/'
-    previous_url = "/" + inspect.currentframe().f_code.co_name
-    customized_footer = original_footer.replace("{{ status }}", STATUS_IDLE)
-    customized_footer = customized_footer.replace("{{ mode }}", MODE_GAME)
-    return render_template(GAME_OPTIONS_TEMPLATE, \
-        generated_header=customized_header_w_home, \
-        generated_footer=customized_footer)
+   global back_url, previous_url
+   back_url = '/'
+   previous_url = "/" + inspect.currentframe().f_code.co_name
+   return render_template(GAME_OPTIONS_TEMPLATE, \
+      home_button = my_home_button, \
+      installation_title = custom_installation_title, \
+      installation_icon = custom_installation_icon, \
+      optional_form_begin = Markup('<form action ="' + GAME_URL + '" method="post">'), \
+      optional_form_end = Markup('</form>'), \
+      footer_left = "Status: " + STATUS_IDLE, \
+      footer_center = "Mode: " + MODE_GAME)
 
 @app.route(GAME_URL, methods=DEFAULT_METHODS)
 def game():
-    global back_url, previous_url
-    back_url = previous_url
+   global back_url, previous_url
+   back_url = previous_url
 
-    if ("/" + inspect.currentframe().f_code.co_name == previous_url):
-        already_on_active_page = True
-        print("post when on active page; request: {}".format(request.data))
-        # multi_dict = request.args
-        # for key in multi_dict:
-            # print(multi_dict.get(key))
-            # print(multi_dict.getlist(key))
-    else:
-        already_on_active_page = False
-    already_on_active_page = False
-
-    mode_string = "FIX ME"
-
-    # print("{} on {}, data: {}".format(request.method, inspect.currentframe().f_code.co_name, request.data))
-    if request.method=='POST':
-        if 'serve_mode' in request.form:
-            print("serve_mode: {}".format(request.form['serve_mode']))
-        if 'scoring' in request.form:
-            print("scoring: {}".format(request.form['scoring']))
-        if 'running' in request.form:
-            print("running: {}".format(request.form['running']))
-        if 'point_delay' in request.form:
-            print("point_delay: {}".format(request.form['point_delay']))
-        
-    previous_url = "/" + inspect.currentframe().f_code.co_name
-    if not already_on_active_page:
-        customized_footer = original_footer.replace("{{ status }}", STATUS_ACTIVE)
-        customized_footer = customized_footer.replace("{{ mode }}", mode_string)
-        return render_template(GAME_TEMPLATE, \
-        generated_header=customized_header_wo_home, \
-        generated_footer=customized_footer)
-    else:
-        return None
+   # print("{} on {}, data: {}".format(request.method, inspect.currentframe().f_code.co_name, request.data))
+   if request.method=='POST':
+      if 'serve_mode' in request.form:
+         print("serve_mode: {}".format(request.form['serve_mode']))
+      if 'scoring' in request.form:
+         print("scoring: {}".format(request.form['scoring']))
+      if 'running' in request.form:
+         print("running: {}".format(request.form['running']))
+      if 'point_delay' in request.form:
+         print("point_delay: {}".format(request.form['point_delay']))
+      if 'grunts' in request.form:
+         print("grunts: {}".format(request.form['grunts']))
+      
+   return render_template(GAME_TEMPLATE, \
+      installation_title = custom_installation_title, \
+      installation_icon = custom_installation_icon, \
+      footer_left = "Status: " + STATUS_ACTIVE, \
+      footer_center = "Mode: " + MODE_GAME)
 
 
 @app.route(DRILL_SELECTION_URL, methods=DEFAULT_METHODS)
 def drill_selection():
-    global back_url, previous_url
-    back_url = '/'
-    previous_url = "/" + inspect.currentframe().f_code.co_name
+   global back_url, previous_url
+   back_url = '/'
+   previous_url = "/" + inspect.currentframe().f_code.co_name
 
-    drill_names = ["Side to Side", "Backhand", "The Dribble"]
+   drill_names = ["Side to Side", "Backhand", "The Dribble"]
 
-    button_def = \
-        Markup('<div>\n\
-            <input type="radio" id="{{drill_id}}" name="drill_id" value="{{value}}" {{checked}}>\n\
-            <label for="{{drill_id}}">{{drill_text}}</label>\n\
-            </div>')
+   button_def = \
+      Markup('<div>\n\
+         <input type="radio" id="{{drill_id}}" name="drill_id" value="{{value}}" {{checked}}>\n\
+         <label for="{{drill_id}}">{{drill_text}}</label>\n\
+         </div>')
 
-    drill_button_list = Markup("<fieldset>\n")
-    for id, drill_text in enumerate(drill_names):
-        this_drill_selection = button_def.replace("{{value}}", drill_text)
-        this_drill_selection = this_drill_selection.replace("{{drill_text}}", drill_text)
-        this_drill_selection = this_drill_selection.replace("{{drill_id}}", "drill_"+str(id+1))
-        if id == 0:
-            this_drill_selection = this_drill_selection.replace("{{checked}}", "checked")
-        else:
-            this_drill_selection = this_drill_selection.replace("{{checked}}", "")
-        drill_button_list += this_drill_selection
-    drill_button_list += Markup("</fieldset>\n")
+   drill_button_list = Markup("<fieldset>\n")
+   for id, drill_text in enumerate(drill_names):
+      this_drill_selection = button_def.replace("{{value}}", drill_text)
+      this_drill_selection = this_drill_selection.replace("{{drill_text}}", drill_text)
+      this_drill_selection = this_drill_selection.replace("{{drill_id}}", "drill_"+str(id+1))
+      if id == 0:
+         this_drill_selection = this_drill_selection.replace("{{checked}}", "checked")
+      else:
+         this_drill_selection = this_drill_selection.replace("{{checked}}", "")
+      drill_button_list += this_drill_selection
+   drill_button_list += Markup("</fieldset>\n")
 
-    customized_footer = original_footer.replace("{{ status }}", STATUS_IDLE)
-    customized_footer = customized_footer.replace("{{ mode }}", MODE_DRILL_NOT_SELECTED)
+   customized_footer = original_footer.replace("{{ status }}", STATUS_IDLE)
+   customized_footer = customized_footer.replace("{{ mode }}", MODE_DRILL_NOT_SELECTED)
 
-    return render_template(DRILL_SELECTION_TEMPLATE, \
-        generated_header=customized_header_w_home, \
-        generated_drills = drill_button_list, \
-        generated_footer=customized_footer)
+   return render_template(DRILL_SELECTION_TEMPLATE, \
+      generated_header=customized_header_w_home, \
+      generated_drills = drill_button_list, \
+      generated_footer=customized_footer)
 
 @app.route(DRILL_URL, methods=DEFAULT_METHODS)
 def drill():
-    global back_url, previous_url
-    back_url = previous_url
+   global back_url, previous_url
+   back_url = previous_url
 
-    if request.method=='POST':
-        mode_string = "'" + request.form['drill_id'] + "'" + " Drill"
-            
-    previous_url = "/" + inspect.currentframe().f_code.co_name
-    customized_footer = original_footer.replace("{{ status }}", STATUS_ACTIVE)
-    customized_footer = customized_footer.replace("{{ mode }}", mode_string)
-    return render_template(DRILL_TEMPLATE, \
-        generated_header=customized_header_wo_home, \
-        generated_footer=customized_footer)
+   if request.method=='POST':
+      mode_string = "'" + request.form['drill_id'] + "'" + " Drill"
+         
+   previous_url = "/" + inspect.currentframe().f_code.co_name
+   customized_footer = original_footer.replace("{{ status }}", STATUS_ACTIVE)
+   customized_footer = customized_footer.replace("{{ mode }}", mode_string)
+   return render_template(DRILL_TEMPLATE, \
+      generated_header=customized_header_wo_home, \
+      generated_footer=customized_footer)
 
-
-@app.route(SETTINGS_URL, methods=DEFAULT_METHODS)
-def settings():
-    global customized_header, original_footer
-    global back_url, previous_url
-    back_url = '/'
-    previous_url = "/" + inspect.currentframe().f_code.co_name
-
-    customized_footer = original_footer.replace("{{ status }}", STATUS_IDLE)
-    customized_footer = customized_footer.replace("{{ mode }}", MODE_SETTINGS)
-
-    return render_template(SETTINGS_TEMPLATE, \
-        generated_header=customized_header_w_home, \
-        generated_footer=customized_footer)
 
 @app.route('/favicon.ico')
 def favicon():
@@ -227,6 +202,7 @@ def resume():
 
 @socketio.on('test')
 def test():
+    print("received test - sending score_update")
     emit('score_update', {"pp": randint(0,3), \
         "bp": 1, "pg": 3, "bg": 2, "ps": 5, "bs": 4, "pt": 6, "bt": 7, "server": "b"})
 
@@ -235,18 +211,17 @@ if __name__ == '__main__':
     global customized_header, original_footer
     
     # TODO: customize header from a file
-    display_title = "Red Oak Sports Club  --  Boomer 1"
-    display_icon = "/static/red-oaks-icon.png"
-    home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
+    custom_installation_title = "Red Oak Sports Club  --  Boomer 1"
+    custom_installation_icon = "/static/red-oaks-icon.png"
+    my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
             <img src="/static/home.png" style="height:64px;"> \
           </button>')
 
-
     with open('./app/templates/includes/header.html', 'r', encoding="utf-8") as file:
         customized_header = Markup(file.read())
-    customized_header = customized_header.replace("{{ installation_title }}", display_title)
-    customized_header = customized_header.replace("{{ installation_icon }}", display_icon)
-    customized_header_w_home = customized_header.replace("{{ home_button }}", home_button)
+    customized_header = customized_header.replace("{{ installation_title }}", custom_installation_title)
+    customized_header = customized_header.replace("{{ installation_icon }}", custom_installation_icon)
+    customized_header_w_home = customized_header.replace("{{ home_button }}", my_home_button)
     customized_header_wo_home = customized_header.replace("{{ home_button }}", "")
     
 

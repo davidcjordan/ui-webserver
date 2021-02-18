@@ -1,7 +1,3 @@
 .vscode
 __pycache__
-/static/experimental.css
-/static/singles-doubles-source.jpg
-/templates/*test.html
-/static/old*
-/static/rejected*
+archive

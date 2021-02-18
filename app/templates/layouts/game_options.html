@@ -1,70 +1,57 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Boomer-Control: game options</title>
-    <link rel="stylesheet" type="text/css" href="/static/boomer.css">
-    <link rel="stylesheet" type="text/css" href="/static/radio-slider.css">
-    <link rel="stylesheet" href="/static/number-picker-2.css">
-  </head>
-  <body>
-    <div class="container">
-      {{ generated_header }}
-      <div class="section">
-        <form action = "{{ url_for('game') }}" method = "post">
-          <div class="statistics-display">
-            <br>
-          </div>  
-          <div class="selections">
-            <fieldset class="radio-slider-buttons">
-              <label>Serves: </label>
-              <input type="radio" id="alt_serve" name="serve_mode" value=0 checked>
-                <label for="alt_serve">Alternate</label>
-              <input type="radio" id="all_serve" name="serve_mode"value=1>
-                <label for="all_serve">All</label>
-              <input type="radio" id="no_serve" name="serve_mode" value=2>
-                <label for="no_serve">None</label>
-            </fieldset>
-            <fieldset class="radio-slider-buttons">
-              <label>Scoring:</label>
-              <input type="radio" id="standard_scoring" name="scoring" value=0 checked>
-                <label for="standard_scoring">Standard</label>
-              <input type="radio" id="tiebreaker_scoring"name="scoring" value=1>
-                <label for="tiebreaker_scoring">Tie Breaker</label>
-            </fieldset>
-            <fieldset class="radio-slider-buttons">
-              <label>Running:</label>
-              <input type="radio" id="less_running" name="running" value=1>
-                <label for="less_running">Less</label>
-              <input type="radio" id="standard_running"name="running" value=0 checked>
-                <label for="standard_running">Standard</label>
-            </fieldset>
-            <div class="stepper">
-              <label for="point_delay_stepper">Delay:</label>
-              <button type="button">–</button>
-              <input type="number" id="point_delay_stepper" name="point_delay" value="0" min="0" max="10" step="1" readonly>
-              <button type="button">+</button>
-              <!-- <p>After Point</p> -->
-            </div>
-            <fieldset class="radio-slider-buttons">
-              <label>Grunts:</label>
-              <input type="radio" id="grunts_off" name="grunts" value=0>
-                <label for="grunts_off">Off</label>
-              <input type="radio" id="grunts_on"name="grunts" value=1 checked>
-                <label for="grunts_on">On</label>
-            </fieldset>
-          </div>
-          <div class="start-stop">
-            <button type="submit" >
-              <!-- <img src="/static/start.png" style="height:90px;"> -->
-              <img src="/static/start.png">
-            </button>
-          </div>
-        </form>
-      </div>
+{% extends "layouts/base.html" %}
+
+{% block stats %}
+  <div class="statistics-display">
+    <br>
+  </div>  
+{% endblock %} 
+
+{% block selections %}
+  <div class="selections">
+    <fieldset class="radio-slider-buttons">
+      <label>Serves: </label>
+      <input type="radio" id="alt_serve" name="serve_mode" value=0 checked>
+        <label for="alt_serve">Alternate</label>
+      <input type="radio" id="all_serve" name="serve_mode"value=1>
+        <label for="all_serve">All</label>
+      <input type="radio" id="no_serve" name="serve_mode" value=2>
+        <label for="no_serve">None</label>
+    </fieldset>
+    <fieldset class="radio-slider-buttons">
+      <label>Scoring:</label>
+      <input type="radio" id="standard_scoring" name="scoring" value=0 checked>
+        <label for="standard_scoring">Standard</label>
+      <input type="radio" id="tiebreaker_scoring"name="scoring" value=1>
+        <label for="tiebreaker_scoring">Tie Breaker</label>
+    </fieldset>
+    <fieldset class="radio-slider-buttons">
+      <label>Running:</label>
+      <input type="radio" id="less_running" name="running" value=1>
+        <label for="less_running">Less</label>
+      <input type="radio" id="standard_running"name="running" value=0 checked>
+        <label for="standard_running">Standard</label>
+    </fieldset>
+    <div class="stepper">
+      <label for="point_delay_stepper">Delay:</label>
+      <button type="button">–</button>
+      <input type="number" id="point_delay_stepper" name="point_delay" value="0" min="0" max="10" step="1" readonly>
+      <button type="button">+</button>
+      <!-- <p>After Point</p> -->
     </div>
-    {{ generated_footer }}
-    <script src="/static/number-picker-2.js"></script>
-  </body>
-</html>
+    <fieldset class="radio-slider-buttons">
+      <label>Grunts:</label>
+      <input type="radio" id="grunts_off" name="grunts" value=0>
+        <label for="grunts_off">Off</label>
+      <input type="radio" id="grunts_on"name="grunts" value=1 checked>
+        <label for="grunts_on">On</label>
+    </fieldset>
+  </div>
+{% endblock %}
+
+{% block control %}
+  <div class="start-stop">
+    <button type="submit">
+      <img src="/static/start.png">
+    </button>
+  </div>
+{% endblock %}

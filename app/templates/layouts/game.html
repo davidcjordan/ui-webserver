@@ -1,18 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Boomer-Control: game active</title>
-    <link rel="stylesheet" href="/static/boomer.css">
-    <link rel="stylesheet" href="/static/number-picker-2.css">
-    <link rel="stylesheet" href="/static/tables.css">
-</head>
-  <body>
-    <div class="container">
-      {{ generated_header }}
-      <div class="section">
-        <div class="statistics-display">
+{% extends "layouts/base.html" %}
+
+{% block stats %} 
+<div class="statistics-display">
           <div class="Table">
             <!-- <div class="Title">
               <p>Game Score</p>
@@ -71,81 +60,56 @@
             </div>
           </div>
           <p id="server">TBD's serve</p>
-        </div>
-        <div class="selections">
-          <div class="stepper">
-            <label for="level">Level:</label>
-            <button type="button">–</button>
-            <input type="number" id="level-stepper" name="level" value="3" min="2" max="7" step="0.5" readonly>
-            <button type="button">+</button>
-          </div>
-        </div>
-        <div class="start-stop">
-          <button type="button" id="pause-resume" class="pause-resume-button pause">
-          </button>
-          <button type="submit" onclick="window.location.href='/game_options';">
-            <img src="/static/stop.png" style="height:90px;"">
-          </button>
-          <button type="button" id="test">Test</button>
-        </div>
-      </div>
-    </div>
-    <div>
-      {{ generated_footer }}
-    </div>
-    <!--  if javascript was in header, then the javascripts didnt work.  Reconmendation is they should be here -->
-    <script src="/static/number-picker-2.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
-    <!-- <script src="/socket.io/socket.io.js"></script> -->
-    <script type="text/javascript" charset="utf-8">
-      var socket = io();
-      socket.on('score_update', function(data) {
-        Object.keys(data).forEach(function(key) {
-          // console.log('Key : ' + key + ', Value : ' + data[key])
-          var IdToUpdate = document.getElementById(key);
-          if (IdToUpdate) {
-            if (key !== 'server') {
-              IdToUpdate.innerHTML = data[key];
-            }
-            else {
-              if (data[key] == 'b') {
-                IdToUpdate.innerHTML = "Boomer's serve"
-              } else {
-                IdToUpdate.innerHTML = "Player's serve"
-              }
-            }
-          }
-          else {
-            console.log("No element with ID: " + key)
-          }
-        })
-      });
+</div>
+{% endblock %} 
 
-      document.getElementById("pause-resume").addEventListener("click", function (e) {
-        var target = e.target;
-        //the full classlist is: 
-        //      {0: "pause-resume-button", 1: "resume", length: 2, value: "pause-resume-button resume", ...
-        // console.log(document.getElementById("pause-resume").classList);
-        // the following gets pause/resume before changing the icon
-        var action = document.getElementById("pause-resume").classList.item(1);
-        socket.emit(action);
-        target.classList.toggle("pause");
-        target.classList.toggle("resume");
-      }, false);
+{% block selections %}
+<div class="selections">
+  <div class="stepper">
+    <label for="level">Level:</label>
+    <button type="button">–</button>
+    <input type="number" id="level-stepper" name="level" value="3" min="2" max="7" step="0.5" readonly>
+    <button type="button">+</button>
+  </div>
+</div>
+ {% endblock %}
 
-      document.getElementById("test").addEventListener("click", function (e) {
-        socket.emit("test");
-        console.log("emitted test")
-      }, false);
-
+{% block control %}
+<div class="start-stop">
+  <button type="button" id="pause-resume" class="pause-resume-button pause">
+  </button>
+  <button type="submit" onclick="window.location.href='{{ url_for('game_options') }}';">
+    <img src="/static/stop.png">
+  </button>
+  <!-- <button type="button" id="test">Test</button> -->
+</div>
+{% endblock %}
+      
+{% block page_specific_js %} 
+<script type="text/javascript" charset="utf-8"> var socket = io(); </script>
+<script src="/static/game_score_update.js"></script>
+<script src="/static/pause_resume.js"></script>
+<script type="text/javascript" charset="utf-8">
       var pollingVar = setInterval(pollingTimer, 1000);
-
       function pollingTimer() {
         socket.emit("test");
       }
-      // socket.on('connect', function() {
-      //   socket.emit('message', 'Connected!');
-      // });
-    </script>
-  </body>
-</html>
+</script>
+{% endblock %} 
+
+<!-- 
+  <script type="text/javascript" charset="utf-8">
+      document.getElementById("test").addEventListener("click", function (e) {
+      socket.emit("test");
+      console.log("emitted test")
+    }, false);
+
+    var pollingVar = setInterval(pollingTimer, 1000);
+    function pollingTimer() {
+      socket.emit("test");
+    }
+    // socket.on('connect', function() {
+    //   socket.emit('message', 'Connected!');
+    // });
+  </script>
+ -->
