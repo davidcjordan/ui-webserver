@@ -1,19 +1,21 @@
 {% extends "layouts/base.html" %}
 
+{% block stats %} 
+<div class="statistics-display">
+  <br>
+</div>
+{% endblock %}
+
 {% block selections %}
 <div class="selections">
+  {% for key,item in options.items() %}
   <div class="stepper">
-    <label for="level">Level:</label>
+    <label for="{{key}}">{{item['legend']}}:</label>
     <button>–</button>
-      <input type="number" id="level-stepper" name="level" value="3" min="2" max="7" step="0.5" readonly>
+      <input type="number" id="{{key}}-stepper" name="{{key}}" value={{item['dflt']}} min={{item['min']}} max={{item['max']}} step={{item['step']}} readonly>
     <button>+</button>
   </div>
-  <div class="stepper">
-    <label for="speed">Speed:</label>
-    <button>–</button>
-    <input type="number" id="speed-stepper" name="speed" value="100" min="80" max="120" step="2" readonly>
-    <button>+</button>
-  </div>
+  {% endfor %}
 </div>
 {% endblock %}
 

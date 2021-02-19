@@ -178,11 +178,22 @@ def drill():
    mode_string = "FIX-ME"
    if request.method=='POST':
       mode_string = "'" + request.form['drill_id'] + "'" + " Drill"
+   
+
+   stepper_options = { \
+      "level":{"legend":"Level", "dflt":LEVEL_DEFAULT/LEVEL_UI_FACTOR, "min":LEVEL_MIN/LEVEL_UI_FACTOR, \
+         "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
+      "speed":{"legend":"Speed", "dflt":SPEED_DEFAULT, "min":SPEED_MIN, "max":SPEED_MAX, "step":SPEED_STEP}, \
+      "delay":{"legend":"Delay", "dflt":DELAY_DEFAULT/DELAY_UI_FACTOR, "min":DELAY_MIN/DELAY_UI_FACTOR, \
+         "max":DELAY_MAX/DELAY_UI_FACTOR, "step":DELAY_UI_STEP/DELAY_UI_FACTOR}, \
+      "height":{"legend":"Height", "dflt":HEIGHT_DEFAULT, "min":HEIGHT_MIN, "max":HEIGHT_MAX, "step":HEIGHT_STEP} \
+   }
          
    previous_url = "/" + inspect.currentframe().f_code.co_name
    return render_template(DRILL_TEMPLATE, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
+      options = stepper_options, \
       footer_left = "Status: " + STATUS_ACTIVE, \
       footer_center = "Mode: " + mode_string)
 
