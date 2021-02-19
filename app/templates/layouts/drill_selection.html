@@ -1,10 +1,28 @@
 {% extends "layouts/base.html" %}
 
+{% block stats %}
+<div class="statistics-display">
+  <br>
+</div>
+{% endblock %}
+
 {% block selections %}
+<!-- 
               <div class="radio-text-buttons">
                 <p>Select Drill:</p>
-{{ generated_drills }}
+                {{ generated_drills }}
               </div>
+               -->
+<div class="selections">
+  <div id="placeHolder"> </div>
+    <ul id="container">
+      <li data-genre="pop, rock, british, classic rock"> The Beatles </li>
+      <li data-genre="rock, british, blues, classic rock"> The Rolling Stones </li>
+      <li data-genre="alternative, electronic, female vocalists"> Björk </li>
+      <li data-genre="rock, alternative, grunge"> Foo Fighters </li>
+      <li data-genre="rock, classic rock"> Bruce Springsteen </li>
+    </ul>
+</div>
 {% endblock %}
 
 {% block control %}
@@ -14,4 +32,21 @@
     </button>
   </div>
 {% endblock %}
+
+{% block page_specific_js %} 
+<script src="/static/js/jquery-1.7.1.min.js"></script>
+<!-- <script src="/static/js/filtrify.min.js"></script> -->
+<script src="/static/js/filtrify.js"></script>
+<script src="/static/js/highlight.pack.js"></script>
+<script src="/static/js/script.js"></script>
+
+<script type="text/javascript">
+  $(function() {
+    $.filtrify("container", "placeHolder");
+  });
+</script>    
+
+<link rel="stylesheet" href="/static/css/my_filtrify.css">
+{% endblock %} 
+
             

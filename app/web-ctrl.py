@@ -175,8 +175,10 @@ def drill():
    global back_url, previous_url
    back_url = previous_url
 
+   # print("request_form: {}".format(request.form))
+
    mode_string = "FIX-ME"
-   if request.method=='POST':
+   if request.method=='POST' and 'drill_id' in request.form:
       mode_string = "'" + request.form['drill_id'] + "'" + " Drill"
    
 
