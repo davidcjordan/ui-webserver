@@ -139,33 +139,18 @@ def drill_selection():
    back_url = '/'
    previous_url = "/" + inspect.currentframe().f_code.co_name
 
-# The following is to be replaced with fetching from a database of drills based on tags
-   drill_names = ["Side to Side", "Backhand", "The Dribble"]
-
-   button_def = \
-      Markup('<div>\n\
-         <input type="radio" id="{{drill_id}}" name="drill_id" value="{{value}}" {{checked}}>\n\
-         <label for="{{drill_id}}">{{drill_text}}</label>\n\
-         </div>')
-
-   drill_button_list = Markup("<fieldset>\n")
-   for id, drill_text in enumerate(drill_names):
-      this_drill_selection = button_def.replace("{{value}}", drill_text)
-      this_drill_selection = this_drill_selection.replace("{{drill_text}}", drill_text)
-      this_drill_selection = this_drill_selection.replace("{{drill_id}}", "drill_"+str(id+1))
-      if id == 0:
-         this_drill_selection = this_drill_selection.replace("{{checked}}", "checked")
-      else:
-         this_drill_selection = this_drill_selection.replace("{{checked}}", "")
-      drill_button_list += this_drill_selection
-   drill_button_list += Markup("</fieldset>\n")
+   # The following is to be replaced with fetching from a database of drills based on tags
+   drill_d = {}
+   drill_d["001"] = {"name": "speed", "type":"movement", "lvl": "medium", "stroke": "forehand" }
+   drill_d["002"] = {"name": "1-line 5 ball net", "type":"net", "lvl": "easy", "stroke": "backhand" }
+   drill_d["003"] = {"name": "Volley Kill footwork", "type":"volley, movement", "lvl": "hard", "stroke": "forehand" }
 
    return render_template(DRILL_SELECTION_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
       optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
-      generated_drills = drill_button_list, \
+      drills = drill_d, \
       optional_form_end = Markup('</form>'), \
       footer_left = "Status: " + STATUS_IDLE, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
@@ -181,7 +166,6 @@ def drill():
    if request.method=='POST' and 'drill_id' in request.form:
       mode_string = "'" + request.form['drill_id'] + "'" + " Drill"
    
-
    stepper_options = { \
       "level":{"legend":"Level", "dflt":LEVEL_DEFAULT/LEVEL_UI_FACTOR, "min":LEVEL_MIN/LEVEL_UI_FACTOR, \
          "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \

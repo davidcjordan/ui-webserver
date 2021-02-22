@@ -1,0 +1,5 @@
+{
+    "terminal.integrated.env.osx": {
+        "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}/src:/Users/tom/Documents/Projects/Boomer/control_ipc_utils"
+    }
+}
