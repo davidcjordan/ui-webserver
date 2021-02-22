@@ -1,7 +1,7 @@
 .vscode
 __pycache__
 archive
-*filtrify*
+filtrify*
 highlight.pack.js
 script.js
 jquery*

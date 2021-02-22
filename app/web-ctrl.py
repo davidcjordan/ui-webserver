@@ -8,8 +8,8 @@ import inspect
 import os  # for sending favicon 
 
 # the following requires: export PYTHONPATH='/Users/tom/Documents/Projects/Boomer/control_ipc_utils'
-import sys
-sys.path.append('/Users/tom/Documents/Projects/Boomer/control_ipc_utils')
+# import sys
+# sys.path.append('/Users/tom/Documents/Projects/Boomer/control_ipc_utils')
 from ctrl_messaging_routines import send_msg #, is_active
 from control_ipc_defines import *
 import json
