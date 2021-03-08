@@ -33,6 +33,7 @@ GAME_OPTIONS_TEMPLATE = '/layouts/game_options.html'
 GAME_TEMPLATE = '/layouts/game.html'
 DRILL_SELECTION_TEMPLATE = '/layouts/drill_selection.html'
 DRILL_TEMPLATE = '/layouts/drill.html'
+CALIBRATION_TEMPLATE = '/layouts/calib.html'
 # WORKOUT_SELECTION_TEMPLATE = '/layouts/workout_selection.html'
 SETTINGS_TEMPLATE = '/layouts/settings.html'
 
@@ -57,9 +58,14 @@ app.config['SECRET_KEY'] = 'secret!'
 # socketio = SocketIO(app, cors_allowed_origins="http://127.0.0.1")
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-@app.route('/test')
-def test_io_send():
-    return render_template('test.html')
+@app.route('/calib')
+def calib():
+    return render_template(CALIBRATION_TEMPLATE, \
+      home_button = my_home_button, \
+      installation_title = custom_installation_title, \
+      installation_icon = custom_installation_icon, \
+      footer_left = "Status: " + STATUS_IDLE, \
+      footer_center = "Mode: " + "Calibration")
  
 @app.route(MAIN_URL, methods=DEFAULT_METHODS)
 def index():
@@ -67,7 +73,6 @@ def index():
    back_url = previous_url = "/"
    
    return render_template(MAIN_TEMPLATE, \
-      # home_button = "", \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
       footer_left = "Status: Idle", \

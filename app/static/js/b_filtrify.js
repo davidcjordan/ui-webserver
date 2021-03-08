@@ -124,9 +124,12 @@
 		};
 
 		tags.sort();
+		// console.log(document.getElementById("pause-resume").classList);
+		// console.log(tags);
 
 		for ( t = 0; t < tags.length; t++ ) {
 			tag = tags[t];
+			console.log("data-count: " + this._fields[f][tag] + " tag: " + tag);
 			html += "<li data-count='" + this._fields[f][tag] + "' >" + tag + "</li>";
 		};
 
