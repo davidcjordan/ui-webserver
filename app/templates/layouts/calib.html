@@ -3,7 +3,7 @@
 {% block selections %}
 <div class="img-zoom-container">
   <div class="img-zoom-image">
-    <img id="myimage" src="static/court.png" alt="Tennis Court" height="403">
+    <img id="myimage" src="static/court.png" alt="Tennis Court" height="403" onload="init();">
   </div>
   <div id="myresult" class="img-zoom-result">
       <canvas id="zoom-canvas" width="400" height="400" ></canvas>
@@ -51,17 +51,6 @@
   width: 40px;
   height: 40px;
 }
-/*
-.canvas-wrap { 
-  display: inline-block;
-  border: 1px solid #d4d4d4;
-  width: 400px;
-  height: 400px;
-}
-.canvas-wrap { position:relative }
-.overlay     { position:absolute; top:20px; left:30px; }
-*/
-
 .img-zoom-result {
   display: inline-block;
   border: 1px solid #d4d4d4;
@@ -71,11 +60,9 @@
   /* cursor: crosshair; */
   /* cursor: url('static/cursor-close.png'), auto; */
 }
-
 </style>
-
-
 {% endblock %}
+
 
 {% block control %}
 
@@ -83,13 +70,46 @@
 
 {% block page_specific_js %} 
 <script>
+  var canvas;
+  var contxt;
+  var x_px_selector;
+  var y_px_selector;
+  let move_px = 4;
+
+  function init() {
+    canvas = document.getElementById("zoom-canvas");
+    contxt = canvas.getContext("2d");
+    x_px_selector = canvas.width/2
+    y_px_selector = canvas.height/2
+    draw();
+  }
+  function draw() {
+    contxt.clearRect(0, 0, canvas.width, canvas.height);
+    contxt.beginPath();
+    // x, y, radius, starting angle, ending angle
+    contxt.arc(x_px_selector, y_px_selector, 5, 0, 2 * Math.PI);
+    contxt.strokeStyle = "maroon";
+    contxt.stroke();
+  }
+  function move_down() {
+    if (y_px_selector < (canvas.height - move_px))
+      y_px_selector += move_px;
+    draw();
+  }
   function move_up() {
-    let canvasEle = document.getElementById("zoom-canvas");
-    var circle = canvasEle.getContext("2d");
-      circle.beginPath();
-      // x, y, radius, starting angle, ending angle
-      circle.arc(180, 100, 10, 0, 2 * Math.PI);
-      circle.stroke();
+    if (y_px_selector > move_px)
+      y_px_selector -= move_px;
+    draw();
+  }
+  function move_right() {
+    if (x_px_selector < (canvas.width - move_px))
+      x_px_selector += move_px;
+    draw();
+  }
+    function move_left() {
+    if (x_px_selector > move_px)
+      x_px_selector -= move_px;
+    draw();
   }
 </script>
   
