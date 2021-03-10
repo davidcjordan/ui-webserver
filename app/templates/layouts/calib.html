@@ -2,17 +2,47 @@
 
 {% block selections %}
 <div class="img-zoom-container">
-  <img id="myimage" src="static/court.png" height="400" alt="Tennis Court">
-  <div id="myresult" class="img-zoom-result"></div>
+  <div class="img-zoom-image">
+    <img id="myimage" src="static/court.png" alt="Tennis Court" height="403">
+  </div>
+  <div id="myresult" class="img-zoom-result">
+      <canvas id="zoom-canvas" width="400" height="400" ></canvas>
+  </div>
+  <div class="calibration_controls">
+    <input type="button" value="&#x21A5" onclick="move_up()">
+    <input type="button" value="&#x21A7" onclick="move_down()">
+    <br>
+    <input type="button" value="&#x21A4" onclick="move_left()">
+    <input type="button" value="&#x21A6" onclick="move_right()">
+  </div>
 </div>
 
 <style media="all">
+.calibration_controls {
+  display: inline-block;
+  border: 1px solid #d4d4d4;
+  vertical-align: top;
+}
+.calibration_controls input[type="button"] {
+  width: 50px;
+  font-size: 32px;
+  color: white;
+  background: #555555;
+  padding: 1px;
+  border: 2px solid #494949;
+  display: inline-block;
+}
 /*
   * {box-sizing: border-box;}
-  display: inline-block;
 */
 .img-zoom-container {
   position: relative;
+  vertical-align: top;
+}
+.img-zoom-image {
+  display: inline-block;
+  border: 1px solid #d4d4d4;
+  height: 403px;
 }
 .img-zoom-lens {
   position: absolute;
@@ -21,13 +51,27 @@
   width: 40px;
   height: 40px;
 }
-.img-zoom-result {
+/*
+.canvas-wrap { 
   display: inline-block;
   border: 1px solid #d4d4d4;
-  /*set the size of the result div:*/
   width: 400px;
   height: 400px;
 }
+.canvas-wrap { position:relative }
+.overlay     { position:absolute; top:20px; left:30px; }
+*/
+
+.img-zoom-result {
+  display: inline-block;
+  border: 1px solid #d4d4d4;
+  width: 400px;
+  height: 400px;
+  cursor: None;
+  /* cursor: crosshair; */
+  /* cursor: url('static/cursor-close.png'), auto; */
+}
+
 </style>
 
 
@@ -38,6 +82,17 @@
 {% endblock %}
 
 {% block page_specific_js %} 
+<script>
+  function move_up() {
+    let canvasEle = document.getElementById("zoom-canvas");
+    var circle = canvasEle.getContext("2d");
+      circle.beginPath();
+      // x, y, radius, starting angle, ending angle
+      circle.arc(180, 100, 10, 0, 2 * Math.PI);
+      circle.stroke();
+  }
+</script>
+  
 <script type="text/javascript">
 function imageZoom(imgID, resultID) {
   var img, lens, result, cx, cy;
