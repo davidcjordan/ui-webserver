@@ -3,10 +3,10 @@
 {% block selections %}
 <div class="img-zoom-container">
   <div class="img-zoom-image">
-    <img id="myimage" src="static/court.png" alt="Tennis Court" height="403" onload="init();">
+    <img id="myimage" src="static/court.png" alt="Tennis Court" height="400" onload="init();">
   </div>
   <div id="myresult" class="img-zoom-result">
-      <canvas id="zoom-canvas" width="400" height="400" ></canvas>
+      <canvas id="zoom-canvas" width="240" height="240" ></canvas>
   </div>
   <div class="calibration_controls">
     <input type="button" value="&#x21A5" onclick="move_up()">
@@ -42,21 +42,24 @@
 .img-zoom-image {
   display: inline-block;
   border: 1px solid #d4d4d4;
-  height: 403px;
+  height: 400px;
 }
 .img-zoom-lens {
   position: absolute;
-  border: 1px solid #d4d4d4;
+  /* border: 1px solid #d4d4d4; */
+  border: 2px solid #702727;
   /*set the size of the lens:*/
-  width: 40px;
-  height: 40px;
+  width: 16px;
+  height: 16px;
 }
 .img-zoom-result {
+  vertical-align: top;
   display: inline-block;
   border: 1px solid #d4d4d4;
-  width: 400px;
-  height: 400px;
+  width: 256px;
+  height: 256px;
   cursor: None;
+  image-rendering: pixelated;
   /* cursor: crosshair; */
   /* cursor: url('static/cursor-close.png'), auto; */
 }
@@ -126,12 +129,15 @@ function imageZoom(imgID, resultID) {
   /* Calculate the ratio between result DIV and lens: */
   cx = result.offsetWidth / lens.offsetWidth;
   cy = result.offsetHeight / lens.offsetHeight;
+  cx = cy = 16;
   /* Set background properties for the result DIV */
   result.style.backgroundImage = "url('" + img.src + "')";
   result.style.backgroundSize = (img.width * cx) + "px " + (img.height * cy) + "px";
   /* Execute a function when someone moves the cursor over the image, or the lens: */
-  lens.addEventListener("mousemove", moveLens);
-  img.addEventListener("mousemove", moveLens);
+  // lens.addEventListener("mousemove", moveLens);
+  // img.addEventListener("mousemove", moveLens);
+  lens.addEventListener("mousedown", moveLens);
+  img.addEventListener("mousedown", moveLens);
   /* And also for touch screens: */
   lens.addEventListener("touchmove", moveLens);
   img.addEventListener("touchmove", moveLens);
@@ -141,14 +147,18 @@ function imageZoom(imgID, resultID) {
     e.preventDefault();
     /* Get the cursor's x and y positions: */
     pos = getCursorPos(e);
+    let border = 2
     /* Calculate the position of the lens: */
     x = pos.x - (lens.offsetWidth / 2);
     y = pos.y - (lens.offsetHeight / 2);
     /* Prevent the lens from being positioned outside the image: */
-    if (x > img.width - lens.offsetWidth) {x = img.width - lens.offsetWidth;}
+    // if (x > img.width - lens.offsetWidth) {x = img.width - lens.offsetWidth;}
+    if (x > img.width - lens.offsetWidth + 2) {x = img.width - lens.offsetWidth + 2;}
     if (x < 0) {x = 0;}
-    if (y > img.height - lens.offsetHeight) {y = img.height - lens.offsetHeight;}
+    // if (y > img.height - lens.offsetHeight) {y = img.height - lens.offsetHeight;}
+    if (y > img.height - lens.offsetHeight + 2) {y = img.height - lens.offsetHeight + 2;}
     if (y < 0) {y = 0;}
+    console.log("Lens left: %d  top: %d   lens.offsetWidth: %d", x, y, lens.offsetWidth);
     /* Set the position of the lens: */
     lens.style.left = x + "px";
     lens.style.top = y + "px";
