@@ -6,7 +6,7 @@
     <img id="myimage" src="static/court.png" alt="Tennis Court" height="400" onload="init();">
   </div>
   <div id="myresult" class="img-zoom-result">
-      <canvas id="zoom-canvas" width="240" height="240" ></canvas>
+      <canvas id="zoom-canvas" width="256" height="256" ></canvas>
   </div>
   <div class="calibration_controls">
     <input type="button" value="&#x21A5" onclick="move_up()">
@@ -14,6 +14,7 @@
     <br>
     <input type="button" value="&#x21A4" onclick="move_left()">
     <input type="button" value="&#x21A6" onclick="move_right()">
+    <p id="coordinates" style="padding: 10px; border: 2px solid wheat;">X: ___ Y: ___</p>
   </div>
 </div>
 
@@ -77,11 +78,14 @@
   var contxt;
   var x_px_selector;
   var y_px_selector;
-  let move_px = 4;
+  let move_px = 8;
+  var background_top;
+  var background_left;
 
   function init() {
     canvas = document.getElementById("zoom-canvas");
     contxt = canvas.getContext("2d");
+    background_top = background_left = 0;
     x_px_selector = canvas.width/2
     y_px_selector = canvas.height/2
     draw();
@@ -90,9 +94,16 @@
     contxt.clearRect(0, 0, canvas.width, canvas.height);
     contxt.beginPath();
     // x, y, radius, starting angle, ending angle
-    contxt.arc(x_px_selector, y_px_selector, 5, 0, 2 * Math.PI);
+    contxt.arc((x_px_selector-2), (y_px_selector-2), 5, 0, 2 * Math.PI);
     contxt.strokeStyle = "maroon";
     contxt.stroke();
+
+    // the 1280x800 image is displayed at 640x400, so double the left/top to get the pixel on the real image
+    console.log("background left: %d  top: %d", background_left, background_top); 
+    x_px = (background_left*2) + (x_px_selector/move_px - 1);
+    y_px = (background_top *2) + (y_px_selector/move_px -1);
+    coordinates = document.getElementById('coordinates');
+    coordinates.innerText = `X: ${x_px} Y: ${y_px}`;
   }
   function move_down() {
     if (y_px_selector < (canvas.height - move_px))
@@ -124,18 +135,23 @@ function imageZoom(imgID, resultID) {
   /* Create lens: */
   lens = document.createElement("DIV");
   lens.setAttribute("class", "img-zoom-lens");
+  lens.id = "LENS"
   /* Insert lens: */
   img.parentElement.insertBefore(lens, img);
   /* Calculate the ratio between result DIV and lens: */
-  cx = result.offsetWidth / lens.offsetWidth;
-  cy = result.offsetHeight / lens.offsetHeight;
-  cx = cy = 16;
+  lens_style = getComputedStyle(lens);
+  let lens_borderTotal = (parseInt(lens_style.borderLeftWidth) || 0) * 2;
+  result_style = getComputedStyle(result);
+  let result_borderTotal = (parseInt(result_style.borderLeftWidth) || 0) *2;
+  cx = (result.offsetWidth - result_borderTotal) / (lens.offsetWidth - lens_borderTotal);
+  cy = (result.offsetHeight - result_borderTotal) / (lens.offsetHeight - lens_borderTotal);
+  // console.log("result.offsetWidth & Height: %d x %d   lens.offsetWidth & Height: %d x %d", result.offsetWidth, result.offsetHeight, lens.offsetWidth, lens.offsetHeight);
+  // console.log("lens_borderTotal: %d   result_borderTotal: %d  cx: %d  cy: %d", lens_borderTotal, result_borderTotal, cx, cy);
+
   /* Set background properties for the result DIV */
   result.style.backgroundImage = "url('" + img.src + "')";
   result.style.backgroundSize = (img.width * cx) + "px " + (img.height * cy) + "px";
   /* Execute a function when someone moves the cursor over the image, or the lens: */
-  // lens.addEventListener("mousemove", moveLens);
-  // img.addEventListener("mousemove", moveLens);
   lens.addEventListener("mousedown", moveLens);
   img.addEventListener("mousedown", moveLens);
   /* And also for touch screens: */
@@ -147,23 +163,59 @@ function imageZoom(imgID, resultID) {
     e.preventDefault();
     /* Get the cursor's x and y positions: */
     pos = getCursorPos(e);
-    let border = 2
-    /* Calculate the position of the lens: */
-    x = pos.x - (lens.offsetWidth / 2);
-    y = pos.y - (lens.offsetHeight / 2);
-    /* Prevent the lens from being positioned outside the image: */
+    /* Calculate the top & left of the lens - placing the cursor at the center of the lens
+       x -> horizontal left to right, e.g. Width.
+      img.width & height do NOT include the border
+      lens.offsetHeight & Width DO include the border
+    */
+    background_top = pos.y - (lens.offsetWidth/2);
+    background_left = pos.x - (lens.offsetHeight/2);
+    lens_top = background_top + lens_borderTotal/2;
+    lens_left = background_left + lens_borderTotal/2;
+
+    /* Prevent the background from being positioned outside the image */
+    if (background_top < 0) {
+      background_top = 0;
+      lens_top = -1;
+    }
+    background_top_limit = img.height - lens.offsetHeight + lens_borderTotal;
+    if (background_top > background_top_limit) {
+      background_top = background_top_limit;
+      lens_top = background_top + 1;
+    }
+    if (background_left < 0) {
+      background_left = 0;
+      lens_left = -1;
+    }
+    background_left_limit = img.width - lens.offsetWidth + lens_borderTotal;
+    if (background_left > background_left_limit) {
+      background_left = background_left_limit;
+      lens_left = background_left + 1;
+    }
+
+    /* position the lens based on the background; add in the border
+     */
+    console.log("cursor x: %d  y: %d    backg left: %d  top: %d    lens left: %d  top: %d", pos.x, pos.y, background_left, background_top, lens_left, lens_top);
+    /* Prevent the lens from being positioned outside the image:  (BUT: OK to have lens border outside the image
+       on the zero sides, allow the lens to overlap the image border - hence limit to -1
+       on the other side, have the lens be inside the img.height/widht - the lens size not including the border
+    */
     // if (x > img.width - lens.offsetWidth) {x = img.width - lens.offsetWidth;}
-    if (x > img.width - lens.offsetWidth + 2) {x = img.width - lens.offsetWidth + 2;}
-    if (x < 0) {x = 0;}
+    // if (x < 0) {x = 0;}
     // if (y > img.height - lens.offsetHeight) {y = img.height - lens.offsetHeight;}
-    if (y > img.height - lens.offsetHeight + 2) {y = img.height - lens.offsetHeight + 2;}
-    if (y < 0) {y = 0;}
-    console.log("Lens left: %d  top: %d   lens.offsetWidth: %d", x, y, lens.offsetWidth);
+    // if (y < 0) {y = 0;}
+    // console.log("img.width: %d  img.height: %d   img.offsetWidth: %d  img.offsetHeight: %d", img.width, img.height, img.offsetWidth, img.offsetHeight);
     /* Set the position of the lens: */
-    lens.style.left = x + "px";
-    lens.style.top = y + "px";
+    lens.style.left = lens_left + "px";
+    lens.style.top = lens_top + "px";
     /* Display what the lens "sees": */
-    result.style.backgroundPosition = "-" + (x * cx) + "px -" + (y * cy) + "px";
+    // result.style.backgroundPosition = "-" + (x * cx) + "px -" + (y * cy) + "px";
+    result.style.backgroundPosition = "-" + (background_left * cx) + "px -" + (background_top * cy) + "px";
+
+    // reset the pixel selectors to the middle
+    x_px_selector = canvas.width/2
+    y_px_selector = canvas.height/2
+    draw()
   }
   function getCursorPos(e) {
     var a, x = 0, y = 0;
