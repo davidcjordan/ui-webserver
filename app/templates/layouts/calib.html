@@ -3,7 +3,7 @@
 {% block selections %}
 <div class="img-zoom-container">
   <div class="img-zoom-image">
-    <img id="myimage" src="static/court.png" alt="Tennis Court" height="400" onload="init();">
+    <img id="myimage" src="static/court.png" alt="Tennis Court" height="400">
   </div>
   <div id="myresult" class="img-zoom-result">
       <canvas id="zoom-canvas" width="256" height="256" ></canvas>
@@ -82,21 +82,46 @@
   var background_top;
   var background_left;
 
-  function init() {
+  window.addEventListener('load', (event) => {
+    // console.log('The page has fully loaded');
+    imageZoom("myimage", "myresult");
     canvas = document.getElementById("zoom-canvas");
     contxt = canvas.getContext("2d");
     background_top = background_left = 0;
     x_px_selector = canvas.width/2
     y_px_selector = canvas.height/2
     draw();
-  }
+  });
+
   function draw() {
     contxt.clearRect(0, 0, canvas.width, canvas.height);
+    // contxt.beginPath();
+    // // x, y, radius, starting angle, ending angle
+    // contxt.arc((x_px_selector-3), (y_px_selector-3), 6, 0, 2 * Math.PI);
+    // contxt.lineWidth = 3;
+    // contxt.strokeStyle = "Chartreuse";
+    // contxt.setLineDash([2]);
+    // contxt.stroke();
+    let len_half_line = 8;
     contxt.beginPath();
-    // x, y, radius, starting angle, ending angle
-    contxt.arc((x_px_selector-2), (y_px_selector-2), 5, 0, 2 * Math.PI);
-    contxt.strokeStyle = "maroon";
-    contxt.stroke();
+  // contxt.setLineDash([2]);
+    contxt.strokeStyle = "Chartreuse";
+    contxt.lineWidth = 1;
+    contxt.moveTo(x_px_selector-len_half_line, y_px_selector);
+    contxt.lineTo(x_px_selector+len_half_line, y_px_selector);
+    contxt.moveTo(x_px_selector, y_px_selector-len_half_line);
+    contxt.lineTo(x_px_selector, y_px_selector+len_half_line);
+    contxt.stroke();   
+
+    contxt.beginPath();
+    contxt.strokeStyle = "DarkGreen";
+    contxt.lineWidth = 1;
+    contxt.moveTo(x_px_selector-len_half_line, y_px_selector-len_half_line);
+    contxt.lineTo(x_px_selector+len_half_line, y_px_selector+len_half_line);
+    contxt.moveTo(x_px_selector-len_half_line, y_px_selector+len_half_line);
+    contxt.lineTo(x_px_selector+len_half_line, y_px_selector-len_half_line);
+    contxt.stroke();   
+
 
     // the 1280x800 image is displayed at 640x400, so double the left/top to get the pixel on the real image
     console.log("background left: %d  top: %d", background_left, background_top); 
@@ -232,9 +257,4 @@ function imageZoom(imgID, resultID) {
   }
 }
 </script>
-<script>
-  // Initiate zoom effect:
-  imageZoom("myimage", "myresult");
-</script>  
-
 {% endblock %} 
