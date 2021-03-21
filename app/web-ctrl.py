@@ -15,27 +15,32 @@ from control_ipc_defines import *
 import json
 from random import randint
 
-
 IP_PORT = 1111 # picked what is hopefully an unused port  (can't use 44)
 DEFAULT_METHODS = ['POST', 'GET']
 
-# Flask looks for following in the 'templates' directory
 MAIN_URL = '/'
 GAME_OPTIONS_URL = '/game_options'
 GAME_URL = '/game'
-DRILL_SELECTION_URL = '/drill_selection'
+DRILL_SELECT_TYPE_URL = '/drill_select_type'
+DRILL_SELECT_PLAYER_URL = '/drill_select_player'
+DRILL_SELECT_INSTRUCTOR_URL = '/drill_select_instructor'
+DRILL_SELECT_TEST_URL = '/drill_select_test'
 DRILL_URL = '/drill'
 # WORKOUT_SELECTION_URL = '/workout_selection'
-SETTINGS_URL = '/settings'
+# SETTINGS_URL = '/settings'
 
+# Flask looks for following in the 'templates' directory
 MAIN_TEMPLATE = 'index.html'
-GAME_OPTIONS_TEMPLATE = '/layouts/game_options.html'
-GAME_TEMPLATE = '/layouts/game.html'
-DRILL_SELECTION_TEMPLATE = '/layouts/drill_selection.html'
-DRILL_TEMPLATE = '/layouts/drill.html'
+GAME_OPTIONS_TEMPLATE = '/layouts' + GAME_OPTIONS_URL + '.html'
+GAME_TEMPLATE = '/layouts' + GAME_URL + '.html'
+DRILL_SELECT_TYPE_TEMPLATE = '/layouts' + DRILL_SELECT_TYPE_URL + '.html'
+DRILL_SELECT_PLAYER_TEMPLATE = '/layouts' + DRILL_SELECT_PLAYER_URL + '.html'
+DRILL_SELECT_INSTRUCTOR_TEMPLATE = '/layouts' + DRILL_SELECT_INSTRUCTOR_URL + '.html'
+DRILL_SELECT_TEST_TEMPLATE = '/layouts' + DRILL_SELECT_TEST_URL + '.html'
+DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
 CALIBRATION_TEMPLATE = '/layouts/calib.html'
-# WORKOUT_SELECTION_TEMPLATE = '/layouts/workout_selection.html'
-SETTINGS_TEMPLATE = '/layouts/settings.html'
+# WORKOUT_SELECTION_TEMPLATE = '/layouts' + WORKOUT_SELECTION_URL + '.html'
+# SETTINGS_TEMPLATE = '/layouts' + SETTINGS_URL + '.html'
 
 STATUS_IDLE = "Idle"
 STATUS_ACTIVE = "Active"
@@ -138,8 +143,19 @@ def game():
       footer_center = "Mode: " + MODE_GAME)
 
 
-@app.route(DRILL_SELECTION_URL, methods=DEFAULT_METHODS)
-def drill_selection():
+@app.route(DRILL_SELECT_TYPE_URL, methods=DEFAULT_METHODS)
+def drill_select_type():
+
+   return render_template(DRILL_SELECT_TYPE_TEMPLATE, \
+      home_button = my_home_button, \
+      installation_title = custom_installation_title, \
+      installation_icon = custom_installation_icon, \
+      footer_left = "Status: " + STATUS_IDLE, \
+      footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
+
+
+@app.route(DRILL_SELECT_PLAYER_URL, methods=DEFAULT_METHODS)
+def drill_select_player():
    global back_url, previous_url
    back_url = '/'
    previous_url = "/" + inspect.currentframe().f_code.co_name
@@ -150,7 +166,7 @@ def drill_selection():
    drill_d["002"] = {"name": "1-line 5 ball net", "type":"net", "lvl": "easy", "stroke": "backhand" }
    drill_d["003"] = {"name": "Volley Kill footwork", "type":"volley, movement", "lvl": "hard", "stroke": "forehand" }
 
-   return render_template(DRILL_SELECTION_TEMPLATE, \
+   return render_template(DRILL_SELECT_PLAYER_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
@@ -159,6 +175,49 @@ def drill_selection():
       optional_form_end = Markup('</form>'), \
       footer_left = "Status: " + STATUS_IDLE, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
+
+
+@app.route(DRILL_SELECT_INSTRUCTOR_URL, methods=DEFAULT_METHODS)
+def drill_select_instructor():
+   global back_url, previous_url
+   back_url = '/'
+   previous_url = "/" + inspect.currentframe().f_code.co_name
+
+   # The following is to be replaced with fetching from a database of drills based on tags
+   drill_d = {}
+   drill_d["001"] = {"name": "speed", "type":"movement", "lvl": "medium", "stroke": "forehand" }
+   drill_d["002"] = {"name": "1-line 5 ball net", "type":"net", "lvl": "easy", "stroke": "backhand" }
+   drill_d["003"] = {"name": "Volley Kill footwork", "type":"volley, movement", "lvl": "hard", "stroke": "forehand" }
+
+   return render_template(DRILL_SELECT_INSTRUCTOR_TEMPLATE, \
+      home_button = my_home_button, \
+      installation_title = custom_installation_title, \
+      installation_icon = custom_installation_icon, \
+      optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
+      drills = drill_d, \
+      optional_form_end = Markup('</form>'), \
+      footer_left = "Status: " + STATUS_IDLE, \
+      footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
+
+
+@app.route(DRILL_SELECT_TEST_URL, methods=DEFAULT_METHODS)
+def drill_select_test():
+   global back_url, previous_url
+   back_url = '/'
+   previous_url = "/" + inspect.currentframe().f_code.co_name
+
+   from drill_titles_test import drill_list
+
+   return render_template(DRILL_SELECT_TEST_TEMPLATE, \
+      home_button = my_home_button, \
+      installation_title = custom_installation_title, \
+      installation_icon = custom_installation_icon, \
+      optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
+      drills = drill_list, \
+      optional_form_end = Markup('</form>'), \
+      footer_left = "Status: " + STATUS_IDLE, \
+      footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
+
 
 @app.route(DRILL_URL, methods=DEFAULT_METHODS)
 def drill():
