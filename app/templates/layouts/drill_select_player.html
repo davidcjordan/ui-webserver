@@ -1,16 +1,14 @@
 {% extends "layouts/base.html" %}
 
 {% block selections %}
-<!-- drills = { "001": {"name": "speed", "type":"movement", "lvl": "medium", "stroke": "forehand" } -->
-
 <div class="selections-drill">
   <div id="placeHolder"> </div>
   <fieldset id="container" class="radio-text-buttons">
-    {% for key,item in drills.items() %}
-    <input type="radio" id="{{key}}" name="drill_id" value="{{key}}" 
-      data-Type="{{item['type']}}" data-Difficulty="{{item['lvl']}}" data-Stroke="{{item['stroke']}}">
-    <label for="{{key}}" data-Type="{{item['type']}}" data-Difficulty="{{item['lvl']}}" 
-      data-Stroke="{{item['stroke']}}">{{item['name']}}</label>
+    {% for drill in drills %}
+    <input type="radio" id="{{drill['id']}}" name="drill_id" value="{{drill['id']}}" 
+      data-Type="{{drill['type']}}" data-Stroke="{{drill['stroke']}}" data-Difficulty="{{drill['difficulty']}}">
+    <label for="{{drill['id']}}" data-Type="{{drill['type']}}" data-Stroke="{{drill['stroke']}}"
+      data-Difficulty="{{drill['difficulty']}}">{{drill['name']}}</label>
     {% endfor %}
   </fieldset>
 </div>

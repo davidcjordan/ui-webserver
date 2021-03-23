@@ -160,18 +160,14 @@ def drill_select_player():
    back_url = '/'
    previous_url = "/" + inspect.currentframe().f_code.co_name
 
-   # The following is to be replaced with fetching from a database of drills based on tags
-   drill_d = {}
-   drill_d["001"] = {"name": "speed", "type":"movement", "lvl": "medium", "stroke": "forehand" }
-   drill_d["002"] = {"name": "1-line 5 ball net", "type":"net", "lvl": "easy", "stroke": "backhand" }
-   drill_d["003"] = {"name": "Volley Kill footwork", "type":"volley, movement", "lvl": "hard", "stroke": "forehand" }
+   from drill_titles_player import drill_list
 
    return render_template(DRILL_SELECT_PLAYER_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
       optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
-      drills = drill_d, \
+      drills = drill_list, \
       optional_form_end = Markup('</form>'), \
       footer_left = "Status: " + STATUS_IDLE, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
