@@ -2,16 +2,25 @@
 
 #from flask import ? session, abort
 from flask import Flask, render_template, Response, request, redirect, url_for, Markup, send_from_directory
-from flask_socketio import SocketIO, emit
+try:
+   from flask_socketio import SocketIO, emit
+except:
+   print("Missing package 'flask_socketio', please run: python3 -m pip install flask-socketio")
+   exit()
 
 import inspect
 import os  # for sending favicon 
 
 # the following requires: export PYTHONPATH='/Users/tom/Documents/Projects/Boomer/control_ipc_utils'
-# import sys
-# sys.path.append('/Users/tom/Documents/Projects/Boomer/control_ipc_utils')
-from ctrl_messaging_routines import send_msg #, is_active
-from control_ipc_defines import *
+import sys
+sys.path.append('/home/pi/repos/control_ipc_utils')
+try:
+   from ctrl_messaging_routines import send_msg #, is_active
+   from control_ipc_defines import *
+except:
+   print("Missing 'control_ipc' modules, please run: git clone https://github.com/manningt/control_ipc_utils")
+   exit()
+
 import json
 from random import randint
 

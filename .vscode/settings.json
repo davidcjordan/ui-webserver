@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "/Users/tom/Envs/protobufs/bin/python",
+    "python.pythonPath": "/usr/bin/python3.7",
     "terminal.integrated.env.osx": {
         "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}:/Users/tom/Documents/Projects/Boomer/control_ipc_utils"
     }

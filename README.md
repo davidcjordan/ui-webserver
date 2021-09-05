@@ -13,3 +13,9 @@ A mouse and keyboard will not be available - the only input will be the touchscr
 * browser features like hover (tool tips) and focus are not available
 
 # Installation Instructions
+
+For development using VS Code, install the Microsoft Python Extension in order to run under VScode control.
+
+git clone https://github.com/manningt/ui-webserver  (this will be moved to Dave's repo)
+
+Currently another repository has to be cloned: https://github.com/manningt/control_ipc_utils should be cloned to /home/pi/repos.  web-ctrl.py uses python scripts in this repository to send messages to the base in order to set/get information.
