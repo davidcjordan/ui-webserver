@@ -63,8 +63,11 @@ app.config['SECRET_KEY'] = 'secret!'
 # socketio = SocketIO(app, cors_allowed_origins="http://127.0.0.1")
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-@app.route('/calib')
+@app.route('/calib', methods=DEFAULT_METHODS)
 def calib():
+   # if request.method=='POST':
+   #    if 'serve_mode' in request.form:
+
     return render_template(CALIBRATION_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = custom_installation_title, \

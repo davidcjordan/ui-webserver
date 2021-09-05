@@ -14,7 +14,18 @@
     <br>
     <input type="button" value="&#x21A4" onclick="move_left()">
     <input type="button" value="&#x21A6" onclick="move_right()">
-    <p id="coordinates" style="padding: 10px; border: 2px solid wheat;">X: ___ Y: ___</p>
+    <br>
+    <input type="button" value="Set Intersection" onclick="set_point()">
+    <input type="button" value="Fini" onclick="send_points()">
+    <p id="current_x_y">X: ___ Y: ___</p>
+    <p></p>
+    <p id="fbl_x_y">FBL X: ___ Y: ___</p>
+    <p id="fbr_x_y">FBR X: ___ Y: ___</p>
+    <p id="nsl_x_y">NSL X: ___ Y: ___</p>
+    <p id="nsc_x_y">NSC X: ___ Y: ___</p>
+    <p id="nsr_x_y">NSR X: ___ Y: ___</p>
+    <p id="nbl_x_y">NBL X: ___ Y: ___</p>
+    <p id="nbr_x_y">NBR X: ___ Y: ___</p>
   </div>
 </div>
 
@@ -24,8 +35,15 @@
   border: 1px solid #d4d4d4;
   vertical-align: top;
 }
+.calibration_controls p {
+  font-size: 18px;
+  color: white;
+  background: #555555;
+  padding: 1px;
+  border: 2px solid #494949;
+ }
 .calibration_controls input[type="button"] {
-  width: 50px;
+  width: 60px;
   font-size: 32px;
   color: white;
   background: #555555;
@@ -122,13 +140,12 @@
     contxt.lineTo(x_px_selector+len_half_line, y_px_selector-len_half_line);
     contxt.stroke();   
 
-
     // the 1280x800 image is displayed at 640x400, so double the left/top to get the pixel on the real image
     console.log("background left: %d  top: %d", background_left, background_top); 
     x_px = (background_left*2) + (x_px_selector/move_px - 1);
     y_px = (background_top *2) + (y_px_selector/move_px -1);
-    coordinates = document.getElementById('coordinates');
-    coordinates.innerText = `X: ${x_px} Y: ${y_px}`;
+    current_x_y = document.getElementById('current_x_y');
+    current_x_y.innerText = `Current X: ${x_px} Y: ${y_px}`;
   }
   function move_down() {
     if (y_px_selector < (canvas.height - move_px))
@@ -145,10 +162,64 @@
       x_px_selector += move_px;
     draw();
   }
-    function move_left() {
+  function move_left() {
     if (x_px_selector > move_px)
       x_px_selector -= move_px;
     draw();
+  }
+  function set_point() {
+    var fb_y_max = 100
+    var bl_x_max = 500
+    var ns_y_min = 220
+    var ns_y_max = 425
+    var nsl_x_max = 440
+    var nsc_x_max = 730
+
+    if (y_px < fb_y_max) {
+      if (x_px < bl_x_max) {
+        fbl_x_y = document.getElementById('fbl_x_y');
+        fbl_x_y.innerText = `Far-BaseLine-Left: X: ${x_px} Y: ${y_px}`;
+      } else {
+        fbr_x_y = document.getElementById('fbr_x_y');
+        fbr_x_y.innerText = `Far-BaseLine-Right: X: ${x_px} Y: ${y_px}`;
+      }
+    } else if (y_px > ns_y_min && y_px < ns_y_max) {
+      if (x_px < nsl_x_max) {
+        nsl_x_y = document.getElementById('nsl_x_y');
+        nsl_x_y.innerText = `Near-ServiceLine-Left: X: ${x_px} Y: ${y_px}`;
+      } else if (x_px > nsl_x_max && x_px < nsc_x_max) {
+        nsc_x_y = document.getElementById('nsc_x_y');
+        nsc_x_y.innerText = `Near-ServiceLine-Center: X: ${x_px} Y: ${y_px}`;
+      } else {
+        nsr_x_y = document.getElementById('nsr_x_y');
+        nsr_x_y.innerText = `Near-ServiceLine-Right: X: ${x_px} Y: ${y_px}`;
+      }
+    } else if (y_px > ns_y_max) {
+      if (x_px < bl_x_max) {
+        nbl_x_y = document.getElementById('nbl_x_y');
+        nbl_x_y.innerText = `Near-BaseLine-Left: X: ${x_px} Y: ${y_px}`;
+      } else {
+        nbr_x_y = document.getElementById('nbr_x_y');
+        nbr_x_y.innerText = `Near-BaseLine-Right: X: ${x_px} Y: ${y_px}`;
+      }
+    } else {
+      console.log("y_px: %d is out of bounds", y_px)
+    }
+  }
+
+  window.post = function(url, data) {
+  return fetch(url, {method: "POST", body: JSON.stringify(data)});
+  }
+
+  function send_points() {
+    console.log("POST 14 points here")
+    post("/calib", {element: "osmium"});
+    // var xhr = new XMLHttpRequest();
+    // xhr.open("POST", yourUrl, true);
+    // xhr.setRequestHeader('Content-Type', 'application/json');
+    // xhr.send(JSON.stringify({
+    //     value: value
+    // }));
   }
 </script>
   
@@ -247,7 +318,7 @@ function imageZoom(imgID, resultID) {
     e = e || window.event;
     /* Get the x and y positions of the image: */
     a = img.getBoundingClientRect();
-    /* Calculate the cursor's x and y coordinates, relative to the image: */
+    /* Calculate the cursor's x and y current_x_y, relative to the image: */
     x = e.pageX - a.left;
     y = e.pageY - a.top;
     /* Consider any page scrolling: */
