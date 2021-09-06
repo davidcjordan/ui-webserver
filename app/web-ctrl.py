@@ -15,14 +15,18 @@ import os  # for sending favicon
 import sys
 sys.path.append('/home/pi/repos/control_ipc_utils')
 try:
-   from ctrl_messaging_routines import send_msg #, is_active
+   from ctrl_messaging_routines import send_msg, is_active
    from control_ipc_defines import *
 except:
    print("Missing 'control_ipc' modules, please run: git clone https://github.com/manningt/control_ipc_utils")
    exit()
 
+from threading import Thread
+import time
 import json
 from random import randint
+
+base_state = None
 
 IP_PORT = 1111 # picked what is hopefully an unused port  (can't use 44)
 DEFAULT_METHODS = ['POST', 'GET']
@@ -51,6 +55,10 @@ CALIBRATION_TEMPLATE = '/layouts/calib.html'
 # WORKOUT_SELECTION_TEMPLATE = '/layouts' + WORKOUT_SELECTION_URL + '.html'
 # SETTINGS_TEMPLATE = '/layouts' + SETTINGS_URL + '.html'
 
+# base process status strings:
+STATUS_NOT_RUNNING = "Down"
+STATUS_RUNNING = "Running"
+STATUS_NOT_RESPONDING = "Faulted"
 STATUS_IDLE = "Idle"
 STATUS_ACTIVE = "Active"
 MODE_NONE = " --"
@@ -192,17 +200,23 @@ def drill_select_instructor():
    previous_url = "/" + inspect.currentframe().f_code.co_name
 
    # The following is to be replaced with fetching from a database of drills based on tags
-   drill_d = {}
-   drill_d["001"] = {"name": "speed", "type":"movement", "lvl": "medium", "stroke": "forehand" }
-   drill_d["002"] = {"name": "1-line 5 ball net", "type":"net", "lvl": "easy", "stroke": "backhand" }
-   drill_d["003"] = {"name": "Volley Kill footwork", "type":"volley, movement", "lvl": "hard", "stroke": "forehand" }
+   # drill_d = {}
+   # drill_d["001"] = {"name": "speed", "type":"movement", "lvl": "medium", "stroke": "forehand" }
+   # drill_d["002"] = {"name": "1-line 5 ball net", "type":"net", "lvl": "easy", "stroke": "backhand" }
+   # drill_d["003"] = {"name": "Volley Kill footwork", "type":"volley, movement", "lvl": "hard", "stroke": "forehand" }
 
-   return render_template(DRILL_SELECT_INSTRUCTOR_TEMPLATE, \
+   drill_list = [\
+      {'id': '001', 'name': 'speed'},\
+      {'id': '002', 'name': '1-line 5 ball net'},\
+      {'id': '003', 'name': 'Volley Kill footwork'},\
+   ]
+   # TODO change the following to: DRILL_SELECT_INSTRUCTOR_TEMPLATE
+   return render_template(DRILL_SELECT_TEST_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
       optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
-      drills = drill_d, \
+      drills = drill_list, \
       optional_form_end = Markup('</form>'), \
       footer_left = "Status: " + STATUS_IDLE, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
@@ -237,6 +251,14 @@ def drill():
    mode_string = "FIX-ME"
    if request.method=='POST' and 'drill_id' in request.form:
       mode_string = "'" + request.form['drill_id'] + "'" + " Drill"
+      mode = {MODE_PARAM: DRILL_MODE_E, ID_PARAM: request.form['drill_id']}
+      rc, code = send_msg(PUT_METHOD, MODE_RSRC, mode)
+      if not rc:
+         app.logger.error("PUT Mode failed, code: {}".format(code))
+         rc, code = send_msg(PUT_METHOD, STRT_RSRC)
+      if not rc:
+         app.logger.error("PUT START failed, code: {}".format(code))
+
    
    stepper_options = { \
       "level":{"legend":"Level", "dflt":LEVEL_DEFAULT/LEVEL_UI_FACTOR, "min":LEVEL_MIN/LEVEL_UI_FACTOR, \
@@ -288,28 +310,62 @@ def test():
         "bp": 1, "pg": 3, "bg": 2, "ps": 5, "bs": 4, "pt": 6, "bt": 7, "server": "b"})
 
 
+def check_base(process_name):
+   global base_state
+   while True:
+      base_pid = os.popen(f"pgrep {process_name}").read()
+      #base_pid is empty if base is not running
+      if base_pid:
+         base_state = STATUS_RUNNING
+         # verify responding to FIFO
+         base_state_tmp = is_active()
+         if base_state_tmp:
+            base_state = STATUS_ACTIVE
+         elif (base_state_tmp == False):
+            base_state = STATUS_IDLE
+         else:
+            base_state = STATUS_NOT_RESPONDING
+      else:
+         base_state = STATUS_NOT_RUNNING
+      time.sleep(1)
+
+def print_base_status(iterations = 20):
+   global base_state
+   while iterations > 0:
+      print(f"{base_state}")
+      time.sleep(1)
+      iterations -=1
+
 if __name__ == '__main__':
-    global customized_header, original_footer
-    
-    # TODO: customize header from a file
-    custom_installation_title = "Red Oak Sports Club  --  Boomer 1"
-    custom_installation_icon = "/static/red-oaks-icon.png"
-    my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
+   global customized_header, original_footer
+
+   check_base_thread = Thread(target = check_base, args =("bbase", ))
+   check_base_thread.start()
+   do_status_printout = False
+   if do_status_printout:
+      print_base_thread = Thread(target = print_base_status, args =(20, ))
+      print_base_thread.start() 
+
+   # TODO: customize header from a file
+   custom_installation_title = "Red Oak Sports Club  --  Boomer 1"
+   custom_installation_icon = "/static/red-oaks-icon.png"
+   my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
             <img src="/static/home.png" style="height:64px;"> \
           </button>')
 
-    with open('./app/templates/includes/header.html', 'r', encoding="utf-8") as file:
+   with open('./app/templates/includes/header.html', 'r', encoding="utf-8") as file:
         customized_header = Markup(file.read())
-    customized_header = customized_header.replace("{{ installation_title }}", custom_installation_title)
-    customized_header = customized_header.replace("{{ installation_icon }}", custom_installation_icon)
-    customized_header_w_home = customized_header.replace("{{ home_button }}", my_home_button)
-    customized_header_wo_home = customized_header.replace("{{ home_button }}", "")
+   customized_header = customized_header.replace("{{ installation_title }}", custom_installation_title)
+   customized_header = customized_header.replace("{{ installation_icon }}", custom_installation_icon)
+   customized_header_w_home = customized_header.replace("{{ home_button }}", my_home_button)
+   customized_header_wo_home = customized_header.replace("{{ home_button }}", "")
     
+   my_copyright = "© tennisrobot.com"
+   with open('./app/templates/includes/footer.html', 'r', encoding="utf-8") as file:
+      original_footer = Markup(file.read())
+   original_footer = original_footer.replace("{{ copyright }}", my_copyright)
 
-    my_copyright = "© tennisrobot.com"
-    with open('./app/templates/includes/footer.html', 'r', encoding="utf-8") as file:
-        original_footer = Markup(file.read())
-    original_footer = original_footer.replace("{{ copyright }}", my_copyright)
+   # app.run(host="0.0.0.0", port=IP_PORT, debug = True)
+   #  socketio.run(app, host="0.0.0.0", port=IP_PORT, debug = True)
 
-    # app.run(host="0.0.0.0", port=IP_PORT, debug = True)
-    socketio.run(app, host="0.0.0.0", port=IP_PORT, debug = True)
+   check_base_thread.join()
