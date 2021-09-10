@@ -308,11 +308,11 @@ def handle_get_updates(data):
    # print('get_updates data: ', data)
    json_data = json.loads(data)
    # print(f"json_data: {json_data}")
-   emit('base_state_update', {"base_state": base_state})
-   # could combine the 2 emits, but it's more parsing work...
    if (("page" in json_data) and (json_data["page"] == "game")):
-      emit('score_update', {"pp": randint(0,3), \
+      emit('state_update', {"base_state": base_state, "pp": randint(0,3), \
          "bp": 1, "pg": 3, "bg": 2, "ps": 5, "bs": 4, "pt": 6, "bt": 7, "server": "b"})
+   else:
+      emit('state_update', {"base_state": base_state})
 
 
 def check_base(process_name):
