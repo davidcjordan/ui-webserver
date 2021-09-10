@@ -27,6 +27,7 @@ import json
 from random import randint
 
 base_state = None
+client_state = False
 
 IP_PORT = 1111 # picked what is hopefully an unused port  (can't use 44)
 DEFAULT_METHODS = ['POST', 'GET']
@@ -289,34 +290,59 @@ def handle_message(data):
     print('received message: ' + data)
 
 @socketio.on('change_params')     # Decorator to catch an event named change_params
-def change_params(data):          # change_params() is the event callback function.
+def handle_change_params(data):          # change_params() is the event callback function.
     print('change_params data: ', data)      # data is a json string: {"speed":102}
     item_to_change = json.loads(data)
     print('change opts: {}'.format(item_to_change))
     # send_msg(PUT_METHOD, OPTS_RSRC, item_to_change)
 
 @socketio.on('pause')
-def pause():
+def handle_pause():
     print('received pause.')
 
 @socketio.on('resume')
-def resume():
+def handle_resume():
     print('received resume.')
 
-@socketio.on('test')
-def test():
-    print("received test - sending score_update")
-    emit('score_update', {"pp": randint(0,3), \
-        "bp": 1, "pg": 3, "bg": 2, "ps": 5, "bs": 4, "pt": 6, "bt": 7, "server": "b"})
+@socketio.on('get_game_score')
+def handle_get_game_score():
+   # print("received get_game_score -> sending score_update")
+   emit('base_state_update', {"base_state": base_state})
+   emit('score_update', {"pp": randint(0,3), \
+      "bp": 1, "pg": 3, "bg": 2, "ps": 5, "bs": 4, "pt": 6, "bt": 7, "server": "b"})
 
+@socketio.on('get_base_state')
+def handle_get_base_state():
+   # print("received get_base_state -> sending base_state_update")
+   emit('base_state_update', {"base_state": base_state})
+
+@socketio.on('get_updates')
+def handle_get_updates(data):
+   # print('get_updates data: ', data)
+   json_data = json.loads(data)
+   # print(f"json_data: {json_data}")
+   emit('base_state_update', {"base_state": base_state})
+   if (json_data["mode"] == "game"):
+      print("Sending score update")
+      emit('score_update', {"pp": randint(0,3), \
+         "bp": 1, "pg": 3, "bg": 2, "ps": 5, "bs": 4, "pt": 6, "bt": 7, "server": "b"})
+
+
+## the following was replaced by polling for the base state
+# @socketio.on('client_connected')
+# def handle_client_connect_event(json):
+#    # print('received json: {0}'.format(str(json)))
+#    global client_state
+#    client_state = True
+#    # globals()['client_state'] = True
+#    emit('base_state_update', {"base_state": base_state})
 
 def check_base(process_name):
-   global base_state
+   global base_state, client_state, socketio
    while True:
       base_pid = os.popen(f"pgrep {process_name}").read()
       #base_pid is empty if base is not running
       if base_pid:
-         base_state = STATUS_RUNNING
          # verify responding to FIFO
          base_state_tmp = is_active()
          if base_state_tmp:
@@ -327,6 +353,10 @@ def check_base(process_name):
             base_state = STATUS_NOT_RESPONDING
       else:
          base_state = STATUS_NOT_RUNNING
+      # the following didn't work: the emit didn't get to the client
+      # if client_state:
+      #    print(f"emitting: {{'base_state_update', {{\"base_state\": \"{base_state}\"}}}}")
+      #    socketio.emit('base_state_update', {"base_state": base_state})
       time.sleep(1)
 
 def print_base_status(iterations = 20):
@@ -340,10 +370,12 @@ if __name__ == '__main__':
    global customized_header, original_footer
 
    check_base_thread = Thread(target = check_base, args =("bbase", ))
+   check_base_thread.daemon = True
    check_base_thread.start()
    do_status_printout = False
    if do_status_printout:
       print_base_thread = Thread(target = print_base_status, args =(20, ))
+      print_base_thread.daemon = True
       print_base_thread.start() 
 
    # TODO: customize header from a file
@@ -353,19 +385,7 @@ if __name__ == '__main__':
             <img src="/static/home.png" style="height:64px;"> \
           </button>')
 
-   with open('./app/templates/includes/header.html', 'r', encoding="utf-8") as file:
-        customized_header = Markup(file.read())
-   customized_header = customized_header.replace("{{ installation_title }}", custom_installation_title)
-   customized_header = customized_header.replace("{{ installation_icon }}", custom_installation_icon)
-   customized_header_w_home = customized_header.replace("{{ home_button }}", my_home_button)
-   customized_header_wo_home = customized_header.replace("{{ home_button }}", "")
-    
-   my_copyright = "© tennisrobot.com"
-   with open('./app/templates/includes/footer.html', 'r', encoding="utf-8") as file:
-      original_footer = Markup(file.read())
-   original_footer = original_footer.replace("{{ copyright }}", my_copyright)
-
    # app.run(host="0.0.0.0", port=IP_PORT, debug = True)
-   #  socketio.run(app, host="0.0.0.0", port=IP_PORT, debug = True)
+   socketio.run(app, host="0.0.0.0", port=IP_PORT, debug = True)
 
    check_base_thread.join()

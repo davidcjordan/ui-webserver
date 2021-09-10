@@ -7,7 +7,7 @@
       <link rel="stylesheet" href="/static/css/boomer.css">
       <link rel="stylesheet" href="/static/css/number-picker-2.css">
       <link rel="stylesheet" href="/static/css/radio-slider.css">
-      <link rel="stylesheet" href="/static/css/tables.css">  
+      <link rel="stylesheet" href="/static/css/tables.css">
   </head>
   <body>
     <div class="container">
@@ -30,15 +30,44 @@
         {{ optional_form_end }}
       </div>
       <div class="footer"> 
-        <div class="footer-left">{{ footer_left }}</div>
+        <div class="footer-left" id="base_state"> </div>
         <div class="footer-center">{{ footer_center }}</div>
         <div class="footer-right">© tennisrobot.com</div>
       </div>
     </div>
     <!--  if javascript was in header, then the javascripts didnt work.  Reconmendation is they should be here -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
+    <!-- The following will be used when socket.io.js is installed locally, which needs to be done: -->
     <!-- <script src="/socket.io/socket.io.js"></script> -->
+    <!-- <script type="text/javascript">
+      var socket = io.connect('http://' + document.domain + ':' + location.port);
+      console.log("Sending client_connected")
+      socket.on('connect', function() {
+        socket.emit('client_connected', {data: 'New client!'});
+      });
+    </script>   -->
+    <script type="text/javascript" charset="utf-8">
+      var socket = io.connect('http://' + document.domain + ':' + location.port);
+      // if (typeof socket === 'undefined') {
+      //   console.log("opening socket...")
+      //   var socket = io.connect('http://' + document.domain + ':' + location.port);
+      // }
+      var pollingVar = setInterval(pollingTimer, 1000);
+      function pollingTimer() {
+        socket.emit("get_updates", JSON.stringify({mode: "none"}));
+      }
+      socket.onclose = function (event) {  
+        console.log("socket onclose occurred; event.code: " + event.code);  
+        if (event.code != 1000) {
+          // Error code 1000 means that the connection was closed normally; Try to reconnect.
+          if (!navigator.onLine) {
+              alert("You are offline. Please connect to the Internet and try again.");
+          }
+        }
+      }
+    </script>
     <script src="/static/js/number-picker-2.js"></script>
+    <script src="/static/js/base_state_update.js"></script>
     {% block page_specific_js %} {% endblock %} 
   </body>
 </html>

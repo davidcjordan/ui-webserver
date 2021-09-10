@@ -29,16 +29,16 @@
                 <p>Boomer</p>
               </div>
               <div class="Cell">
-                <p id="bs">bs</p>
+                <p id="bs">0</p>
               </div>
               <div class="Cell">
-                <p id="bg">bg</p>
+                <p id="bg">0</p>
               </div>
               <div class="Cell">
-                <p id="bp">bp</p>
+                <p id="bp">0</p>
               </div>
               <div class="Cell">
-                <p id="bt">bt</p>
+                <p id="bt">0</p>
               </div>
             </div>
             <div class="Row">
@@ -46,16 +46,16 @@
                 <p>Player</p>
               </div>
               <div class="Cell">
-                <p id="ps">ps</p>
+                <p id="ps">0</p>
               </div>
               <div class="Cell">
-                <p id="pg">pg</p>
+                <p id="pg">0</p>
               </div>
               <div class="Cell">
-                <p id="pp">pp</p>
+                <p id="pp">0</p>
               </div>
               <div class="Cell">
-                <p id="pt">pt</p>
+                <p id="pt">0</p>
               </div>
             </div>
           </div>
@@ -89,12 +89,13 @@
 <script type="text/javascript" charset="utf-8"> var socket = io(); </script>
 <script src="/static/js/game_score_update.js"></script>
 <script src="/static/js/pause_resume.js"></script>
-<script type="text/javascript" charset="utf-8">
+<!-- <script type="text/javascript" charset="utf-8">
       var pollingVar = setInterval(pollingTimer, 1000);
       function pollingTimer() {
-        socket.emit("test");
+        // socket.emit("get_game_score");
+        socket.emit("get_updates", JSON.stringify({mode: "game"}));
       }
-</script>
+</script> -->
 {% endblock %} 
 
 <!-- 
@@ -104,10 +105,6 @@
       console.log("emitted test")
     }, false);
 
-    var pollingVar = setInterval(pollingTimer, 1000);
-    function pollingTimer() {
-      socket.emit("test");
-    }
     // socket.on('connect', function() {
     //   socket.emit('message', 'Connected!');
     // });

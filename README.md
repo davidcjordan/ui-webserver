@@ -20,6 +20,12 @@ git clone https://github.com/manningt/ui-webserver  (this will be moved to Dave'
 
 Currently another repository has to be cloned: https://github.com/manningt/control_ipc_utils should be cloned to /home/pi/repos.  web-ctrl.py uses python scripts in this repository to send messages to the base in order to set/get information.
 
+The following python packages have to be installed:
+```
+python3 -m pip install flask-socketio
+python3 -m pip install eventlet
+```
+
 # Other dependencies:
 
 There are 3 files (drill_titles_player.py, drill_titles_instructor.py, drill_titles_test.py) which need to be included in the /app directory.  It hasn't been decided how those will get installed.
