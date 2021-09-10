@@ -303,26 +303,14 @@ def handle_pause():
 def handle_resume():
     print('received resume.')
 
-# @socketio.on('get_game_score')
-# def handle_get_game_score():
-#    # print("received get_game_score -> sending score_update")
-#    emit('base_state_update', {"base_state": base_state})
-#    emit('score_update', {"pp": randint(0,3), \
-#       "bp": 1, "pg": 3, "bg": 2, "ps": 5, "bs": 4, "pt": 6, "bt": 7, "server": "b"})
-
-# @socketio.on('get_base_state')
-# def handle_get_base_state():
-#    # print("received get_base_state -> sending base_state_update")
-#    emit('base_state_update', {"base_state": base_state})
-
 @socketio.on('get_updates')
 def handle_get_updates(data):
    # print('get_updates data: ', data)
    json_data = json.loads(data)
    # print(f"json_data: {json_data}")
    emit('base_state_update', {"base_state": base_state})
+   # could combine the 2 emits, but it's more parsing work...
    if (("page" in json_data) and (json_data["page"] == "game")):
-      print("Sending score update")
       emit('score_update', {"pp": randint(0,3), \
          "bp": 1, "pg": 3, "bg": 2, "ps": 5, "bs": 4, "pt": 6, "bt": 7, "server": "b"})
 
