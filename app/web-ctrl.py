@@ -284,7 +284,6 @@ def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
-
 @socketio.on('message')
 def handle_message(data):
     print('received message: ' + data)
@@ -304,17 +303,17 @@ def handle_pause():
 def handle_resume():
     print('received resume.')
 
-@socketio.on('get_game_score')
-def handle_get_game_score():
-   # print("received get_game_score -> sending score_update")
-   emit('base_state_update', {"base_state": base_state})
-   emit('score_update', {"pp": randint(0,3), \
-      "bp": 1, "pg": 3, "bg": 2, "ps": 5, "bs": 4, "pt": 6, "bt": 7, "server": "b"})
+# @socketio.on('get_game_score')
+# def handle_get_game_score():
+#    # print("received get_game_score -> sending score_update")
+#    emit('base_state_update', {"base_state": base_state})
+#    emit('score_update', {"pp": randint(0,3), \
+#       "bp": 1, "pg": 3, "bg": 2, "ps": 5, "bs": 4, "pt": 6, "bt": 7, "server": "b"})
 
-@socketio.on('get_base_state')
-def handle_get_base_state():
-   # print("received get_base_state -> sending base_state_update")
-   emit('base_state_update', {"base_state": base_state})
+# @socketio.on('get_base_state')
+# def handle_get_base_state():
+#    # print("received get_base_state -> sending base_state_update")
+#    emit('base_state_update', {"base_state": base_state})
 
 @socketio.on('get_updates')
 def handle_get_updates(data):
@@ -322,20 +321,11 @@ def handle_get_updates(data):
    json_data = json.loads(data)
    # print(f"json_data: {json_data}")
    emit('base_state_update', {"base_state": base_state})
-   if (json_data["mode"] == "game"):
+   if (("page" in json_data) and (json_data["page"] == "game")):
       print("Sending score update")
       emit('score_update', {"pp": randint(0,3), \
          "bp": 1, "pg": 3, "bg": 2, "ps": 5, "bs": 4, "pt": 6, "bt": 7, "server": "b"})
 
-
-## the following was replaced by polling for the base state
-# @socketio.on('client_connected')
-# def handle_client_connect_event(json):
-#    # print('received json: {0}'.format(str(json)))
-#    global client_state
-#    client_state = True
-#    # globals()['client_state'] = True
-#    emit('base_state_update', {"base_state": base_state})
 
 def check_base(process_name):
    global base_state, client_state, socketio

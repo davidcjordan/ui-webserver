@@ -39,6 +39,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
     <!-- The following will be used when socket.io.js is installed locally, which needs to be done: -->
     <!-- <script src="/socket.io/socket.io.js"></script> -->
+    <script type="text/javascript" charset="utf-8"> var socket = io(); </script>
     <!-- <script type="text/javascript">
       var socket = io.connect('http://' + document.domain + ':' + location.port);
       console.log("Sending client_connected")
@@ -47,14 +48,21 @@
       });
     </script>   -->
     <script type="text/javascript" charset="utf-8">
-      var socket = io.connect('http://' + document.domain + ':' + location.port);
+      // var socket = io.connect('http://' + document.domain + ':' + location.port);
       // if (typeof socket === 'undefined') {
       //   console.log("opening socket...")
       //   var socket = io.connect('http://' + document.domain + ':' + location.port);
       // }
+      // var path = window.location.pathname;
+      // var page = path.split("/").pop();
+      // var page = window.location.pathname.split("/").pop();
+      var data_get_update = {};
+      data_get_update["page"] = window.location.pathname.split("/").pop();
+      // console.log("json: " + date_get_update + " page: " + page );
+
       var pollingVar = setInterval(pollingTimer, 1000);
       function pollingTimer() {
-        socket.emit("get_updates", JSON.stringify({mode: "none"}));
+        socket.emit("get_updates", JSON.stringify(data_get_update));
       }
       socket.onclose = function (event) {  
         console.log("socket onclose occurred; event.code: " + event.code);  
