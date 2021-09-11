@@ -32,10 +32,4 @@
 {% block page_specific_js %} 
 <script type="text/javascript" charset="utf-8"> var socket = io(); </script>
 <script src="/static/js/pause_resume.js"></script>
-<script type="text/javascript" charset="utf-8">
-      var pollingVar = setInterval(pollingTimer, 1000);
-      function pollingTimer() {
-        socket.emit("test");
-      }
-</script>
 {% endblock %} 

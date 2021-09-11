@@ -90,7 +90,6 @@ def calib():
       home_button = my_home_button, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
-      footer_left = "Status: " + STATUS_IDLE, \
       footer_center = "Mode: " + "Calibration")
  
 @app.route(MAIN_URL, methods=DEFAULT_METHODS)
@@ -101,7 +100,6 @@ def index():
    return render_template(MAIN_TEMPLATE, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
-      footer_left = "Status: Idle", \
       footer_center = "Mode: --")
 
 '''
@@ -132,7 +130,6 @@ def game_options():
       point_delay_min = GAME_POINT_DELAY_MIN, \
       point_delay_max = GAME_POINT_DELAY_MAX, \
       point_delay_step = GAME_POINT_DELAY_STEP, \
-      footer_left = "Status: " + STATUS_IDLE, \
       footer_center = "Mode: " + MODE_GAME)
 
 @app.route(GAME_URL, methods=DEFAULT_METHODS)
@@ -160,7 +157,6 @@ def game():
       level_min = LEVEL_MIN/LEVEL_UI_FACTOR, \
       level_max = LEVEL_MAX/LEVEL_UI_FACTOR, \
       level_step = LEVEL_UI_STEP/LEVEL_UI_FACTOR, \
-      footer_left = "Status: " + STATUS_ACTIVE, \
       footer_center = "Mode: " + MODE_GAME)
 
 
@@ -171,7 +167,6 @@ def drill_select_type():
       home_button = my_home_button, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
-      footer_left = "Status: " + STATUS_IDLE, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
 
@@ -190,7 +185,6 @@ def drill_select_player():
       optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
       drills = drill_list, \
       optional_form_end = Markup('</form>'), \
-      footer_left = "Status: " + STATUS_IDLE, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
 
@@ -219,7 +213,6 @@ def drill_select_instructor():
       optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
       drills = drill_list, \
       optional_form_end = Markup('</form>'), \
-      footer_left = "Status: " + STATUS_IDLE, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
 
@@ -238,7 +231,6 @@ def drill_select_test():
       optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
       drills = drill_list, \
       optional_form_end = Markup('</form>'), \
-      footer_left = "Status: " + STATUS_IDLE, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
 
@@ -247,7 +239,7 @@ def drill():
    global back_url, previous_url
    back_url = previous_url
 
-   # print("request_form: {}".format(request.form))
+   print("request_form: {}".format(request.form))
 
    mode_string = "FIX-ME"
    if request.method=='POST' and 'drill_id' in request.form:
@@ -275,7 +267,6 @@ def drill():
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
       options = stepper_options, \
-      footer_left = "Status: " + STATUS_ACTIVE, \
       footer_center = "Mode: " + mode_string)
 
 

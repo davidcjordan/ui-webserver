@@ -30,7 +30,7 @@
         {{ optional_form_end }}
       </div>
       <div class="footer"> 
-        <div class="footer-left" id="base_state"> </div>
+        <div class="footer-left" id="base_state">Status: Idle</div>
         <div class="footer-center">{{ footer_center }}</div>
         <div class="footer-right">© tennisrobot.com</div>
       </div>
@@ -47,15 +47,9 @@
         socket.emit('client_connected', {data: 'New client!'});
       });
     </script>   -->
+    <script src="/static/js/state_update.js"></script>
+    <script src="/static/js/number-picker-2.js"></script>
     <script type="text/javascript" charset="utf-8">
-      // var socket = io.connect('http://' + document.domain + ':' + location.port);
-      // if (typeof socket === 'undefined') {
-      //   console.log("opening socket...")
-      //   var socket = io.connect('http://' + document.domain + ':' + location.port);
-      // }
-      // var path = window.location.pathname;
-      // var page = path.split("/").pop();
-      // var page = window.location.pathname.split("/").pop();
       var data_get_update = {};
       data_get_update["page"] = window.location.pathname.split("/").pop();
       // console.log("json: " + date_get_update + " page: " + page );
@@ -74,8 +68,6 @@
         }
       }
     </script>
-    <script src="/static/js/number-picker-2.js"></script>
-    <script src="/static/js/base_state_update.js"></script>
     {% block page_specific_js %} {% endblock %} 
   </body>
 </html>
