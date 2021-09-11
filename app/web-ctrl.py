@@ -117,6 +117,12 @@ def go_to_main():
 
 @app.route(GAME_OPTIONS_URL, methods=DEFAULT_METHODS)
 def game_options():
+
+   # clicking stop when the game is active goes to this page, so stop the game
+   rc, code = send_msg(PUT_METHOD, STOP_RSRC)
+   if not rc:
+      app.logger.error("PUT STOP failed, code: {}".format(code))
+
    global back_url, previous_url
    back_url = '/'
    previous_url = "/" + inspect.currentframe().f_code.co_name
@@ -162,6 +168,11 @@ def game():
 
 @app.route(DRILL_SELECT_TYPE_URL, methods=DEFAULT_METHODS)
 def drill_select_type():
+
+   # clicking stop when the drill is active goes to this page, so stop the drill
+   rc, code = send_msg(PUT_METHOD, STOP_RSRC)
+   if not rc:
+      app.logger.error("PUT STOP failed, code: {}".format(code))
 
    return render_template(DRILL_SELECT_TYPE_TEMPLATE, \
       home_button = my_home_button, \
@@ -248,9 +259,10 @@ def drill():
       rc, code = send_msg(PUT_METHOD, MODE_RSRC, mode)
       if not rc:
          app.logger.error("PUT Mode failed, code: {}".format(code))
+      else:
          rc, code = send_msg(PUT_METHOD, STRT_RSRC)
-      if not rc:
-         app.logger.error("PUT START failed, code: {}".format(code))
+         if not rc:
+            app.logger.error("PUT START failed, code: {}".format(code))
 
    
    stepper_options = { \
