@@ -36,9 +36,7 @@ MAIN_URL = '/'
 GAME_OPTIONS_URL = '/game_options'
 GAME_URL = '/game'
 DRILL_SELECT_TYPE_URL = '/drill_select_type'
-DRILL_SELECT_PLAYER_URL = '/drill_select_player'
-DRILL_SELECT_INSTRUCTOR_URL = '/drill_select_instructor'
-DRILL_SELECT_TEST_URL = '/drill_select_test'
+DRILL_SELECT_URL = '/drill_select' # does not have a template
 DRILL_URL = '/drill'
 # WORKOUT_SELECTION_URL = '/workout_selection'
 # SETTINGS_URL = '/settings'
@@ -48,9 +46,8 @@ MAIN_TEMPLATE = 'index.html'
 GAME_OPTIONS_TEMPLATE = '/layouts' + GAME_OPTIONS_URL + '.html'
 GAME_TEMPLATE = '/layouts' + GAME_URL + '.html'
 DRILL_SELECT_TYPE_TEMPLATE = '/layouts' + DRILL_SELECT_TYPE_URL + '.html'
-DRILL_SELECT_PLAYER_TEMPLATE = '/layouts' + DRILL_SELECT_PLAYER_URL + '.html'
-DRILL_SELECT_INSTRUCTOR_TEMPLATE = '/layouts' + DRILL_SELECT_INSTRUCTOR_URL + '.html'
-DRILL_SELECT_TEST_TEMPLATE = '/layouts' + DRILL_SELECT_TEST_URL + '.html'
+DRILL_SELECT_FILTERED_TEMPLATE = '/layouts' + '/drill_select_filtered' + '.html'
+DRILL_SELECT_UNFILTERED_TEMPLATE = '/layouts' + '/drill_select_unfiltered' + '.html'
 DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
 CALIBRATION_TEMPLATE = '/layouts/calib.html'
 # WORKOUT_SELECTION_TEMPLATE = '/layouts' + WORKOUT_SELECTION_URL + '.html'
@@ -180,7 +177,7 @@ def drill_select_type():
       installation_icon = custom_installation_icon, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
-
+'''
 @app.route(DRILL_SELECT_PLAYER_URL, methods=DEFAULT_METHODS)
 def drill_select_player():
    global back_url, previous_url
@@ -197,13 +194,17 @@ def drill_select_player():
       drills = drill_list, \
       optional_form_end = Markup('</form>'), \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
+'''
 
-
-@app.route(DRILL_SELECT_INSTRUCTOR_URL, methods=DEFAULT_METHODS)
-def drill_select_instructor():
+@app.route(DRILL_SELECT_URL, methods=DEFAULT_METHODS)
+def drill_select():
    global back_url, previous_url
    back_url = '/'
    previous_url = "/" + inspect.currentframe().f_code.co_name
+
+   if request.method=='POST':
+      # print("request_form: {}".format(request.form))
+      print(f"request_form_getlist_type: {request.form.getlist('type')}")
 
    # The following is to be replaced with fetching from a database of drills based on tags
    # drill_d = {}
@@ -216,8 +217,7 @@ def drill_select_instructor():
       {'id': '002', 'name': '1-line 5 ball net'},\
       {'id': '003', 'name': 'Volley Kill footwork'},\
    ]
-   # TODO change the following to: DRILL_SELECT_INSTRUCTOR_TEMPLATE
-   return render_template(DRILL_SELECT_TEST_TEMPLATE, \
+   return render_template(DRILL_SELECT_UNFILTERED_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
@@ -226,7 +226,7 @@ def drill_select_instructor():
       optional_form_end = Markup('</form>'), \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
-
+'''
 @app.route(DRILL_SELECT_TEST_URL, methods=DEFAULT_METHODS)
 def drill_select_test():
    global back_url, previous_url
@@ -243,7 +243,7 @@ def drill_select_test():
       drills = drill_list, \
       optional_form_end = Markup('</form>'), \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
-
+'''
 
 @app.route(DRILL_URL, methods=DEFAULT_METHODS)
 def drill():

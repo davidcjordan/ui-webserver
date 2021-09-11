@@ -1,10 +1,10 @@
 {% extends "layouts/base.html" %}
 {% block selections %}
 <div>
-  <button class="block_b" type="submit" onclick="window.location.href='{{ url_for('drill_select_player') }}';">Player(s)
-  </button>
-  <button class="block_b" type="submit" onclick="window.location.href='{{ url_for('drill_select_instructor') }}';">Instructor
-  </button>
-  <button class="block_b" type="submit" onclick="window.location.href='{{ url_for('drill_select_test') }}';">Test
-  </button></div>
+  <form method="post" action="{{ url_for('drill_select') }}">
+    <input class="block_b" type="submit" name="type" value="Player(s)"></input>
+    <input class="block_b" type="submit" name="type" value="Instructor"></input>
+    <input class="block_b" type="submit" name="type" value="Test"></input>
+   </form>
+</div>
 {% endblock %}
