@@ -21,6 +21,8 @@ except:
    print("Missing 'control_ipc' modules, please run: git clone https://github.com/manningt/control_ipc_utils")
    exit()
 
+sys.path.append('/home/pi/repos/drill_filtering')
+
 from threading import Thread
 import time
 import json
@@ -65,6 +67,11 @@ MODE_DRILL_NOT_SELECTED = "Drills --"
 MODE_WORKOUT_NOT_SELECTED = "Workout --"
 MODE_WORKOUT_SELECTED = "Workout: "
 MODE_SETTINGS = "Boomer Options"
+
+DRILL_SELECT_TYPE_PLAYER = 'Player(s)'
+DRILL_SELECT_TYPE_INSTRUCTORS = 'Instructors'
+DRILL_SELECT_TYPE_TEST ='Test'
+
 
 previous_url = None
 back_url = None
@@ -171,10 +178,17 @@ def drill_select_type():
    if not rc:
       app.logger.error("PUT STOP failed, code: {}".format(code))
 
+   drill_select_type_list = [\
+      {'name': DRILL_SELECT_TYPE_PLAYER},\
+      {'name': DRILL_SELECT_TYPE_INSTRUCTORS},\
+      {'name': DRILL_SELECT_TYPE_TEST},\
+   ]
+
    return render_template(DRILL_SELECT_TYPE_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
+      drill_select_types = drill_select_type_list, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
 '''
@@ -202,9 +216,10 @@ def drill_select():
    back_url = '/'
    previous_url = "/" + inspect.currentframe().f_code.co_name
 
+   drill_select_type = None
    if request.method=='POST':
-      # print("request_form: {}".format(request.form))
-      print(f"request_form_getlist_type: {request.form.getlist('type')}")
+      # print(f"request_form_getlist_type: {request.form.getlist('type')}")
+      drill_select_type = request.form.getlist('type')[0]
 
    # The following is to be replaced with fetching from a database of drills based on tags
    # drill_d = {}
@@ -212,38 +227,44 @@ def drill_select():
    # drill_d["002"] = {"name": "1-line 5 ball net", "type":"net", "lvl": "easy", "stroke": "backhand" }
    # drill_d["003"] = {"name": "Volley Kill footwork", "type":"volley, movement", "lvl": "hard", "stroke": "forehand" }
 
-   drill_list = [\
-      {'id': '001', 'name': 'speed'},\
-      {'id': '002', 'name': '1-line 5 ball net'},\
-      {'id': '003', 'name': 'Volley Kill footwork'},\
-   ]
-   return render_template(DRILL_SELECT_UNFILTERED_TEMPLATE, \
-      home_button = my_home_button, \
-      installation_title = custom_installation_title, \
-      installation_icon = custom_installation_icon, \
-      optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
-      drills = drill_list, \
-      optional_form_end = Markup('</form>'), \
-      footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
+   print(f"drill_select_type: {drill_select_type}")
 
-'''
-@app.route(DRILL_SELECT_TEST_URL, methods=DEFAULT_METHODS)
-def drill_select_test():
-   global back_url, previous_url
-   back_url = '/'
-   previous_url = "/" + inspect.currentframe().f_code.co_name
+   if drill_select_type == DRILL_SELECT_TYPE_TEST:
+      drill_list = [\
+         {'id': '100', 'name': 'Test 100'},\
+         {'id': '800', 'name': 'Test servoing'},\
+         {'id': '050', 'name': 'test overhead timing'},\
+      ]
+   elif drill_select_type == DRILL_SELECT_TYPE_INSTRUCTORS:
+      drill_list = [\
+         {'id': '001', 'name': 'speed'},\
+         {'id': '002', 'name': '1-line 5 ball net'},\
+         {'id': '003', 'name': 'Volley Kill footwork'},\
+      ]
+   if (drill_select_type == DRILL_SELECT_TYPE_TEST or drill_select_type == DRILL_SELECT_TYPE_INSTRUCTORS):
+      return render_template(DRILL_SELECT_UNFILTERED_TEMPLATE, \
+         home_button = my_home_button, \
+         installation_title = custom_installation_title, \
+         installation_icon = custom_installation_icon, \
+         optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
+         drills = drill_list, \
+         optional_form_end = Markup('</form>'), \
+         footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
+   else:
+      try:
+         from drill_titles_player import drill_list
+      except:
+         print("Missing 'drill_titles_player' ")
+         # exit()
+      return render_template(DRILL_SELECT_FILTERED_TEMPLATE, \
+         home_button = my_home_button, \
+         installation_title = custom_installation_title, \
+         installation_icon = custom_installation_icon, \
+         optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
+         drills = drill_list, \
+         optional_form_end = Markup('</form>'), \
+         footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
-   from drill_titles_test import drill_list
-
-   return render_template(DRILL_SELECT_TEST_TEMPLATE, \
-      home_button = my_home_button, \
-      installation_title = custom_installation_title, \
-      installation_icon = custom_installation_icon, \
-      optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
-      drills = drill_list, \
-      optional_form_end = Markup('</form>'), \
-      footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
-'''
 
 @app.route(DRILL_URL, methods=DEFAULT_METHODS)
 def drill():

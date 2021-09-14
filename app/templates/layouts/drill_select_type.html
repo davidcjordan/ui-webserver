@@ -2,9 +2,9 @@
 {% block selections %}
 <div>
   <form method="post" action="{{ url_for('drill_select') }}">
-    <input class="block_b" type="submit" name="type" value="Player(s)"></input>
-    <input class="block_b" type="submit" name="type" value="Instructor"></input>
-    <input class="block_b" type="submit" name="type" value="Test"></input>
+    {% for type in drill_select_types %}
+    <input class="block_b" type="submit" name="type" value="{{type['name']}}"></input>
+    {% endfor %}
    </form>
 </div>
 {% endblock %}
