@@ -92,14 +92,19 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 @app.route('/calib', methods=DEFAULT_METHODS)
 def calib():
-   # if request.method=='POST':
-   #    if 'serve_mode' in request.form:
-
-    return render_template(CALIBRATION_TEMPLATE, \
+   if request.method=='POST':
+      # print(f"request_form: {request.form}")
+      # print(f"request_form_getlist_type: {request.form.getlist('submit')}")
+      mode = request.form.getlist('submit')[0]
+      cam = mode.split()[0].lower()
+ 
+   return render_template(CALIBRATION_TEMPLATE, \
+      # court_pic = "/home/pi/boomer/" + cam + "_court.png", \
+      court_pic = "static/" + cam + "_court.png", \
       home_button = my_home_button, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
-      footer_center = "Mode: " + "Calibration")
+      footer_center = "Mode: " + mode)
  
 @app.route(MAIN_URL, methods=DEFAULT_METHODS)
 def index():
@@ -126,7 +131,6 @@ def go_to_main():
 
 @app.route(GAME_OPTIONS_URL, methods=DEFAULT_METHODS)
 def game_options():
-
    # clicking stop when the game is active goes to this page, so stop the game
    rc, code = send_msg(PUT_METHOD, STOP_RSRC)
    if not rc:

@@ -3,7 +3,8 @@
 {% block selections %}
 <div class="img-zoom-container">
   <div class="img-zoom-image">
-    <img id="myimage" src="static/court.png" alt="Tennis Court" height="400">
+    <!-- <img id="myimage" src="static/court.png" alt="Tennis Court" height="400"> -->
+    <img id="myimage" src="{{court_pic}}" alt="Image from camera is missing" height="400">
   </div>
   <div id="myresult" class="img-zoom-result">
       <canvas id="zoom-canvas" width="256" height="256" ></canvas>

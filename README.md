@@ -25,7 +25,11 @@ The following python packages have to be installed:
 python3 -m pip install flask-socketio
 python3 -m pip install eventlet
 ```
+jquery.js is already installed on Raspbian, but a symbolic link needs to be made.  Run the following script which is the app directory.
+```
+./make_links.sh
+```
 
 # Other dependencies:
 
-There are 3 files (drill_titles_player.py, drill_titles_instructor.py, drill_titles_test.py) which need to be included in the /app directory.  It hasn't been decided how those will get installed.
+git clone https://github.com/davidcjordan/drills to ~/boomer should have already been performed. The file *ui_drill_selection_lists.py* in the drills directory is used by the UI to present a subset of drills to select.
