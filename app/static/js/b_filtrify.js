@@ -90,13 +90,17 @@
 	};
 
 	Filtrify.prototype.set = function () {
-		var f = 0, field,
-			browser = $.browser;
+		var field;
+		// var f = 0, field,
+		// 	browser = $.browser;
+      // $.browser obsolete: https://stackoverflow.com/questions/24379212/typeerror-jquery-browser-is-undefined
+      var webkit = (navigator.userAgent.toUpperCase().indexOf('WEBKIT') > 0);
 
 		this._menu.list = $("<ul class='ft-menu' />");
 
-		for ( f; f < this._order.length; f++ ) {
-			field = browser.webkit || browser.opera ? 
+		for ( var f = 0; f < this._order.length; f++ ) {
+			// field = browser.webkit || browser.opera ? 
+			field = webkit ? 
 				this._order[f] : this._order[ this._order.length - f - 1 ];
 			this._menu[ field ] = {};
 			this.build( field );
@@ -129,7 +133,7 @@
 
 		for ( t = 0; t < tags.length; t++ ) {
 			tag = tags[t];
-			console.log("data-count: " + this._fields[f][tag] + " tag: " + tag);
+			// console.log("data-count: " + this._fields[f][tag] + " tag: " + tag);
 			html += "<li data-count='" + this._fields[f][tag] + "' >" + tag + "</li>";
 		};
 
