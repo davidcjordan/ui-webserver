@@ -21,7 +21,12 @@ except:
    print("Missing 'control_ipc' modules, please run: git clone https://github.com/manningt/control_ipc_utils")
    exit()
 
-sys.path.append('/home/pi/repos/drill_filtering')
+sys.path.append('/home/pi/boomer/drills')
+try:
+   from ui_drill_selection_lists import *
+except:
+   print("Missing 'ui_drill_selection_lists' modules, please run: git clone https://github.com/davidcjordon/drills")
+   exit()
 
 from threading import Thread
 import time
@@ -191,24 +196,6 @@ def drill_select_type():
       drill_select_types = drill_select_type_list, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
-'''
-@app.route(DRILL_SELECT_PLAYER_URL, methods=DEFAULT_METHODS)
-def drill_select_player():
-   global back_url, previous_url
-   back_url = '/'
-   previous_url = "/" + inspect.currentframe().f_code.co_name
-
-   from drill_titles_player import drill_list
-
-   return render_template(DRILL_SELECT_PLAYER_TEMPLATE, \
-      home_button = my_home_button, \
-      installation_title = custom_installation_title, \
-      installation_icon = custom_installation_icon, \
-      optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
-      drills = drill_list, \
-      optional_form_end = Markup('</form>'), \
-      footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
-'''
 
 @app.route(DRILL_SELECT_URL, methods=DEFAULT_METHODS)
 def drill_select():
@@ -221,28 +208,18 @@ def drill_select():
       # print(f"request_form_getlist_type: {request.form.getlist('type')}")
       drill_select_type = request.form.getlist('type')[0]
 
-   # The following is to be replaced with fetching from a database of drills based on tags
-   # drill_d = {}
-   # drill_d["001"] = {"name": "speed", "type":"movement", "lvl": "medium", "stroke": "forehand" }
-   # drill_d["002"] = {"name": "1-line 5 ball net", "type":"net", "lvl": "easy", "stroke": "backhand" }
-   # drill_d["003"] = {"name": "Volley Kill footwork", "type":"volley, movement", "lvl": "hard", "stroke": "forehand" }
+   # print(f"drill_select_type: {drill_select_type}")
 
-   print(f"drill_select_type: {drill_select_type}")
-
+   # refer to /home/pi/boomer/drills/ui_drill_selection_lists for drill_list format
    if drill_select_type == DRILL_SELECT_TYPE_TEST:
-      drill_list = [\
-         {'id': '100', 'name': 'Test 100'},\
-         {'id': '800', 'name': 'Test servoing'},\
-         {'id': '050', 'name': 'test overhead timing'},\
-      ]
+      drill_list = drill_list_test
    elif drill_select_type == DRILL_SELECT_TYPE_INSTRUCTORS:
-      drill_list = [\
-         {'id': '001', 'name': 'speed'},\
-         {'id': '002', 'name': '1-line 5 ball net'},\
-         {'id': '003', 'name': 'Volley Kill footwork'},\
-      ]
-   if (drill_select_type == DRILL_SELECT_TYPE_TEST or drill_select_type == DRILL_SELECT_TYPE_INSTRUCTORS):
-      return render_template(DRILL_SELECT_UNFILTERED_TEMPLATE, \
+      drill_list = drill_list_instructor
+   else:
+      drill_list = drill_list_player
+
+   if len(drill_list[0]) > 2:
+      return render_template(DRILL_SELECT_FILTERED_TEMPLATE, \
          home_button = my_home_button, \
          installation_title = custom_installation_title, \
          installation_icon = custom_installation_icon, \
@@ -251,12 +228,7 @@ def drill_select():
          optional_form_end = Markup('</form>'), \
          footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
    else:
-      try:
-         from drill_titles_player import drill_list
-      except:
-         print("Missing 'drill_titles_player' ")
-         # exit()
-      return render_template(DRILL_SELECT_FILTERED_TEMPLATE, \
+      return render_template(DRILL_SELECT_UNFILTERED_TEMPLATE, \
          home_button = my_home_button, \
          installation_title = custom_installation_title, \
          installation_icon = custom_installation_icon, \
