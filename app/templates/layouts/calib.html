@@ -216,7 +216,11 @@
     }
   }
 
+  // for 2 different methods to post coord, refer to: https://stackoverflow.com/questions/6396101/pure-javascript-send-post-data-without-a-form
+
   function send_points() {
+    console.log("status: " + document.getElementById("base_state").innerText.substring(6,7));
+    coords["cam"] = document.getElementById("mode").innerText.substring(6,7);
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "/calib_points", true);
     xhr.setRequestHeader('Content-Type', 'application/json');

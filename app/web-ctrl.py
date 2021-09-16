@@ -37,6 +37,8 @@ from random import randint
 base_state = None
 client_state = False
 
+DO_SCP_FOR_CALIBRATION = False
+
 IP_PORT = 1111 # picked what is hopefully an unused port  (can't use 44)
 DEFAULT_METHODS = ['POST', 'GET']
 
@@ -46,6 +48,7 @@ GAME_URL = '/game'
 DRILL_SELECT_TYPE_URL = '/drill_select_type'
 DRILL_SELECT_URL = '/drill_select' # does not have a template
 DRILL_URL = '/drill'
+CALIB_URL = '/calib'
 # WORKOUT_SELECTION_URL = '/workout_selection'
 # SETTINGS_URL = '/settings'
 
@@ -53,11 +56,11 @@ DRILL_URL = '/drill'
 MAIN_TEMPLATE = 'index.html'
 GAME_OPTIONS_TEMPLATE = '/layouts' + GAME_OPTIONS_URL + '.html'
 GAME_TEMPLATE = '/layouts' + GAME_URL + '.html'
-DRILL_SELECT_TYPE_TEMPLATE = '/layouts' + DRILL_SELECT_TYPE_URL + '.html'
+CHOICE_INPUTS_TEMPLATE = '/layouts' + '/choice_inputs' + '.html'
 DRILL_SELECT_FILTERED_TEMPLATE = '/layouts' + '/drill_select_filtered' + '.html'
 DRILL_SELECT_UNFILTERED_TEMPLATE = '/layouts' + '/drill_select_unfiltered' + '.html'
 DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
-CALIBRATION_TEMPLATE = '/layouts/calib.html'
+CALIBRATION_TEMPLATE = '/layouts' + CALIB_URL + '.html'
 # WORKOUT_SELECTION_TEMPLATE = '/layouts' + WORKOUT_SELECTION_URL + '.html'
 # SETTINGS_TEMPLATE = '/layouts' + SETTINGS_URL + '.html'
 
@@ -77,7 +80,6 @@ MODE_SETTINGS = "Boomer Options"
 DRILL_SELECT_TYPE_PLAYER = 'Player(s)'
 DRILL_SELECT_TYPE_INSTRUCTORS = 'Instructors'
 DRILL_SELECT_TYPE_TEST ='Test'
-
 
 previous_url = None
 back_url = None
@@ -102,28 +104,30 @@ def calib_points():
       # points_dict = json.loads(request.json)
       # print(f"points: {points_dict}")
 
-   drill_select_type_list = [\
-      {'name': "Calibration Done"}
+   choice_list = [\
+      {"value": "Calibration Done", "onclick_url": MAIN_URL}
    ]
-   return render_template(DRILL_SELECT_TYPE_TEMPLATE, \
+   return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
-      drill_select_types = drill_select_type_list, \
+      onclick_choices = choice_list, \
       footer_center = "Mode: " + "calib_points")
 
 
-@app.route('/calib', methods=DEFAULT_METHODS)
+@app.route(CALIB_URL, methods=DEFAULT_METHODS)
 def calib():
    if request.method=='POST':
       # print(f"request_form: {request.form}")
-      # print(f"request_form_getlist_type: {request.form.getlist('submit')}")
-      mode = request.form.getlist('submit')[0]
+      # print(f"request_form_getlist_type: {request.form.getlist('choice')}")
+      mode = request.form.getlist('choice')[0]
       cam = mode.split()[0].lower()
 
    # copy the lastest PNG from the camera to the base
-   # p = Popen(["cp", "/run/shm/frame.png", "/home/pi/boomer/{cam}_court.png"])
-   p = Popen(["scp", "{cam}:/run/shm/frame.png", "/home/pi/boomer/{cam}_court.png"])
+   if DO_SCP_FOR_CALIBRATION:
+      p = Popen(["scp", f"{cam}:/run/shm/frame.png", f"/home/pi/boomer/{cam}_court.png"])
+   else:
+      p = Popen(["cp", "/run/shm/frame.png", "/home/pi/boomer/{cam}_court.png"])
    stdoutdata, stderrdata = p.communicate()
    if p.returncode != 0:
       print(f"copy of camera's frame.png to court.png failed: {p.returncode}")
@@ -140,10 +144,22 @@ def calib():
 def index():
    global back_url, previous_url
    back_url = previous_url = "/"
-   
-   return render_template(MAIN_TEMPLATE, \
+
+   onclick_choice_list = [\
+      {"value": "Game Mode", "onclick_url": GAME_OPTIONS_URL},\
+      {"value": "Drills", "onclick_url": DRILL_SELECT_TYPE_URL}\
+   ]
+   form_choice_list = [\
+      {"value": "Left Cam Calib"},\
+      {"value": "Right Cam Calib"}\
+   ]
+
+   return render_template(CHOICE_INPUTS_TEMPLATE, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
+      onclick_choices = onclick_choice_list, \
+      form_choices = form_choice_list, \
+      url_for_post = CALIB_URL, \
       footer_center = "Mode: --")
 
 '''
@@ -211,23 +227,23 @@ def game():
 
 @app.route(DRILL_SELECT_TYPE_URL, methods=DEFAULT_METHODS)
 def drill_select_type():
-
    # clicking stop when the drill is active goes to this page, so stop the drill
    rc, code = send_msg(PUT_METHOD, STOP_RSRC)
    if not rc:
       app.logger.error("PUT STOP failed, code: {}".format(code))
 
    drill_select_type_list = [\
-      {'name': DRILL_SELECT_TYPE_PLAYER},\
-      {'name': DRILL_SELECT_TYPE_INSTRUCTORS},\
-      {'name': DRILL_SELECT_TYPE_TEST},\
+      {'value': DRILL_SELECT_TYPE_PLAYER},\
+      {'value': DRILL_SELECT_TYPE_INSTRUCTORS},\
+      {'value': DRILL_SELECT_TYPE_TEST},\
    ]
 
-   return render_template(DRILL_SELECT_TYPE_TEMPLATE, \
+   return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
-      drill_select_types = drill_select_type_list, \
+      form_choices = drill_select_type_list, \
+      url_for_post = DRILL_SELECT_URL, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
 
@@ -239,8 +255,8 @@ def drill_select():
 
    drill_select_type = None
    if request.method=='POST':
-      # print(f"request_form_getlist_type: {request.form.getlist('type')}")
-      drill_select_type = request.form.getlist('type')[0]
+      print(f"request_form_getlist_type: {request.form.getlist('choice')}")
+      drill_select_type = request.form.getlist('choice')[0]
 
    # print(f"drill_select_type: {drill_select_type}")
 
