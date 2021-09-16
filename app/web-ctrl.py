@@ -29,6 +29,7 @@ except:
    exit()
 
 from threading import Thread
+from subprocess import Popen
 import time
 import json
 from random import randint
@@ -90,6 +91,28 @@ app.config['SECRET_KEY'] = 'secret!'
 # socketio = SocketIO(app, cors_allowed_origins="http://127.0.0.1")
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+@app.route('/calib_points', methods=DEFAULT_METHODS)
+def calib_points():
+   if request.method=='POST':
+      # print(f"request: {request}")
+      print(f"request: {request.json}")
+      #request.json is a python dict
+      print(f'nblx: {request.json["nblx"]}')
+
+      # points_dict = json.loads(request.json)
+      # print(f"points: {points_dict}")
+
+   drill_select_type_list = [\
+      {'name': "Calibration Done"}
+   ]
+   return render_template(DRILL_SELECT_TYPE_TEMPLATE, \
+      home_button = my_home_button, \
+      installation_title = custom_installation_title, \
+      installation_icon = custom_installation_icon, \
+      drill_select_types = drill_select_type_list, \
+      footer_center = "Mode: " + "calib_points")
+
+
 @app.route('/calib', methods=DEFAULT_METHODS)
 def calib():
    if request.method=='POST':
@@ -97,9 +120,16 @@ def calib():
       # print(f"request_form_getlist_type: {request.form.getlist('submit')}")
       mode = request.form.getlist('submit')[0]
       cam = mode.split()[0].lower()
+
+   # copy the lastest PNG from the camera to the base
+   # p = Popen(["cp", "/run/shm/frame.png", "/home/pi/boomer/{cam}_court.png"])
+   p = Popen(["scp", "{cam}:/run/shm/frame.png", "/home/pi/boomer/{cam}_court.png"])
+   stdoutdata, stderrdata = p.communicate()
+   if p.returncode != 0:
+      print(f"copy of camera's frame.png to court.png failed: {p.returncode}")
+   # status = os.waitpid(p.pid, 0)
  
    return render_template(CALIBRATION_TEMPLATE, \
-      # court_pic = "/home/pi/boomer/" + cam + "_court.png", \
       court_pic = "static/" + cam + "_court.png", \
       home_button = my_home_button, \
       installation_title = custom_installation_title, \

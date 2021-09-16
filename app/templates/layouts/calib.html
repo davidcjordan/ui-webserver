@@ -100,6 +100,7 @@
   let move_px = 8;
   var background_top;
   var background_left;
+  var coords = {};
 
   window.addEventListener('load', (event) => {
     // console.log('The page has fully loaded');
@@ -178,28 +179,35 @@
 
     if (y_px < fb_y_max) {
       if (x_px < bl_x_max) {
+        coords["fblx"] = x_px; coords["fbly"] = y_px;
         fbl_x_y = document.getElementById('fbl_x_y');
         fbl_x_y.innerText = `Far-BaseLine-Left: X: ${x_px} Y: ${y_px}`;
       } else {
+        coords["fbrx"] = x_px; coords["fbry"] = y_px;
         fbr_x_y = document.getElementById('fbr_x_y');
         fbr_x_y.innerText = `Far-BaseLine-Right: X: ${x_px} Y: ${y_px}`;
       }
     } else if (y_px > ns_y_min && y_px < ns_y_max) {
       if (x_px < nsl_x_max) {
+        coords["nslx"] = x_px; coords["nsly"] = y_px;
         nsl_x_y = document.getElementById('nsl_x_y');
         nsl_x_y.innerText = `Near-ServiceLine-Left: X: ${x_px} Y: ${y_px}`;
       } else if (x_px > nsl_x_max && x_px < nsc_x_max) {
+        coords["nscx"] = x_px; coords["nscy"] = y_px;
         nsc_x_y = document.getElementById('nsc_x_y');
         nsc_x_y.innerText = `Near-ServiceLine-Center: X: ${x_px} Y: ${y_px}`;
       } else {
+        coords["nsrx"] = x_px; coords["nsry"] = y_px;
         nsr_x_y = document.getElementById('nsr_x_y');
         nsr_x_y.innerText = `Near-ServiceLine-Right: X: ${x_px} Y: ${y_px}`;
       }
     } else if (y_px > ns_y_max) {
       if (x_px < bl_x_max) {
+        coords["nblx"] = x_px; coords["nbly"] = y_px;
         nbl_x_y = document.getElementById('nbl_x_y');
         nbl_x_y.innerText = `Near-BaseLine-Left: X: ${x_px} Y: ${y_px}`;
       } else {
+        coords["nbrx"] = x_px; coords["nbry"] = y_px;
         nbr_x_y = document.getElementById('nbr_x_y');
         nbr_x_y.innerText = `Near-BaseLine-Right: X: ${x_px} Y: ${y_px}`;
       }
@@ -208,19 +216,13 @@
     }
   }
 
-  window.post = function(url, data) {
-  return fetch(url, {method: "POST", body: JSON.stringify(data)});
-  }
-
   function send_points() {
-    console.log("POST 14 points here")
-    post("/calib", {element: "osmium"});
-    // var xhr = new XMLHttpRequest();
-    // xhr.open("POST", yourUrl, true);
-    // xhr.setRequestHeader('Content-Type', 'application/json');
-    // xhr.send(JSON.stringify({
-    //     value: value
-    // }));
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/calib_points", true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.send(JSON.stringify(coords));
+    // used the following to get webpage update after the post; there is probably a better way
+    location.href = '/calib_points';
   }
 </script>
   
