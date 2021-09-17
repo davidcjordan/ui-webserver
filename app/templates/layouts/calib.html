@@ -227,19 +227,20 @@
   // for 2 different methods to post coord, refer to: https://stackoverflow.com/questions/6396101/pure-javascript-send-post-data-without-a-form
 
   function send_points() {
-    var number_of_calib_points = 14;
-    if (Object.keys(coords).length < number_of_calib_points)
+    var number_of_calib_points = 7;
+    if (Object.keys(coords).length < number_of_calib_points * 2)
     {
-      window.alert("Please finish setting all 7 coordinates.");
+      window.alert("Please finish setting all " + number_of_calib_points*2 + " coordinates.");
     } else
     {
       coords["cam"] = document.getElementById("mode").innerText.substring(6,7);
       var xhr = new XMLHttpRequest();
-      xhr.open("POST", "/calib_points", true);
+      // xhr.open("POST", "/calib_points", true);
+      xhr.open("POST", "/calib", true);
       xhr.setRequestHeader('Content-Type', 'application/json');
       xhr.send(JSON.stringify(coords));
       // used the following to get webpage update after the post; there is probably a better way
-      location.href = '/calib_points';
+      window.location.replace('/calib_done');
     }
   }
 </script>

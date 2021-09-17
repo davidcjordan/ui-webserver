@@ -84,6 +84,7 @@ DRILL_SELECT_TYPE_TEST ='Test'
 previous_url = None
 back_url = None
 
+cam = None  # a global on which camera is being calibrated
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -93,19 +94,10 @@ app.config['SECRET_KEY'] = 'secret!'
 # socketio = SocketIO(app, cors_allowed_origins="http://127.0.0.1")
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-@app.route('/calib_points', methods=DEFAULT_METHODS)
-def calib_points():
-   button_label = "Calib Done"
-   if request.method=='POST':
-      # print(f"request: {request}")
-      print(f"request: {request.json}")
-      #request.json is a python dict
-      print(f'nblx: {request.json["nblx"]}')
-      if request.json["cam"].lower() == 'r':
-         button_label = "Right " + button_label
-      else:
-         button_label = "Left " + button_label
-
+@app.route('/calib_done', methods=DEFAULT_METHODS)
+def calib_done():
+   global cam
+   button_label = cam + " Calib Done"
    choice_list = [\
       {"value": button_label, "onclick_url": MAIN_URL}
    ]
@@ -114,33 +106,39 @@ def calib_points():
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
       onclick_choices = choice_list, \
-      footer_center = "Mode: " + "calib_points")
+      footer_center = "Mode: " + button_label)
 
 
 @app.route(CALIB_URL, methods=DEFAULT_METHODS)
 def calib():
+   mode_str = "FIX ME"
+   global cam
    if request.method=='POST':
-      # print(f"request_form: {request.form}")
-      # print(f"request_form_getlist_type: {request.form.getlist('choice')}")
-      mode = request.form.getlist('choice')[0]
-      cam = mode.split()[0].lower()
-
-   # copy the lastest PNG from the camera to the base
-   if DO_SCP_FOR_CALIBRATION:
-      p = Popen(["scp", f"{cam}:/run/shm/frame.png", f"/home/pi/boomer/{cam}_court.png"])
-   else:
-      p = Popen(["cp", "/run/shm/frame.png", "/home/pi/boomer/{cam}_court.png"])
-   stdoutdata, stderrdata = p.communicate()
-   if p.returncode != 0:
-      print(f"copy of camera's frame.png to court.png failed: {p.returncode}")
-   # status = os.waitpid(p.pid, 0)
- 
-   return render_template(CALIBRATION_TEMPLATE, \
-      court_pic = "static/" + cam + "_court.png", \
-      home_button = my_home_button, \
-      installation_title = custom_installation_title, \
-      installation_icon = custom_installation_icon, \
-      footer_center = "Mode: " + mode)
+      if (request.content_type.startswith('application/json')):
+         print(f"request to calib: {request.json}")
+         # TODO: Popen gen_cam_params; scp params to cams; send cmd to base to reload params and restart cams
+         # after javascript does the post, it redirects to calib_done
+      else:
+         print(f"request_form: {request.form}")
+         # print(f"request_form_getlist_type: {request.form.getlist('choice')}")
+         mode_str = request.form.getlist('choice')[0]
+         cam = mode_str.split()[0].lower()
+         # copy the lastest PNG from the camera to the base
+         if DO_SCP_FOR_CALIBRATION:
+            p = Popen(["scp", f"{cam}:/run/shm/frame.png", f"/home/pi/boomer/{cam}_court.png"])
+         else:
+            p = Popen(["cp", "/run/shm/frame.png", "/home/pi/boomer/{cam}_court.png"])
+         stdoutdata, stderrdata = p.communicate()
+         if p.returncode != 0:
+            print(f"copy of camera's frame.png to court.png failed: {p.returncode}")
+         # status = os.waitpid(p.pid, 0)
+      
+      return render_template(CALIBRATION_TEMPLATE, \
+         court_pic = "static/" + cam + "_court.png", \
+         home_button = my_home_button, \
+         installation_title = custom_installation_title, \
+         installation_icon = custom_installation_icon, \
+         footer_center = "Mode: " + mode_str)
  
 @app.route(MAIN_URL, methods=DEFAULT_METHODS)
 def index():
