@@ -101,6 +101,7 @@
   var background_top;
   var background_left;
   var coords = {};
+  var left;
 
   window.addEventListener('load', (event) => {
     // console.log('The page has fully loaded');
@@ -108,8 +109,9 @@
     canvas = document.getElementById("zoom-canvas");
     contxt = canvas.getContext("2d");
     background_top = background_left = 0;
-    x_px_selector = canvas.width/2
-    y_px_selector = canvas.height/2
+    x_px_selector = canvas.width/2;
+    y_px_selector = canvas.height/2;
+    left = (document.getElementById("mode").innerText.substring(6,7).toLowerCase() === "l") ? true : false;
     draw();
   });
 
@@ -170,15 +172,19 @@
     draw();
   }
   function set_point() {
-    var fb_y_max = 100
-    var bl_x_max = 500
-    var ns_y_min = 220
-    var ns_y_max = 425
-    var nsl_x_max = 440
-    var nsc_x_max = 730
+    // the following define x/y areas for the 7 coordinates: Near/Far(y) Baseline Left/Right (x), and ServiceLine
+    // console.log("Value of left on set_point: " + left);
+    var fb_y_max = 100;
+    var fb_x_max = left ? 500 : 1000;
+    var ns_y_min = 220;
+    var ns_y_max = left ? 425 : 375;
+    var nsl_x_max = left ? 440 : 640;
+    var nsc_x_max = left ? 730 : 900;
+    var nb_x_max = 500;
 
     if (y_px < fb_y_max) {
-      if (x_px < bl_x_max) {
+      // set far base line left or right
+      if (x_px < fb_x_max) {
         coords["fblx"] = x_px; coords["fbly"] = y_px;
         fbl_x_y = document.getElementById('fbl_x_y');
         fbl_x_y.innerText = `Far-BaseLine-Left: X: ${x_px} Y: ${y_px}`;
@@ -188,6 +194,7 @@
         fbr_x_y.innerText = `Far-BaseLine-Right: X: ${x_px} Y: ${y_px}`;
       }
     } else if (y_px > ns_y_min && y_px < ns_y_max) {
+      // set far near service line left, center or right
       if (x_px < nsl_x_max) {
         coords["nslx"] = x_px; coords["nsly"] = y_px;
         nsl_x_y = document.getElementById('nsl_x_y');
@@ -202,7 +209,8 @@
         nsr_x_y.innerText = `Near-ServiceLine-Right: X: ${x_px} Y: ${y_px}`;
       }
     } else if (y_px > ns_y_max) {
-      if (x_px < bl_x_max) {
+      // set near base line left or right
+      if (x_px < nb_x_max) {
         coords["nblx"] = x_px; coords["nbly"] = y_px;
         nbl_x_y = document.getElementById('nbl_x_y');
         nbl_x_y.innerText = `Near-BaseLine-Left: X: ${x_px} Y: ${y_px}`;
@@ -219,14 +227,20 @@
   // for 2 different methods to post coord, refer to: https://stackoverflow.com/questions/6396101/pure-javascript-send-post-data-without-a-form
 
   function send_points() {
-    console.log("status: " + document.getElementById("base_state").innerText.substring(6,7));
-    coords["cam"] = document.getElementById("mode").innerText.substring(6,7);
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/calib_points", true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.send(JSON.stringify(coords));
-    // used the following to get webpage update after the post; there is probably a better way
-    location.href = '/calib_points';
+    var number_of_calib_points = 14;
+    if (Object.keys(coords).length < number_of_calib_points)
+    {
+      window.alert("Please finish setting all 7 coordinates.");
+    } else
+    {
+      coords["cam"] = document.getElementById("mode").innerText.substring(6,7);
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", "/calib_points", true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.send(JSON.stringify(coords));
+      // used the following to get webpage update after the post; there is probably a better way
+      location.href = '/calib_points';
+    }
   }
 </script>
   

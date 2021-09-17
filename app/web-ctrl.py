@@ -95,17 +95,19 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 @app.route('/calib_points', methods=DEFAULT_METHODS)
 def calib_points():
+   button_label = "Calib Done"
    if request.method=='POST':
       # print(f"request: {request}")
       print(f"request: {request.json}")
       #request.json is a python dict
       print(f'nblx: {request.json["nblx"]}')
-
-      # points_dict = json.loads(request.json)
-      # print(f"points: {points_dict}")
+      if request.json["cam"].lower() == 'r':
+         button_label = "Right " + button_label
+      else:
+         button_label = "Left " + button_label
 
    choice_list = [\
-      {"value": "Calibration Done", "onclick_url": MAIN_URL}
+      {"value": button_label, "onclick_url": MAIN_URL}
    ]
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
@@ -257,8 +259,6 @@ def drill_select():
    if request.method=='POST':
       print(f"request_form_getlist_type: {request.form.getlist('choice')}")
       drill_select_type = request.form.getlist('choice')[0]
-
-   # print(f"drill_select_type: {drill_select_type}")
 
    # refer to /home/pi/boomer/drills/ui_drill_selection_lists for drill_list format
    if drill_select_type == DRILL_SELECT_TYPE_TEST:
