@@ -9,41 +9,60 @@
   <div id="myresult" class="img-zoom-result">
       <canvas id="zoom-canvas" width="256" height="256" ></canvas>
   </div>
-  <div class="calibration_controls">
-    <input type="button" value="&#x21A5" onclick="move_up()">
-    <input type="button" value="&#x21A7" onclick="move_down()">
-    <br>
-    <input type="button" value="&#x21A4" onclick="move_left()">
-    <input type="button" value="&#x21A6" onclick="move_right()">
-    <br>
-    <input type="button" value="Set Intersection" onclick="set_point()">
-    <input type="button" value="Fini" onclick="send_points()">
-    <p id="current_x_y">X: ___ Y: ___</p>
-    <p></p>
-    <p id="fbl_x_y">FBL X: ___ Y: ___</p>
-    <p id="fbr_x_y">FBR X: ___ Y: ___</p>
-    <p id="nsl_x_y">NSL X: ___ Y: ___</p>
-    <p id="nsc_x_y">NSC X: ___ Y: ___</p>
-    <p id="nsr_x_y">NSR X: ___ Y: ___</p>
-    <p id="nbl_x_y">NBL X: ___ Y: ___</p>
-    <p id="nbr_x_y">NBR X: ___ Y: ___</p>
-  </div>
+  <form>
+    <div class="calibration_controls">
+      <div>
+        <input type="button" value="&#x21A5" onclick="move_up()">
+        <input type="button" value="&#x21A7" onclick="move_down()">
+        <br>
+        <input type="button" value="&#x21A4" onclick="move_left()">
+        <input type="button" value="&#x21A6" onclick="move_right()">
+        <br>
+        <input type="button" value="Set Intersection" onclick="set_point()">
+        <input type="button" value="Fini" onclick="send_points()">
+        <p id="current_x_y">Current X: ___ Y: ___</p>
+      </div>
+      <hr>
+      <div>
+        <p id="fbl_x_y">Far Baseline Left   X: ___ Y: ___</p>
+        <p id="fbr_x_y">Far Baseline Right  X: ___ Y: ___</p>
+        <p id="nsl_x_y">Near Service Left   X: ___ Y: ___</p>
+        <p id="nsc_x_y">Near Service Center X: ___ Y: ___</p>
+        <p id="nsr_x_y">Near Service Right  X: ___ Y: ___</p>
+        <p id="nbl_x_y">Near Baseline Left  X: ___ Y: ___</p>
+        <p id="nbr_x_y">Near Baseline Right X: ___ Y: ___</p>
+      </div>
+      <hr>
+      <div>
+        <p> Camera position (millimeters) from left singles sideline directly under the net:</p>
+        <label for="cam_x">X:</label>
+        <input type="number" id="cam_x" min="-5500" max="14000">
+        <br><label for="cam_x">Y:</label>
+        <input type="number" id="cam_y" min="12000" max="22000">
+        <br><label for="cam_x">Z:</label>
+        <input type="number" id="cam_z" min="1800" max="6500">
+      </div>
+    </div>
+  </form>
 </div>
 
 <style media="all">
 .calibration_controls {
+  width: 320px;
   display: inline-block;
   border: 1px solid #d4d4d4;
   vertical-align: top;
 }
-.calibration_controls p {
+.calibration_controls p, label, input[type="number"] {
   font-size: 18px;
   color: white;
   background: #555555;
   padding: 1px;
   border: 2px solid #494949;
+  margin-top: 0;
+  margin-bottom: 0;
  }
-.calibration_controls input[type="button"] {
+ .calibration_controls input[type="button"] {
   width: 60px;
   font-size: 32px;
   color: white;
@@ -95,11 +114,10 @@
 <script>
   var canvas;
   var contxt;
-  var x_px_selector;
-  var y_px_selector;
+  var x_px_selector, y_px_selector;
+  var x_px, y_px;
   let move_px = 8;
-  var background_top;
-  var background_left;
+  var background_top, background_left;
   var coords = {};
   var left;
 
@@ -148,7 +166,7 @@
     console.log("background left: %d  top: %d", background_left, background_top); 
     x_px = (background_left*2) + (x_px_selector/move_px - 1);
     y_px = (background_top *2) + (y_px_selector/move_px -1);
-    current_x_y = document.getElementById('current_x_y');
+    var current_x_y = document.getElementById('current_x_y');
     current_x_y.innerText = `Current X: ${x_px} Y: ${y_px}`;
   }
   function move_down() {
@@ -186,37 +204,37 @@
       // set far base line left or right
       if (x_px < fb_x_max) {
         coords["fblx"] = x_px; coords["fbly"] = y_px;
-        fbl_x_y = document.getElementById('fbl_x_y');
+        var fbl_x_y = document.getElementById('fbl_x_y');
         fbl_x_y.innerText = `Far-BaseLine-Left: X: ${x_px} Y: ${y_px}`;
       } else {
         coords["fbrx"] = x_px; coords["fbry"] = y_px;
-        fbr_x_y = document.getElementById('fbr_x_y');
+        var fbr_x_y = document.getElementById('fbr_x_y');
         fbr_x_y.innerText = `Far-BaseLine-Right: X: ${x_px} Y: ${y_px}`;
       }
     } else if (y_px > ns_y_min && y_px < ns_y_max) {
       // set far near service line left, center or right
       if (x_px < nsl_x_max) {
         coords["nslx"] = x_px; coords["nsly"] = y_px;
-        nsl_x_y = document.getElementById('nsl_x_y');
+        var nsl_x_y = document.getElementById('nsl_x_y');
         nsl_x_y.innerText = `Near-ServiceLine-Left: X: ${x_px} Y: ${y_px}`;
       } else if (x_px > nsl_x_max && x_px < nsc_x_max) {
         coords["nscx"] = x_px; coords["nscy"] = y_px;
-        nsc_x_y = document.getElementById('nsc_x_y');
+        var nsc_x_y = document.getElementById('nsc_x_y');
         nsc_x_y.innerText = `Near-ServiceLine-Center: X: ${x_px} Y: ${y_px}`;
       } else {
         coords["nsrx"] = x_px; coords["nsry"] = y_px;
-        nsr_x_y = document.getElementById('nsr_x_y');
+        var nsr_x_y = document.getElementById('nsr_x_y');
         nsr_x_y.innerText = `Near-ServiceLine-Right: X: ${x_px} Y: ${y_px}`;
       }
     } else if (y_px > ns_y_max) {
       // set near base line left or right
       if (x_px < nb_x_max) {
         coords["nblx"] = x_px; coords["nbly"] = y_px;
-        nbl_x_y = document.getElementById('nbl_x_y');
+        var nbl_x_y = document.getElementById('nbl_x_y');
         nbl_x_y.innerText = `Near-BaseLine-Left: X: ${x_px} Y: ${y_px}`;
       } else {
         coords["nbrx"] = x_px; coords["nbry"] = y_px;
-        nbr_x_y = document.getElementById('nbr_x_y');
+        var nbr_x_y = document.getElementById('nbr_x_y');
         nbr_x_y.innerText = `Near-BaseLine-Right: X: ${x_px} Y: ${y_px}`;
       }
     } else {
@@ -228,9 +246,14 @@
 
   function send_points() {
     var number_of_calib_points = 7;
+
+    var cam_x = document.getElementById('cam_x').value;
+    console.log("cam_x: " + cam_x);
+    if (cam_x === "") window.alert("Please enter a value for camera X.");
+
     if (Object.keys(coords).length < number_of_calib_points * 2)
     {
-      window.alert("Please finish setting all " + number_of_calib_points*2 + " coordinates.");
+      window.alert("Please finish setting all " + number_of_calib_points + " coordinates.");
     } else
     {
       coords["cam"] = document.getElementById("mode").innerText.substring(6,7);

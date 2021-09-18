@@ -116,10 +116,26 @@ def calib():
    if request.method=='POST':
       if (request.content_type.startswith('application/json')):
          print(f"request to calib: {request.json}")
+         # request.json example: {'fblx': 883, 'fbly': 77, 'fbrx': 1193, 'fbry': 91,\
+         #  'nslx': 503, 'nsly': 253, 'nscx': 747, 'nscy': 289, 'nsrx': 1065, 'nsry': 347,\
+         #  'nblx': 187, 'nbly': 397, 'nbrx': 933, 'nbry': 653, 'cam': 'R'}
+         c = request.json
+         cam_arg = "--right"
+         if c['cam'].lower() == 'l':
+            cam_arg = ""
          # TODO: Popen gen_cam_params; scp params to cams; send cmd to base to reload params and restart cams
+         PROCESS_CALIB_DATA = False
+         if PROCESS_CALIB_DATA:
+            command = ( f"home/pi/boomer/staged/gen_cam_params.out {cam_arg} --fblx {c['fblx']} --fbly {c['fbly']}"
+               f"--fbrx {c['fbrx']} --fbry {c['fbry']} --nblx {c['nblx']} --nbly {c['nbly']}"
+               f"--nbrx {c['nbrx']} --nbry {c['nbry']} --slx {c['slx']} --sly {c['sly']}"
+               f"--scx {c['scx']} --scy {c['scy']} --srx {c['srx']} --sry {c['sry']}"
+               f"--camx {c['camx']} --camy {c['camy']} --camz {c['camz']}"
+            )
+            printf(f"command: {command}")
          # after javascript does the post, it redirects to calib_done
       else:
-         print(f"request_form: {request.form}")
+         # this POST has which camera to do the calibration for (which PNG to show)
          # print(f"request_form_getlist_type: {request.form.getlist('choice')}")
          mode_str = request.form.getlist('choice')[0]
          cam = mode_str.split()[0].lower()
@@ -130,7 +146,7 @@ def calib():
             p = Popen(["cp", "/run/shm/frame.png", "/home/pi/boomer/{cam}_court.png"])
          stdoutdata, stderrdata = p.communicate()
          if p.returncode != 0:
-            print(f"copy of camera's frame.png to court.png failed: {p.returncode}")
+            print(f"scp of camera's frame.png to court.png failed: {p.returncode}")
          # status = os.waitpid(p.pid, 0)
       
       return render_template(CALIBRATION_TEMPLATE, \
