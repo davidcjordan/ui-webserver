@@ -37,25 +37,28 @@ function stepperInput(id, s, m) {
       updated = true;
     }
   }  
-  // post data to webserver to update base
+  // emit data to webserver to update base IF the page does not have a form
+  // the drill & game pages do not have forms, the cam_position page does.
   if (updated) {
-    let data = {};
-    data[el.name] = Number(el.value);
-    // -- Before using websockets, then did a post, as follows:
-    // fetch("/active", {
-    //   method: "POST", 
-    //   body: JSON.stringify(data)
-    // }).then(respns => {
-    //   console.log("POST %s: %f -- response: %s", el.name, el.value, respns);
-    // });
-    // var socket = io();
-    if (typeof socket !== 'undefined') {
-      socket.emit('change_params', JSON.stringify(data));
-      console.log("Emitted: change_params");
-    }
-    else {
-      console.log("Number picker: socket not defined");
+    // console.log("(iteration 2) forms count: " + document.forms.length);
+    if (document.forms.length === 0) {
+      let data = {};
+      data[el.name] = Number(el.value);
+      // -- Before using websockets, then did a post, as follows:
+      // fetch("/active", {
+      //   method: "POST", 
+      //   body: JSON.stringify(data)
+      // }).then(respns => {
+      //   console.log("POST %s: %f -- response: %s", el.name, el.value, respns);
+      // });
+      // var socket = io();
+      if (typeof socket !== 'undefined') {
+        socket.emit('change_params', JSON.stringify(data));
+        console.log("Emitted: change_params");
+      }
+      else {
+        console.log("Number picker: socket not defined");
+      }
     }
   }
 }
-

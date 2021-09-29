@@ -7,10 +7,10 @@
     <img id="myimage" src="{{court_pic}}" alt="Image from camera is missing" height="400">
   </div>
   <div id="myresult" class="img-zoom-result">
-      <canvas id="zoom-canvas" width="256" height="256" ></canvas>
+    <canvas id="zoom-canvas" width="256" height="256" ></canvas>
   </div>
-  <form>
-    <div class="calibration_controls">
+  <div class="calibration_controls">
+    <form>
       <div>
         <input type="button" value="&#x21A5" onclick="move_up()">
         <input type="button" value="&#x21A7" onclick="move_down()">
@@ -32,29 +32,17 @@
         <p id="nbl_x_y">Near Baseline Left  X: ___ Y: ___</p>
         <p id="nbr_x_y">Near Baseline Right X: ___ Y: ___</p>
       </div>
-      <hr>
-      <div>
-        <p> Camera position (millimeters) from left singles sideline directly under the net:</p>
-        <label for="cam_x">X:</label>
-        <input type="number" id="cam_x" min="-5500" max="14000">
-        <br><label for="cam_x">Y:</label>
-        <input type="number" id="cam_y" min="12000" max="22000">
-        <br><label for="cam_x">Z:</label>
-        <input type="number" id="cam_z" min="1800" max="6500">
-      </div>
-    </div>
-  </form>
+    </form>
+  </div>
 </div>
 
 <style media="all">
 .calibration_controls {
-  width: 320px;
   display: inline-block;
   border: 1px solid #d4d4d4;
-  vertical-align: top;
 }
 .calibration_controls p, label, input[type="number"] {
-  font-size: 18px;
+  font-size: 24px;
   color: white;
   background: #555555;
   padding: 1px;

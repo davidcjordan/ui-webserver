@@ -11,9 +11,9 @@
   {% for key,item in options.items() %}
   <div class="stepper">
     <label for="{{key}}">{{item['legend']}}:</label>
-    <button>–</button>
+    <button type="button">–</button>
       <input type="number" id="{{key}}-stepper" name="{{key}}" value={{item['dflt']}} min={{item['min']}} max={{item['max']}} step={{item['step']}} readonly>
-    <button>+</button>
+    <button type="button">+</button>
   </div>
   {% endfor %}
 </div>

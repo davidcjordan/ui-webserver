@@ -49,6 +49,7 @@ DRILL_SELECT_TYPE_URL = '/drill_select_type'
 DRILL_SELECT_URL = '/drill_select' # does not have a template
 DRILL_URL = '/drill'
 CALIB_URL = '/calib'
+CAM_POSITION_URL = '/cam_position'
 # WORKOUT_SELECTION_URL = '/workout_selection'
 # SETTINGS_URL = '/settings'
 
@@ -61,6 +62,7 @@ DRILL_SELECT_FILTERED_TEMPLATE = '/layouts' + '/drill_select_filtered' + '.html'
 DRILL_SELECT_UNFILTERED_TEMPLATE = '/layouts' + '/drill_select_unfiltered' + '.html'
 DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
 CALIBRATION_TEMPLATE = '/layouts' + CALIB_URL + '.html'
+CAM_POSITION_TEMPLATE = '/layouts' + CAM_POSITION_URL + '.html'
 # WORKOUT_SELECTION_TEMPLATE = '/layouts' + WORKOUT_SELECTION_URL + '.html'
 # SETTINGS_TEMPLATE = '/layouts' + SETTINGS_URL + '.html'
 
@@ -93,6 +95,21 @@ app.config['SECRET_KEY'] = 'secret!'
 # socketio = SocketIO(app, cors_allowed_origins="http://localhost")
 # socketio = SocketIO(app, cors_allowed_origins="http://127.0.0.1")
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+@app.route(CAM_POSITION_URL, methods=DEFAULT_METHODS)
+def cam_position():
+   global cam
+   position_options = { \
+      "cam_x":{"legend":"Camera X (Feet)", "dflt":0, "min":-10, "max":20, "step":1} \
+   }
+         
+   previous_url = "/" + inspect.currentframe().f_code.co_name
+   return render_template(CAM_POSITION_TEMPLATE, \
+      installation_title = custom_installation_title, \
+      installation_icon = custom_installation_icon, \
+      options = position_options, \
+      footer_center = "Mode: " + "Get Cam Position")
+
 
 @app.route('/calib_done', methods=DEFAULT_METHODS)
 def calib_done():

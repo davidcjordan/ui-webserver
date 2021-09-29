@@ -1,0 +1,19 @@
+{% extends "layouts/base.html" %}
+
+{% block selections %}
+<form method="post">
+  <div>
+    <p> Camera position: distance from left singles sideline directly under the net to the center of the camera.</p>
+    {% for key,item in options.items() %}
+    <div class="stepper">
+      <label for="{{key}}">{{item['legend']}}:</label>
+      <button type="button">–</button>
+        <input type="number" id="{{key}}-stepper" name="{{key}}" value={{item['dflt']}} min={{item['min']}} max={{item['max']}} step={{item['step']}} readonly>
+      <button type="button">+</button>
+    </div>
+    {% endfor %}
+    <button type="submit" value="Submit">
+  </div>
+</form>
+
+{% endblock %} 
