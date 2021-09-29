@@ -100,7 +100,12 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 def cam_position():
    global cam
    position_options = { \
-      "cam_x":{"legend":"Camera X (Feet)", "dflt":0, "min":-10, "max":20, "step":1} \
+      "cam_x_ft":{"legend":"Feet", "dflt":0, "min":-10, "max":20, "step":1, "start_div":"From Left Singles"}, \
+      "cam_x_in":{"legend":"Inches", "dflt":0, "min":-11, "max":12, "step":1, "end_div":"Y"}, \
+      "cam_y_ft":{"legend":"Feet", "dflt":47, "min":39, "max":60, "step":1, "start_div":"From Net"}, \
+      "cam_y_in":{"legend":"Inches", "dflt":0, "min":0, "max":12, "step":1, "end_div":"Y"}, \
+      "cam_z_ft":{"legend":"Feet", "dflt":8, "min":0, "max":20, "step":1, "start_div":"Height"}, \
+      "cam_z_in":{"legend":"Inches", "dflt":0, "min":0, "max":12, "step":1, "end_div":"Y"} \
    }
          
    previous_url = "/" + inspect.currentframe().f_code.co_name
