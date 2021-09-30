@@ -87,6 +87,8 @@ previous_url = None
 back_url = None
 
 cam = None  # a global on which camera is being calibrated
+cam_x_mm = cam_y_mm = cam_z_mm = None # global camera location
+INCHES_TO_MM = 25.4
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -98,7 +100,6 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 @app.route(CAM_POSITION_URL, methods=DEFAULT_METHODS)
 def cam_position():
-   global cam
    position_options = { \
       "cam_x_ft":{"legend":"Feet", "dflt":0, "min":-10, "max":20, "step":1, "start_div":"From Left Singles"}, \
       "cam_x_in":{"legend":"Inches", "dflt":0, "min":-11, "max":12, "step":1, "end_div":"Y"}, \
@@ -107,33 +108,52 @@ def cam_position():
       "cam_z_ft":{"legend":"Feet", "dflt":8, "min":0, "max":20, "step":1, "start_div":"Height"}, \
       "cam_z_in":{"legend":"Inches", "dflt":0, "min":0, "max":12, "step":1, "end_div":"Y"} \
    }
-         
-   previous_url = "/" + inspect.currentframe().f_code.co_name
    return render_template(CAM_POSITION_TEMPLATE, \
+      home_button = my_home_button, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
       options = position_options, \
       footer_center = "Mode: " + "Get Cam Position")
 
 
-@app.route('/calib_done', methods=DEFAULT_METHODS)
-def calib_done():
+@app.route(CALIB_URL, methods=DEFAULT_METHODS)
+def calib():
    global cam
-   button_label = cam + " Calib Done"
-   choice_list = [\
-      {"value": button_label, "onclick_url": MAIN_URL}
-   ]
-   return render_template(CHOICE_INPUTS_TEMPLATE, \
+   global cam_x_mm, cam_y_mm, cam_z_mm
+   cam = "Left"
+   if request.method=='POST':
+      print(f"POST to CALIB request.form: {request.form}")
+      # example: ImmutableMultiDict([('cam_id', 'l'), ('cam_x_ft', '0'), ('cam_x_in', '0'), ('cam_y_ft', '47'), ('cam_y_in', '0'), ('cam_z_ft', '8'), ('cam_z_in', '0')])
+      if ('cam_id' in request.form) and request.form['cam_id'].lower().startswith('r'):
+         cam = 'Right'
+      print(f"cam set to: {cam}")
+      if ('cam_x_ft' in request.form) and ('cam_x_in' in request.form):
+         cam_x_mm = ((int(request.form['cam_x_ft']) * 12) + int(request.form['cam_x_in'])) * INCHES_TO_MM
+      print(f"cam_x_mm set to: {cam_x_mm}")
+
+  
+   mode_str = f"Court Coordinates ({cam})"
+   cam_lower = cam.lower()
+   # copy the lastest PNG from the camera to the base
+   if DO_SCP_FOR_CALIBRATION:
+      p = Popen(["scp", f"{cam_lower}:/run/shm/frame.png", f"/home/pi/boomer/{cam_lower}_court.png"])
+   else:
+      p = Popen(["cp", "/run/shm/frame.png", f"/home/pi/boomer/{cam_lower}_court.png"])
+   stdoutdata, stderrdata = p.communicate()
+   if p.returncode != 0:
+      print(f"scp of camera's frame.png to court.png failed: {p.returncode}")
+   # status = os.waitpid(p.pid, 0)
+
+   return render_template(CALIBRATION_TEMPLATE, \
+      court_pic = "static/" + cam_lower + "_court.png", \
       home_button = my_home_button, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
-      onclick_choices = choice_list, \
-      footer_center = "Mode: " + button_label)
+      footer_center = "Mode: " + mode_str)
 
 
-@app.route(CALIB_URL, methods=DEFAULT_METHODS)
-def calib():
-   mode_str = "FIX ME"
+@app.route('/calib_done', methods=DEFAULT_METHODS)
+def calib_done():
    global cam
    if request.method=='POST':
       if (request.content_type.startswith('application/json')):
@@ -157,26 +177,19 @@ def calib():
             printf(f"command: {command}")
          # after javascript does the post, it redirects to calib_done
       else:
-         # this POST has which camera to do the calibration for (which PNG to show)
-         # print(f"request_form_getlist_type: {request.form.getlist('choice')}")
-         mode_str = request.form.getlist('choice')[0]
-         cam = mode_str.split()[0].lower()
-         # copy the lastest PNG from the camera to the base
-         if DO_SCP_FOR_CALIBRATION:
-            p = Popen(["scp", f"{cam}:/run/shm/frame.png", f"/home/pi/boomer/{cam}_court.png"])
-         else:
-            p = Popen(["cp", "/run/shm/frame.png", "/home/pi/boomer/{cam}_court.png"])
-         stdoutdata, stderrdata = p.communicate()
-         if p.returncode != 0:
-            print(f"scp of camera's frame.png to court.png failed: {p.returncode}")
-         # status = os.waitpid(p.pid, 0)
-      
-      return render_template(CALIBRATION_TEMPLATE, \
-         court_pic = "static/" + cam + "_court.png", \
-         home_button = my_home_button, \
-         installation_title = custom_installation_title, \
-         installation_icon = custom_installation_icon, \
-         footer_center = "Mode: " + mode_str)
+         print("Recieved a non-json POST at calib_done")
+ 
+   button_label = cam + " Calib Done"
+   choice_list = [\
+      {"value": button_label, "onclick_url": MAIN_URL}
+   ]
+   return render_template(CHOICE_INPUTS_TEMPLATE, \
+      home_button = my_home_button, \
+      installation_title = custom_installation_title, \
+      installation_icon = custom_installation_icon, \
+      onclick_choices = choice_list, \
+      footer_center = "Mode: " + button_label)
+
  
 @app.route(MAIN_URL, methods=DEFAULT_METHODS)
 def index():
@@ -185,18 +198,19 @@ def index():
 
    onclick_choice_list = [\
       {"value": "Game Mode", "onclick_url": GAME_OPTIONS_URL},\
-      {"value": "Drills", "onclick_url": DRILL_SELECT_TYPE_URL}\
+      {"value": "Drills", "onclick_url": DRILL_SELECT_TYPE_URL},\
+      {"value": "Cam Calibration", "onclick_url": CAM_POSITION_URL}\
    ]
-   form_choice_list = [\
-      {"value": "Left Cam Calib"},\
-      {"value": "Right Cam Calib"}\
-   ]
+   # form_choice_list = [\
+   #    {"value": "Left Cam Calib"},\
+   #    {"value": "Right Cam Calib"}\
+   # ]
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
       onclick_choices = onclick_choice_list, \
-      form_choices = form_choice_list, \
+      # form_choices = form_choice_list, \
       url_for_post = CALIB_URL, \
       footer_center = "Mode: --")
 

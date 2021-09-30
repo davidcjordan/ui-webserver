@@ -2,8 +2,17 @@
 
 {% block selections %}
 <p> Camera position: distance from left singles sideline directly under the net to the center of the camera.</p>
-<form method="post">
+<form method="post" action="{{ url_for('calib') }}">
   <div>
+    <div class="selections">
+    <fieldset class="radio-slider-buttons">
+      <label>Camera: </label>
+      <input type="radio" id="left" name="cam_id" value="l" checked>
+      <label for="left">Left</label><br>
+      <input type="radio" id="right" name="cam_id" value="r">
+      <label for="right">Right</label><br>
+    </fieldset>
+    </div>
     <div class="stepper">
       <table>
         {% for key,item in options.items() %}
