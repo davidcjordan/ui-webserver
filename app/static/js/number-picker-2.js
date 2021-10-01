@@ -6,6 +6,7 @@ for (i = 0; i < inc.length; i++) {
     min = incI.getAttribute("min"),
     max = incI.getAttribute("max"),
     step = incI.getAttribute("step");
+  // console.log("adding onclick to: " + incI.id)
   document
     .getElementById(id)
     .previousElementSibling.setAttribute(

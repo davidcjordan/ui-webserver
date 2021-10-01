@@ -86,8 +86,9 @@ DRILL_SELECT_TYPE_TEST ='Test'
 previous_url = None
 back_url = None
 
-cam = None  # a global on which camera is being calibrated
-cam_x_mm = cam_y_mm = cam_z_mm = None # global camera location
+incam_side = None  # a global on which camera is being calibrated
+cam_mm = [0]*3 # global camera location
+X=0;Y=1;Z=2 # cam array enum
 INCHES_TO_MM = 25.4
 
 app = Flask(__name__)
@@ -102,11 +103,11 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 def cam_position():
    position_options = { \
       "cam_x_ft":{"legend":"Feet", "dflt":0, "min":-10, "max":20, "step":1, "start_div":"From Left Singles"}, \
-      "cam_x_in":{"legend":"Inches", "dflt":0, "min":-11, "max":12, "step":1, "end_div":"Y"}, \
+      "cam_x_in":{"legend":"Inches", "dflt":0, "min":-11, "max":11, "step":1, "end_div":"Y"}, \
       "cam_y_ft":{"legend":"Feet", "dflt":47, "min":39, "max":60, "step":1, "start_div":"From Net"}, \
-      "cam_y_in":{"legend":"Inches", "dflt":0, "min":0, "max":12, "step":1, "end_div":"Y"}, \
+      "cam_y_in":{"legend":"Inches", "dflt":0, "min":0, "max":11, "step":1, "end_div":"Y"}, \
       "cam_z_ft":{"legend":"Feet", "dflt":8, "min":0, "max":20, "step":1, "start_div":"Height"}, \
-      "cam_z_in":{"legend":"Inches", "dflt":0, "min":0, "max":12, "step":1, "end_div":"Y"} \
+      "cam_z_in":{"legend":"Inches", "dflt":0, "min":0, "max":11, "step":1, "end_div":"Y"} \
    }
    return render_template(CAM_POSITION_TEMPLATE, \
       home_button = my_home_button, \
@@ -118,22 +119,23 @@ def cam_position():
 
 @app.route(CALIB_URL, methods=DEFAULT_METHODS)
 def calib():
-   global cam
-   global cam_x_mm, cam_y_mm, cam_z_mm
-   cam = "Left"
+   global cam_side, cam_mm, X, Y, Z
+   cam_side = "Left"
    if request.method=='POST':
       print(f"POST to CALIB request.form: {request.form}")
       # example: ImmutableMultiDict([('cam_id', 'l'), ('cam_x_ft', '0'), ('cam_x_in', '0'), ('cam_y_ft', '47'), ('cam_y_in', '0'), ('cam_z_ft', '8'), ('cam_z_in', '0')])
       if ('cam_id' in request.form) and request.form['cam_id'].lower().startswith('r'):
-         cam = 'Right'
-      print(f"cam set to: {cam}")
+         cam_side = 'Right'
       if ('cam_x_ft' in request.form) and ('cam_x_in' in request.form):
-         cam_x_mm = ((int(request.form['cam_x_ft']) * 12) + int(request.form['cam_x_in'])) * INCHES_TO_MM
-      print(f"cam_x_mm set to: {cam_x_mm}")
-
+         cam_mm[X] = int(((int(request.form['cam_x_ft']) * 12) + int(request.form['cam_x_in'])) * INCHES_TO_MM)
+      if ('cam_y_ft' in request.form) and ('cam_y_in' in request.form):
+         cam_mm[Y] = int(((int(request.form['cam_y_ft']) * 12) + int(request.form['cam_y_in'])) * INCHES_TO_MM)
+      if ('cam_z_ft' in request.form) and ('cam_z_in' in request.form):
+         cam_mm[Z] = int(((int(request.form['cam_z_ft']) * 12) + int(request.form['cam_z_in'])) * INCHES_TO_MM)
+      # print(f"cam_mm set to: {cam_mm}")
   
-   mode_str = f"Court Coordinates ({cam})"
-   cam_lower = cam.lower()
+   mode_str = f"{cam_side} Court Coord"
+   cam_lower = cam_side.lower()
    # copy the lastest PNG from the camera to the base
    if DO_SCP_FOR_CALIBRATION:
       p = Popen(["scp", f"{cam_lower}:/run/shm/frame.png", f"/home/pi/boomer/{cam_lower}_court.png"])
@@ -154,17 +156,18 @@ def calib():
 
 @app.route('/calib_done', methods=DEFAULT_METHODS)
 def calib_done():
-   global cam
+   global cam_side, cam_mm, X, Y, Z
    if request.method=='POST':
       if (request.content_type.startswith('application/json')):
          print(f"request to calib: {request.json}")
          # request.json example: {'fblx': 883, 'fbly': 77, 'fbrx': 1193, 'fbry': 91,\
          #  'nslx': 503, 'nsly': 253, 'nscx': 747, 'nscy': 289, 'nsrx': 1065, 'nsry': 347,\
-         #  'nblx': 187, 'nbly': 397, 'nbrx': 933, 'nbry': 653, 'cam': 'R'}
+         #  'nblx': 187, 'nbly': 397, 'nbrx': 933, 'nbry': 653}
          c = request.json
-         cam_arg = "--right"
-         if c['cam'].lower() == 'l':
-            cam_arg = ""
+         if cam_side.lower() == "Left":
+            cam_arg = "--left"
+         else:
+            cam_arg = "--right"
          # TODO: Popen gen_cam_params; scp params to cams; send cmd to base to reload params and restart cams
          PROCESS_CALIB_DATA = False
          if PROCESS_CALIB_DATA:
@@ -172,7 +175,7 @@ def calib_done():
                f"--fbrx {c['fbrx']} --fbry {c['fbry']} --nblx {c['nblx']} --nbly {c['nbly']}"
                f"--nbrx {c['nbrx']} --nbry {c['nbry']} --slx {c['slx']} --sly {c['sly']}"
                f"--scx {c['scx']} --scy {c['scy']} --srx {c['srx']} --sry {c['sry']}"
-               f"--camx {c['camx']} --camy {c['camy']} --camz {c['camz']}"
+               f"--camx {cam_mm[X]} --camy {cam_mm[Y]} --camz {cam_mm[Z]}"
             )
             printf(f"command: {command}")
          # after javascript does the post, it redirects to calib_done

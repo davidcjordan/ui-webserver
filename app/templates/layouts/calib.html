@@ -3,36 +3,33 @@
 {% block selections %}
 <div class="img-zoom-container">
   <div class="img-zoom-image">
-    <!-- <img id="myimage" src="static/court.png" alt="Tennis Court" height="400"> -->
     <img id="myimage" src="{{court_pic}}" alt="Image from camera is missing" height="400">
   </div>
   <div id="myresult" class="img-zoom-result">
     <canvas id="zoom-canvas" width="256" height="256" ></canvas>
   </div>
   <div class="calibration_controls">
-    <form>
-      <div>
-        <input type="button" value="&#x21A5" onclick="move_up()">
-        <input type="button" value="&#x21A7" onclick="move_down()">
-        <br>
-        <input type="button" value="&#x21A4" onclick="move_left()">
-        <input type="button" value="&#x21A6" onclick="move_right()">
-        <br>
-        <input type="button" value="Set Intersection" onclick="set_point()">
-        <input type="button" value="Fini" onclick="send_points()">
-        <p id="current_x_y">Current X: ___ Y: ___</p>
-      </div>
-      <hr>
-      <div>
-        <p id="fbl_x_y">Far Baseline Left   X: ___ Y: ___</p>
-        <p id="fbr_x_y">Far Baseline Right  X: ___ Y: ___</p>
-        <p id="nsl_x_y">Near Service Left   X: ___ Y: ___</p>
-        <p id="nsc_x_y">Near Service Center X: ___ Y: ___</p>
-        <p id="nsr_x_y">Near Service Right  X: ___ Y: ___</p>
-        <p id="nbl_x_y">Near Baseline Left  X: ___ Y: ___</p>
-        <p id="nbr_x_y">Near Baseline Right X: ___ Y: ___</p>
-      </div>
-    </form>
+    <div>
+      <input type="button" value="&#x21A5" onclick="move_up()">
+      <input type="button" value="&#x21A7" onclick="move_down()">
+      <br>
+      <input type="button" value="&#x21A4" onclick="move_left()">
+      <input type="button" value="&#x21A6" onclick="move_right()">
+      <br>
+      <input type="button" value="Set Intersection" onclick="set_point()">
+      <input type="button" value="Fini" onclick="send_points()">
+      <p id="current_x_y">Current X: ___ Y: ___</p>
+    </div>
+    <hr>
+    <div>
+      <p id="fbl_x_y">Far Baseline Left   X: ___ Y: ___</p>
+      <p id="fbr_x_y">Far Baseline Right  X: ___ Y: ___</p>
+      <p id="nsl_x_y">Near Service Left   X: ___ Y: ___</p>
+      <p id="nsc_x_y">Near Service Center X: ___ Y: ___</p>
+      <p id="nsr_x_y">Near Service Right  X: ___ Y: ___</p>
+      <p id="nbl_x_y">Near Baseline Left  X: ___ Y: ___</p>
+      <p id="nbr_x_y">Near Baseline Right X: ___ Y: ___</p>
+    </div>
   </div>
 </div>
 
@@ -70,6 +67,7 @@
   display: inline-block;
   border: 1px solid #d4d4d4;
   height: 400px;
+  vertical-align: top;
 }
 .img-zoom-lens {
   position: absolute;
@@ -234,10 +232,6 @@
 
   function send_points() {
     var number_of_calib_points = 7;
-
-    var cam_x = document.getElementById('cam_x').value;
-    console.log("cam_x: " + cam_x);
-    if (cam_x === "") window.alert("Please enter a value for camera X.");
 
     if (Object.keys(coords).length < number_of_calib_points * 2)
     {
