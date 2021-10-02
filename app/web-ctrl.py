@@ -86,7 +86,7 @@ DRILL_SELECT_TYPE_TEST ='Test'
 previous_url = None
 back_url = None
 
-incam_side = None  # a global on which camera is being calibrated
+cam_side = None  # a global on which camera is being calibrated
 cam_mm = [0]*3 # global camera location
 X=0;Y=1;Z=2 # cam array enum
 INCHES_TO_MM = 25.4
@@ -101,6 +101,14 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 @app.route(CAM_POSITION_URL, methods=DEFAULT_METHODS)
 def cam_position():
+   dflt_ft = [0, 47, 8]
+   dflt_in = [0, 0, 0]
+   try:
+      with open(f"/home/pi/boomer/site_data/left_cam_location.json") as infile:
+         json.load(left_loc_dict, infile)
+   except:
+      pass
+
    position_options = { \
       "cam_x_ft":{"legend":"Feet", "dflt":0, "min":-10, "max":20, "step":1, "start_div":"From Left Singles"}, \
       "cam_x_in":{"legend":"Inches", "dflt":0, "min":-11, "max":11, "step":1, "end_div":"Y"}, \
@@ -132,6 +140,10 @@ def calib():
          cam_mm[Y] = int(((int(request.form['cam_y_ft']) * 12) + int(request.form['cam_y_in'])) * INCHES_TO_MM)
       if ('cam_z_ft' in request.form) and ('cam_z_in' in request.form):
          cam_mm[Z] = int(((int(request.form['cam_z_ft']) * 12) + int(request.form['cam_z_in'])) * INCHES_TO_MM)
+      if len(cam_mm) > 2:
+         #persist values for next calibration, so they don't have to be re-entered
+         with open(f"/home/pi/boomer/site_data/{cam_side.lower()}_cam_location.json", "w") as outfile:
+            json.dump(request.form, outfile)
       # print(f"cam_mm set to: {cam_mm}")
   
    mode_str = f"{cam_side} Court Coord"
@@ -164,25 +176,35 @@ def calib_done():
          #  'nslx': 503, 'nsly': 253, 'nscx': 747, 'nscy': 289, 'nsrx': 1065, 'nsry': 347,\
          #  'nblx': 187, 'nbly': 397, 'nbrx': 933, 'nbry': 653}
          c = request.json
-         if cam_side.lower() == "Left":
+         if cam_side.lower() == "left":
             cam_arg = "--left"
          else:
             cam_arg = "--right"
          # TODO: Popen gen_cam_params; scp params to cams; send cmd to base to reload params and restart cams
-         PROCESS_CALIB_DATA = False
-         if PROCESS_CALIB_DATA:
-            command = ( f"home/pi/boomer/staged/gen_cam_params.out {cam_arg} --fblx {c['fblx']} --fbly {c['fbly']}"
-               f"--fbrx {c['fbrx']} --fbry {c['fbry']} --nblx {c['nblx']} --nbly {c['nbly']}"
-               f"--nbrx {c['nbrx']} --nbry {c['nbry']} --slx {c['slx']} --sly {c['sly']}"
-               f"--scx {c['scx']} --scy {c['scy']} --srx {c['srx']} --sry {c['sry']}"
-               f"--camx {cam_mm[X]} --camy {cam_mm[Y]} --camz {cam_mm[Z]}"
-            )
-            printf(f"command: {command}")
+         # PROCESS_CALIB_DATA = False
+         # if PROCESS_CALIB_DATA:
+         command = ( f"/home/pi/boomer/staged/gen_cam_params.out {cam_arg} --fblx {c['fblx']} --fbly {c['fbly']}"
+            f" --fbrx {c['fbrx']} --fbry {c['fbry']} --nblx {c['nblx']} --nbly {c['nbly']}"
+            f" --nbrx {c['nbrx']} --nbry {c['nbry']} --nslx {c['nslx']} --nsly {c['nsly']}"
+            f" --nscx {c['nscx']} --nscy {c['nscy']} --nsrx {c['nsrx']} --nsry {c['nsry']}"
+            f" --camx {cam_mm[X]} --camy {cam_mm[Y]} --camz {cam_mm[Z]}" )
+         # print(f"command: {command}")
+         coord_args = (f"--fblx {c['fblx']} --fbly {c['fbly']}"
+            f" --fbrx {c['fbrx']} --fbry {c['fbry']} --nblx {c['nblx']} --nbly {c['nbly']}"
+            f" --nbrx {c['nbrx']} --nbry {c['nbry']} --nslx {c['nslx']} --nsly {c['nsly']}"
+            f" --nscx {c['nscx']} --nscy {c['nscy']} --nsrx {c['nsrx']} --nsry {c['nsry']}"
+            f" --camx {cam_mm[X]} --camy {cam_mm[Y]} --camz {cam_mm[Z]}" )
+
+         p = Popen(["/home/pi/boomer/staged/gen_cam_params.out", cam_arg, coord_args])
+         stdoutdata, stderrdata = p.communicate()
+         if p.returncode != 0:
+            print(f"gen_cam_params failed: {p.returncode}")
+
          # after javascript does the post, it redirects to calib_done
       else:
          print("Recieved a non-json POST at calib_done")
  
-   button_label = cam + " Calib Done"
+   button_label = cam_side + " Calib Done"
    choice_list = [\
       {"value": button_label, "onclick_url": MAIN_URL}
    ]
