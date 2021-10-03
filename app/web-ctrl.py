@@ -101,21 +101,20 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 @app.route(CAM_POSITION_URL, methods=DEFAULT_METHODS)
 def cam_position():
-   dflt_ft = [0, 47, 8]
-   dflt_in = [0, 0, 0]
    try:
-      with open(f"/home/pi/boomer/site_data/left_cam_location.json") as infile:
-         json.load(left_loc_dict, infile)
+      with open("/home/pi/boomer/site_data/left_cam_location.json") as infile:
+         loc_dict = json.load(infile)
    except:
-      pass
+      # default values if not persisted from a previous calibration
+      loc_dict = {"cam_x_ft": "0", "cam_x_in": "0", "cam_y_ft": "47", "cam_y_in": "0", "cam_z_ft": "0", "cam_z_in": "0"}
 
    position_options = { \
-      "cam_x_ft":{"legend":"Feet", "dflt":0, "min":-10, "max":20, "step":1, "start_div":"From Left Singles"}, \
-      "cam_x_in":{"legend":"Inches", "dflt":0, "min":-11, "max":11, "step":1, "end_div":"Y"}, \
-      "cam_y_ft":{"legend":"Feet", "dflt":47, "min":39, "max":60, "step":1, "start_div":"From Net"}, \
-      "cam_y_in":{"legend":"Inches", "dflt":0, "min":0, "max":11, "step":1, "end_div":"Y"}, \
-      "cam_z_ft":{"legend":"Feet", "dflt":8, "min":0, "max":20, "step":1, "start_div":"Height"}, \
-      "cam_z_in":{"legend":"Inches", "dflt":0, "min":0, "max":11, "step":1, "end_div":"Y"} \
+      "cam_x_ft":{"legend":"Feet", "dflt":loc_dict['cam_x_ft'], "min":-10, "max":20, "step":1, "start_div":"From Left Singles"}, \
+      "cam_x_in":{"legend":"Inches", "dflt":loc_dict['cam_x_in'], "min":-11, "max":11, "step":1, "end_div":"Y"}, \
+      "cam_y_ft":{"legend":"Feet", "dflt":loc_dict['cam_y_ft'], "min":39, "max":60, "step":1, "start_div":"From Net"}, \
+      "cam_y_in":{"legend":"Inches", "dflt":loc_dict['cam_y_in'], "min":0, "max":11, "step":1, "end_div":"Y"}, \
+      "cam_z_ft":{"legend":"Feet", "dflt":loc_dict['cam_z_ft'], "min":0, "max":20, "step":1, "start_div":"Height"}, \
+      "cam_z_in":{"legend":"Inches", "dflt":loc_dict['cam_z_in'], "min":0, "max":11, "step":1, "end_div":"Y"} \
    }
    return render_template(CAM_POSITION_TEMPLATE, \
       home_button = my_home_button, \
@@ -129,23 +128,30 @@ def cam_position():
 def calib():
    global cam_side, cam_mm, X, Y, Z
    cam_side = "Left"
+   loc_dict = {}
    if request.method=='POST':
       print(f"POST to CALIB request.form: {request.form}")
       # example: ImmutableMultiDict([('cam_id', 'l'), ('cam_x_ft', '0'), ('cam_x_in', '0'), ('cam_y_ft', '47'), ('cam_y_in', '0'), ('cam_z_ft', '8'), ('cam_z_in', '0')])
       if ('cam_id' in request.form) and request.form['cam_id'].lower().startswith('r'):
          cam_side = 'Right'
       if ('cam_x_ft' in request.form) and ('cam_x_in' in request.form):
-         cam_mm[X] = int(((int(request.form['cam_x_ft']) * 12) + int(request.form['cam_x_in'])) * INCHES_TO_MM)
+         loc_dict['cam_x_ft'] = int(request.form['cam_x_ft'])
+         loc_dict['cam_x_in'] = int(request.form['cam_x_in'])
+         cam_mm[X] = int(((loc_dict['cam_x_ft'] * 12) + loc_dict['cam_x_in']) * INCHES_TO_MM)
       if ('cam_y_ft' in request.form) and ('cam_y_in' in request.form):
-         cam_mm[Y] = int(((int(request.form['cam_y_ft']) * 12) + int(request.form['cam_y_in'])) * INCHES_TO_MM)
+         loc_dict['cam_y_ft'] = int(request.form['cam_y_ft'])
+         loc_dict['cam_y_in'] = int(request.form['cam_y_in'])
+         cam_mm[X] = int(((loc_dict['cam_y_ft'] * 12) + loc_dict['cam_y_in']) * INCHES_TO_MM)
       if ('cam_z_ft' in request.form) and ('cam_z_in' in request.form):
-         cam_mm[Z] = int(((int(request.form['cam_z_ft']) * 12) + int(request.form['cam_z_in'])) * INCHES_TO_MM)
+         loc_dict['cam_z_ft'] = int(request.form['cam_z_ft'])
+         loc_dict['cam_z_in'] = int(request.form['cam_z_in'])
+         cam_mm[X] = int(((loc_dict['cam_z_ft'] * 12) + loc_dict['cam_z_in']) * INCHES_TO_MM)
       if len(cam_mm) > 2:
          #persist values for next calibration, so they don't have to be re-entered
          with open(f"/home/pi/boomer/site_data/{cam_side.lower()}_cam_location.json", "w") as outfile:
-            json.dump(request.form, outfile)
+            json.dump(loc_dict, outfile)
       # print(f"cam_mm set to: {cam_mm}")
-  
+
    mode_str = f"{cam_side} Court Coord"
    cam_lower = cam_side.lower()
    # copy the lastest PNG from the camera to the base
