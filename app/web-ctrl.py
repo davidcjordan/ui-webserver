@@ -141,11 +141,11 @@ def calib():
       if ('cam_y_ft' in request.form) and ('cam_y_in' in request.form):
          loc_dict['cam_y_ft'] = int(request.form['cam_y_ft'])
          loc_dict['cam_y_in'] = int(request.form['cam_y_in'])
-         cam_mm[X] = int(((loc_dict['cam_y_ft'] * 12) + loc_dict['cam_y_in']) * INCHES_TO_MM)
+         cam_mm[Y] = int(((loc_dict['cam_y_ft'] * 12) + loc_dict['cam_y_in']) * INCHES_TO_MM)
       if ('cam_z_ft' in request.form) and ('cam_z_in' in request.form):
          loc_dict['cam_z_ft'] = int(request.form['cam_z_ft'])
          loc_dict['cam_z_in'] = int(request.form['cam_z_in'])
-         cam_mm[X] = int(((loc_dict['cam_z_ft'] * 12) + loc_dict['cam_z_in']) * INCHES_TO_MM)
+         cam_mm[Z] = int(((loc_dict['cam_z_ft'] * 12) + loc_dict['cam_z_in']) * INCHES_TO_MM)
       if len(cam_mm) > 2:
          #persist values for next calibration, so they don't have to be re-entered
          with open(f"/home/pi/boomer/site_data/{cam_side.lower()}_cam_location.json", "w") as outfile:
@@ -187,21 +187,13 @@ def calib_done():
          else:
             cam_arg = "--right"
          # TODO: Popen gen_cam_params; scp params to cams; send cmd to base to reload params and restart cams
-         # PROCESS_CALIB_DATA = False
-         # if PROCESS_CALIB_DATA:
-         command = ( f"/home/pi/boomer/staged/gen_cam_params.out {cam_arg} --fblx {c['fblx']} --fbly {c['fbly']}"
-            f" --fbrx {c['fbrx']} --fbry {c['fbry']} --nblx {c['nblx']} --nbly {c['nbly']}"
-            f" --nbrx {c['nbrx']} --nbry {c['nbry']} --nslx {c['nslx']} --nsly {c['nsly']}"
-            f" --nscx {c['nscx']} --nscy {c['nscy']} --nsrx {c['nsrx']} --nsry {c['nsry']}"
-            f" --camx {cam_mm[X]} --camy {cam_mm[Y]} --camz {cam_mm[Z]}" )
-         # print(f"command: {command}")
          coord_args = (f"--fblx {c['fblx']} --fbly {c['fbly']}"
             f" --fbrx {c['fbrx']} --fbry {c['fbry']} --nblx {c['nblx']} --nbly {c['nbly']}"
             f" --nbrx {c['nbrx']} --nbry {c['nbry']} --nslx {c['nslx']} --nsly {c['nsly']}"
             f" --nscx {c['nscx']} --nscy {c['nscy']} --nsrx {c['nsrx']} --nsry {c['nsry']}"
             f" --camx {cam_mm[X]} --camy {cam_mm[Y]} --camz {cam_mm[Z]}" )
 
-         p = Popen(["/home/pi/boomer/staged/gen_cam_params.out", cam_arg, coord_args])
+         p = Popen(["/home/pi/boomer/staged/gen_cam_params.out", f"--{cam_arg}", coord_args])
          stdoutdata, stderrdata = p.communicate()
          if p.returncode != 0:
             print(f"gen_cam_params failed: {p.returncode}")
