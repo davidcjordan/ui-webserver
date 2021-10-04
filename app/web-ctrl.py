@@ -186,17 +186,23 @@ def calib_done():
             cam_arg = "--left"
          else:
             cam_arg = "--right"
-         # TODO: Popen gen_cam_params; scp params to cams; send cmd to base to reload params and restart cams
          coord_args = (f"--fblx {c['fblx']} --fbly {c['fbly']}"
             f" --fbrx {c['fbrx']} --fbry {c['fbry']} --nblx {c['nblx']} --nbly {c['nbly']}"
             f" --nbrx {c['nbrx']} --nbry {c['nbry']} --nslx {c['nslx']} --nsly {c['nsly']}"
             f" --nscx {c['nscx']} --nscy {c['nscy']} --nsrx {c['nsrx']} --nsry {c['nsry']}"
             f" --camx {cam_mm[X]} --camy {cam_mm[Y]} --camz {cam_mm[Z]}" )
-
-         p = Popen(["/home/pi/boomer/staged/gen_cam_params.out", f"--{cam_arg}", coord_args])
+         cmd = "/home/pi/boomer/staged/gen_cam_params.out " + cam_arg + " " + coord_args
+         # p = Popen(["/home/pi/boomer/staged/gen_cam_params.out", cam_arg, f"--fblx {c['fblx']}", f"--fbly {c['fbly']}", \
+         #    f"--fbrx {c['fbrx']}", f"--fbry {c['fbry']}", f"--nblx {c['nblx']}", f"--nbly {c['nbly']}", \
+         #    f"--nbrx {c['nbrx']}", f"--nbry {c['nbry']}", f"--nslx {c['nslx']}", f"--nsly {c['nsly']}", \
+         #    f"--nscx {c['nscx']}", f"--nscy {c['nscy']}", f"--nsrx {c['nsrx']}", f"--nsry {c['nsry']}",  \
+         #    f"--camx {cam_mm[X]}", f"--camy {cam_mm[Y]}", f"--camz {cam_mm[Z]}" ])
+         p = Popen(cmd, shell=True)
          stdoutdata, stderrdata = p.communicate()
          if p.returncode != 0:
             print(f"gen_cam_params failed: {p.returncode}")
+         else:
+            print("TODO: send parameters.txt, restart the cam, reload the param on the base")
 
          # after javascript does the post, it redirects to calib_done
       else:

@@ -244,7 +244,7 @@
       xhr.open("POST", "/calib_done", true);
       xhr.setRequestHeader('Content-Type', 'application/json');
       xhr.send(JSON.stringify(coords));
-      // console.log("Posted to /calib_done");
+      fetch("/calib_done");
       // used the following to get webpage update after the post; there is probably a better way
       // window.location.replace('/calib_done');
     }
