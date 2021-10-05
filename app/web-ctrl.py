@@ -175,48 +175,51 @@ def calib():
 @app.route('/calib_done', methods=DEFAULT_METHODS)
 def calib_done():
    global cam_side, cam_mm, X, Y, Z
+   if cam_side.lower() == "left":
+      cam_arg = "--left"
+   else:
+      cam_arg = "--right"
+
    if request.method=='POST':
       if (request.content_type.startswith('application/json')):
-         print(f"request to calib: {request.json}")
+         # >> not supporting a javascript POST of json; left for reference
+         # print(f"request to calib: {request.json}")
          # request.json example: {'fblx': 883, 'fbly': 77, 'fbrx': 1193, 'fbry': 91,\
          #  'nslx': 503, 'nsly': 253, 'nscx': 747, 'nscy': 289, 'nsrx': 1065, 'nsry': 347,\
          #  'nblx': 187, 'nbly': 397, 'nbrx': 933, 'nbry': 653}
          c = request.json
-         if cam_side.lower() == "left":
-            cam_arg = "--left"
-         else:
-            cam_arg = "--right"
          coord_args = (f"--fblx {c['fblx']} --fbly {c['fbly']}"
             f" --fbrx {c['fbrx']} --fbry {c['fbry']} --nblx {c['nblx']} --nbly {c['nbly']}"
             f" --nbrx {c['nbrx']} --nbry {c['nbry']} --nslx {c['nslx']} --nsly {c['nsly']}"
             f" --nscx {c['nscx']} --nscy {c['nscy']} --nsrx {c['nsrx']} --nsry {c['nsry']}"
             f" --camx {cam_mm[X]} --camy {cam_mm[Y]} --camz {cam_mm[Z]}" )
-         cmd = "/home/pi/boomer/staged/gen_cam_params.out " + cam_arg + " " + coord_args
-         # p = Popen(["/home/pi/boomer/staged/gen_cam_params.out", cam_arg, f"--fblx {c['fblx']}", f"--fbly {c['fbly']}", \
-         #    f"--fbrx {c['fbrx']}", f"--fbry {c['fbry']}", f"--nblx {c['nblx']}", f"--nbly {c['nbly']}", \
-         #    f"--nbrx {c['nbrx']}", f"--nbry {c['nbry']}", f"--nslx {c['nslx']}", f"--nsly {c['nsly']}", \
-         #    f"--nscx {c['nscx']}", f"--nscy {c['nscy']}", f"--nsrx {c['nsrx']}", f"--nsry {c['nsry']}",  \
-         #    f"--camx {cam_mm[X]}", f"--camy {cam_mm[Y]}", f"--camz {cam_mm[Z]}" ])
-         p = Popen(cmd, shell=True)
-         stdoutdata, stderrdata = p.communicate()
-         if p.returncode != 0:
-            print(f"gen_cam_params failed: {p.returncode}")
-         else:
-            print("TODO: send parameters.txt, restart the cam, reload the param on the base")
-
-         # after javascript does the post, it redirects to calib_done
       else:
-         print("Recieved a non-json POST at calib_done")
+         print(f"POST to CALIB_DONE request.form: {request.form}")
+         # example: ImmutableMultiDict
+         coord_args = (f"--fblx {int(request.form['fblx'])} --fbly {int(request.form['fbly'])}"
+            f" --fbrx {int(request.form['fbrx'])} --fbry {int(request.form['fbry'])}"
+            f" --nblx {int(request.form['nblx'])} --nbly {int(request.form['nbly'])}"
+            f" --nbrx {int(request.form['nbrx'])} --nbry {int(request.form['nbry'])}"
+            f" --nslx {int(request.form['nslx'])} --nsly {int(request.form['nsly'])}"
+            f" --nscx {int(request.form['nscx'])} --nscy {int(request.form['nscy'])}"
+            f" --nsrx {int(request.form['nsrx'])} --nsry {int(request.form['nsry'])}"
+            f" --camx {cam_mm[X]} --camy {cam_mm[Y]} --camz {cam_mm[Z]}" )
+         cmd = "/home/pi/boomer/staged/gen_cam_params.out " + cam_arg + " " + coord_args
+         process_data = True
+         if (process_data):
+            p = Popen(cmd, shell=True)
+            stdoutdata, stderrdata = p.communicate()
+            if p.returncode != 0:
+               print(f"gen_cam_params failed: {p.returncode}")
+            else:
+               print("TODO: send parameters.txt, restart the cam, reload the param on the base")
  
    button_label = cam_side + " Calib Done"
-   choice_list = [\
-      {"value": button_label, "onclick_url": MAIN_URL}
-   ]
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
-      onclick_choices = choice_list, \
+      onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL}], \
       footer_center = "Mode: " + button_label)
 
  

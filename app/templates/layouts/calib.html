@@ -9,17 +9,33 @@
     <canvas id="zoom-canvas" width="256" height="256" ></canvas>
   </div>
   <div class="calibration_controls">
-    <div>
-      <input type="button" value="&#x21A5" onclick="move_up()">
-      <input type="button" value="&#x21A7" onclick="move_down()">
-      <br>
-      <input type="button" value="&#x21A4" onclick="move_left()">
-      <input type="button" value="&#x21A6" onclick="move_right()">
-      <br>
-      <input type="button" value="Set Intersection" onclick="set_point()">
-      <input type="button" value="Fini" onclick="send_points()">
-      <p id="current_x_y">Current X: ___ Y: ___</p>
-    </div>
+    <form id="court_coordinates" action="/calib_done" method="post" onsubmit="return check_coords();">
+      <div>
+        <input type="button" value="&#x21A5" onclick="move_up()">
+        <input type="button" value="&#x21A7" onclick="move_down()">
+        <br>
+        <input type="button" value="&#x21A4" onclick="move_left()">
+        <input type="button" value="&#x21A6" onclick="move_right()">
+        <br>
+        <input type="button" value="Set Intersection" onclick="set_point()">
+        <input type="submit" value="Fini">
+        <input type="hidden" id="fblx" name="fblx" value=0>
+        <input type="hidden" id="fbly" name="fbly" value=0>
+        <input type="hidden" id="fbrx" name="fbrx" value=0>
+        <input type="hidden" id="fbry" name="fbry" value=0>
+        <input type="hidden" id="nslx" name="nslx" value=0>
+        <input type="hidden" id="nsly" name="nsly" value=0>
+        <input type="hidden" id="nscx" name="nscx" value=0>
+        <input type="hidden" id="nscy" name="nscy" value=0>
+        <input type="hidden" id="nsrx" name="nsrx" value=0>
+        <input type="hidden" id="nsry" name="nsry" value=0>
+        <input type="hidden" id="nblx" name="nblx" value=0>
+        <input type="hidden" id="nbly" name="nbly" value=0>
+        <input type="hidden" id="nbrx" name="nbrx" value=0>
+        <input type="hidden" id="nbry" name="nbry" value=0>
+        <p id="current_x_y">Current X: ___ Y: ___</p>
+      </div>
+    </form>
     <hr>
     <div>
       <p id="fbl_x_y">Far Baseline Left   X: ___ Y: ___</p>
@@ -119,6 +135,42 @@
     draw();
   });
 
+  // document.getElementById('court_coordinates').submit(check_coords());
+
+  function check_coords() {
+    // alert("check_coords called; fblx=" + document.getElementById("fblx").value + "typeof: " + typeof(document.getElementById("fblx").value));
+    //only checking the X coordinate; if X is set, then Y should be set via the set_point script
+    if (!(Number(document.getElementById("fblx").value) !== 0)) {
+      alert("Please set Far Baseline Left point");
+      return false;
+    }
+    if (!(Number(document.getElementById("fbrx").value) !== 0)) {
+      alert("Please set Far Baseline Right point");
+      return false;
+    }
+    if (!(Number(document.getElementById("nslx").value) !== 0)) {
+      alert("Please set Near Service Line Left point");
+      return false;
+    }
+    if (!(Number(document.getElementById("nscx").value) !== 0)) {
+      alert("Please set Near Service Line Center point");
+      return false;
+    }
+    if (!(Number(document.getElementById("nslx").value) !== 0)) {
+      alert("Please set Near Service Line Right point");
+      return false;
+    }
+    if (!(Number(document.getElementById("nblx").value) !== 0)) {
+      alert("Please set Near Baseline Left point");
+      return false;
+    }
+    if (!(Number(document.getElementById("nbrx").value) !== 0)) {
+      alert("Please set Near Baseline Right point");
+      return false;
+    }
+    return true;
+  }
+
   function draw() {
     contxt.clearRect(0, 0, canvas.width, canvas.height);
     // contxt.beginPath();
@@ -155,6 +207,7 @@
     var current_x_y = document.getElementById('current_x_y');
     current_x_y.innerText = `Current X: ${x_px} Y: ${y_px}`;
   }
+
   function move_down() {
     if (y_px_selector < (canvas.height - move_px))
       y_px_selector += move_px;
@@ -191,45 +244,58 @@
       if (x_px < fb_x_max) {
         coords["fblx"] = x_px; coords["fbly"] = y_px;
         var fbl_x_y = document.getElementById('fbl_x_y');
-        fbl_x_y.innerText = `Far-BaseLine-Left: X: ${x_px} Y: ${y_px}`;
+        fbl_x_y.innerText = `Far Baseline Left: X: ${x_px} Y: ${y_px}`;
+        document.getElementById("fblx").value = x_px;
+        document.getElementById("fbly").value = y_px;
       } else {
         coords["fbrx"] = x_px; coords["fbry"] = y_px;
         var fbr_x_y = document.getElementById('fbr_x_y');
-        fbr_x_y.innerText = `Far-BaseLine-Right: X: ${x_px} Y: ${y_px}`;
+        fbr_x_y.innerText = `Far Baseline Right: X: ${x_px} Y: ${y_px}`;
+        document.getElementById("fbrx").value = x_px;
+        document.getElementById("fbry").value = y_px;
       }
     } else if (y_px > ns_y_min && y_px < ns_y_max) {
       // set far near service line left, center or right
       if (x_px < nsl_x_max) {
         coords["nslx"] = x_px; coords["nsly"] = y_px;
         var nsl_x_y = document.getElementById('nsl_x_y');
-        nsl_x_y.innerText = `Near-ServiceLine-Left: X: ${x_px} Y: ${y_px}`;
+        nsl_x_y.innerText = `Near Service Left: X: ${x_px} Y: ${y_px}`;
+        document.getElementById("nslx").value = x_px;
+        document.getElementById("nsly").value = y_px;
       } else if (x_px > nsl_x_max && x_px < nsc_x_max) {
         coords["nscx"] = x_px; coords["nscy"] = y_px;
         var nsc_x_y = document.getElementById('nsc_x_y');
-        nsc_x_y.innerText = `Near-ServiceLine-Center: X: ${x_px} Y: ${y_px}`;
+        nsc_x_y.innerText = `Near Service Center: X: ${x_px} Y: ${y_px}`;
+        document.getElementById("nscx").value = x_px;
+        document.getElementById("nscy").value = y_px;
       } else {
         coords["nsrx"] = x_px; coords["nsry"] = y_px;
         var nsr_x_y = document.getElementById('nsr_x_y');
-        nsr_x_y.innerText = `Near-ServiceLine-Right: X: ${x_px} Y: ${y_px}`;
+        nsr_x_y.innerText = `Near Service Right: X: ${x_px} Y: ${y_px}`;
+        document.getElementById("nsrx").value = x_px;
+        document.getElementById("nsry").value = y_px;
       }
     } else if (y_px > ns_y_max) {
       // set near base line left or right
       if (x_px < nb_x_max) {
         coords["nblx"] = x_px; coords["nbly"] = y_px;
         var nbl_x_y = document.getElementById('nbl_x_y');
-        nbl_x_y.innerText = `Near-BaseLine-Left: X: ${x_px} Y: ${y_px}`;
+        nbl_x_y.innerText = `Near Baseline Left: X: ${x_px} Y: ${y_px}`;
+        document.getElementById("nblx").value = x_px;
+        document.getElementById("nbly").value = y_px;
       } else {
         coords["nbrx"] = x_px; coords["nbry"] = y_px;
         var nbr_x_y = document.getElementById('nbr_x_y');
-        nbr_x_y.innerText = `Near-BaseLine-Right: X: ${x_px} Y: ${y_px}`;
+        nbr_x_y.innerText = `Near Baseline Right: X: ${x_px} Y: ${y_px}`;
+        document.getElementById("nbrx").value = x_px;
+        document.getElementById("nbry").value = y_px;
       }
     } else {
       console.log("y_px: %d is out of bounds", y_px)
     }
   }
 
-  // for 2 different methods to post coord, refer to: https://stackoverflow.com/questions/6396101/pure-javascript-send-post-data-without-a-form
-
+  // the following funciotn is no longer used to send the data:
   function send_points() {
     var number_of_calib_points = 7;
 
@@ -238,13 +304,10 @@
       window.alert("Please finish setting all " + number_of_calib_points + " coordinates.");
     } else
     {
-      // not reporting CAM left/right; web-ctrl has it has it a a global
-      // coords["cam"] = document.getElementById("mode").innerText.substring(6,7);
       var xhr = new XMLHttpRequest();
       xhr.open("POST", "/calib_done", true);
       xhr.setRequestHeader('Content-Type', 'application/json');
       xhr.send(JSON.stringify(coords));
-      fetch("/calib_done");
       // used the following to get webpage update after the post; there is probably a better way
       // window.location.replace('/calib_done');
     }
