@@ -9,7 +9,7 @@
     <canvas id="zoom-canvas" width="256" height="256" ></canvas>
   </div>
   <div class="calibration_controls">
-    <form id="court_coordinates" action="/calib_done" method="post" onsubmit="return check_coords();">
+    <form id="court_coordinates" action="/cam_calib_done" method="post" onsubmit="return check_coords();">
       <div>
         <input type="button" value="&#x21A5" onclick="move_up()">
         <input type="button" value="&#x21A7" onclick="move_down()">
@@ -305,11 +305,11 @@
     } else
     {
       var xhr = new XMLHttpRequest();
-      xhr.open("POST", "/calib_done", true);
+      xhr.open("POST", "/cam_calib_done", true);
       xhr.setRequestHeader('Content-Type', 'application/json');
       xhr.send(JSON.stringify(coords));
       // used the following to get webpage update after the post; there is probably a better way
-      // window.location.replace('/calib_done');
+      // window.location.replace('/cam_calib_done');
     }
   }
 </script>

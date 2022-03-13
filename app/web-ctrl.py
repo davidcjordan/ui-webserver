@@ -8,17 +8,20 @@ except:
    print("Missing package 'flask_socketio', please run: python3 -m pip install flask-socketio")
    exit()
 
+app = Flask(__name__)
+
 import inspect
 import os  # for sending favicon 
 
 # the following requires: export PYTHONPATH='/Users/tom/Documents/Projects/Boomer/control_ipc_utils'
 import sys
 sys.path.append('/home/pi/repos/control_ipc_utils')
+# print(sys.path)
 try:
-   from ctrl_messaging_routines import send_msg, is_active
+   from ctrl_messaging_routines import send_msg, is_state
    from control_ipc_defines import *
 except:
-   print("Missing 'control_ipc' modules, please run: git clone https://github.com/manningt/control_ipc_utils")
+   print("Missing 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
    exit()
 
 sys.path.append('/home/pi/boomer/drills')
@@ -37,6 +40,13 @@ from random import randint
 base_state = None
 client_state = False
 
+# TODO: customize header from a file
+custom_installation_title = "Red Oak Sports Club  --  Boomer 1"
+custom_installation_icon = "/static/red-oaks-icon.png"
+my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
+         <img src="/static/home.png" style="height:64px;"> \
+         </button>')
+
 DO_SCP_FOR_CALIBRATION = False
 
 IP_PORT = 1111 # picked what is hopefully an unused port  (can't use 44)
@@ -48,10 +58,11 @@ GAME_URL = '/game'
 DRILL_SELECT_TYPE_URL = '/drill_select_type'
 DRILL_SELECT_URL = '/drill_select' # does not have a template
 DRILL_URL = '/drill'
-CALIB_URL = '/calib'
+CAM_CALIB_URL = '/cam_calib'
 CAM_POSITION_URL = '/cam_position'
-# WORKOUT_SELECTION_URL = '/workout_selection'
-# SETTINGS_URL = '/settings'
+CALIB_DRILL_URL = '/thrower_calib'
+WORKOUT_SELECTION_URL = '/workout_selection'
+SETTINGS_URL = '/settings'
 
 # Flask looks for following in the 'templates' directory
 MAIN_TEMPLATE = 'index.html'
@@ -61,10 +72,10 @@ CHOICE_INPUTS_TEMPLATE = '/layouts' + '/choice_inputs' + '.html'
 DRILL_SELECT_FILTERED_TEMPLATE = '/layouts' + '/drill_select_filtered' + '.html'
 DRILL_SELECT_UNFILTERED_TEMPLATE = '/layouts' + '/drill_select_unfiltered' + '.html'
 DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
-CALIBRATION_TEMPLATE = '/layouts' + CALIB_URL + '.html'
+CAM_CALIBRATION_TEMPLATE = '/layouts' + CAM_CALIB_URL + '.html'
 CAM_POSITION_TEMPLATE = '/layouts' + CAM_POSITION_URL + '.html'
-# WORKOUT_SELECTION_TEMPLATE = '/layouts' + WORKOUT_SELECTION_URL + '.html'
-# SETTINGS_TEMPLATE = '/layouts' + SETTINGS_URL + '.html'
+WORKOUT_SELECTION_TEMPLATE = '/layouts' + WORKOUT_SELECTION_URL + '.html'
+SETTINGS_TEMPLATE = '/layouts' + SETTINGS_URL + '.html'
 
 # base process status strings:
 STATUS_NOT_RUNNING = "Down"
@@ -91,7 +102,8 @@ cam_mm = [0]*3 # global camera location
 X=0;Y=1;Z=2 # cam array enum
 INCHES_TO_MM = 25.4
 
-app = Flask(__name__)
+calib_drill_id = 780
+
 app.config['SECRET_KEY'] = 'secret!'
 # didn't find how to have multiple allowed origins
 # socketio = SocketIO(app, cors_allowed_origins="https://cdnjs.cloudflare.com http://localhost")
@@ -124,8 +136,8 @@ def cam_position():
       footer_center = "Mode: " + "Get Cam Position")
 
 
-@app.route(CALIB_URL, methods=DEFAULT_METHODS)
-def calib():
+@app.route(CAM_CALIB_URL, methods=DEFAULT_METHODS)
+def cam_calib():
    global cam_side, cam_mm, X, Y, Z
    cam_side = "Left"
    loc_dict = {}
@@ -164,7 +176,7 @@ def calib():
       print(f"scp of camera's frame.png to court.png failed: {p.returncode}")
    # status = os.waitpid(p.pid, 0)
 
-   return render_template(CALIBRATION_TEMPLATE, \
+   return render_template(CAM_CALIBRATION_TEMPLATE, \
       court_pic = "static/" + cam_lower + "_court.png", \
       home_button = my_home_button, \
       installation_title = custom_installation_title, \
@@ -172,8 +184,8 @@ def calib():
       footer_center = "Mode: " + mode_str)
 
 
-@app.route('/calib_done', methods=DEFAULT_METHODS)
-def calib_done():
+@app.route('/cam_calib_done', methods=DEFAULT_METHODS)
+def cam_calib_done():
    global cam_side, cam_mm, X, Y, Z
    if cam_side.lower() == "left":
       cam_arg = "--left"
@@ -214,7 +226,7 @@ def calib_done():
             else:
                print("TODO: send parameters.txt, restart the cam, reload the param on the base")
  
-   button_label = cam_side + " Calib Done"
+   button_label = cam_side + " Cam Calib Done"
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = custom_installation_title, \
@@ -231,7 +243,9 @@ def index():
    onclick_choice_list = [\
       {"value": "Game Mode", "onclick_url": GAME_OPTIONS_URL},\
       {"value": "Drills", "onclick_url": DRILL_SELECT_TYPE_URL},\
-      {"value": "Cam Calibration", "onclick_url": CAM_POSITION_URL}\
+      # {"value": "Cam Calibration", "onclick_url": CAM_POSITION_URL}\
+      {"value": "Workouts", "onclick_url": CAM_POSITION_URL},\
+      {"value": "Settings", "onclick_url": SETTINGS_URL}
    ]
    # form_choice_list = [\
    #    {"value": "Left Cam Calib"},\
@@ -243,7 +257,7 @@ def index():
       installation_icon = custom_installation_icon, \
       onclick_choices = onclick_choice_list, \
       # form_choices = form_choice_list, \
-      url_for_post = CALIB_URL, \
+      url_for_post = CAM_CALIB_URL, \
       footer_center = "Mode: --")
 
 '''
@@ -258,6 +272,32 @@ def go_to_main():
    #       href='{{ url_for('back') }}'
    return redirect(back_url)
 '''
+
+@app.route(SETTINGS_URL, methods=DEFAULT_METHODS)
+def settings():
+   global back_url, previous_url
+   back_url = previous_url = "/"
+
+   onclick_choice_list = [\
+      {"value": "Cam Calibration", "onclick_url": CAM_POSITION_URL}, \
+      {"value": "Rotary Calibration", "onclick_url": CALIB_DRILL_URL}
+ 		# rotary_calibration_mode= (drill_number==780)	   ? true : false;
+		# elevator_calibration_mode= (drill_number==781)	? true : false;
+		# lob_calibration_mode= (drill_number==782)	      ? true : false;
+		# serve_calibration_mode=(drill_number==784)      ? true : false;
+		# drop_calibration_mode=(drill_number==785)       ? true : false;
+		# flat_calibration_mode=(drill_number==786)			? true : false;
+   ]
+
+   return render_template(CHOICE_INPUTS_TEMPLATE, \
+      home_button = my_home_button, \
+      installation_title = custom_installation_title, \
+      installation_icon = custom_installation_icon, \
+      onclick_choices = onclick_choice_list, \
+      # form_choices = form_choice_list, \
+      # url_for_post = CAM_CALIB_URL, \
+      footer_center = "Mode: --")
+
 
 @app.route(GAME_OPTIONS_URL, methods=DEFAULT_METHODS)
 def game_options():
@@ -275,10 +315,10 @@ def game_options():
       installation_icon = custom_installation_icon, \
       optional_form_begin = Markup('<form action ="' + GAME_URL + '" method="post">'), \
       optional_form_end = Markup('</form>'), \
-      point_delay_dflt = GAME_POINT_DELAY_DEFAULT, \
-      point_delay_min = GAME_POINT_DELAY_MIN, \
-      point_delay_max = GAME_POINT_DELAY_MAX, \
-      point_delay_step = GAME_POINT_DELAY_STEP, \
+      # point_delay_dflt = GAME_POINT_DELAY_DEFAULT, \
+      # point_delay_min = GAME_POINT_DELAY_MIN, \
+      # point_delay_max = GAME_POINT_DELAY_MAX, \
+      # point_delay_step = GAME_POINT_DELAY_STEP, \
       footer_center = "Mode: " + MODE_GAME)
 
 @app.route(GAME_URL, methods=DEFAULT_METHODS)
@@ -369,7 +409,6 @@ def drill_select():
          optional_form_end = Markup('</form>'), \
          footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
-
 @app.route(DRILL_URL, methods=DEFAULT_METHODS)
 def drill():
    global back_url, previous_url
@@ -380,7 +419,7 @@ def drill():
    mode_string = "FIX-ME"
    if request.method=='POST' and 'drill_id' in request.form:
       mode_string = "'" + request.form['drill_id'] + "'" + " Drill"
-      mode = {MODE_PARAM: DRILL_MODE_E, ID_PARAM: request.form['drill_id']}
+      mode = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: request.form['drill_id']}
       rc, code = send_msg(PUT_METHOD, MODE_RSRC, mode)
       if not rc:
          app.logger.error("PUT Mode failed, code: {}".format(code))
@@ -388,15 +427,16 @@ def drill():
          rc, code = send_msg(PUT_METHOD, STRT_RSRC)
          if not rc:
             app.logger.error("PUT START failed, code: {}".format(code))
-
    
    stepper_options = { \
       "level":{"legend":"Level", "dflt":LEVEL_DEFAULT/LEVEL_UI_FACTOR, "min":LEVEL_MIN/LEVEL_UI_FACTOR, \
          "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
-      "speed":{"legend":"Speed", "dflt":SPEED_DEFAULT, "min":SPEED_MIN, "max":SPEED_MAX, "step":SPEED_STEP}, \
-      "delay":{"legend":"Delay", "dflt":DELAY_DEFAULT/DELAY_UI_FACTOR, "min":DELAY_MIN/DELAY_UI_FACTOR, \
-         "max":DELAY_MAX/DELAY_UI_FACTOR, "step":DELAY_UI_STEP/DELAY_UI_FACTOR}, \
-      "height":{"legend":"Height", "dflt":HEIGHT_DEFAULT, "min":HEIGHT_MIN, "max":HEIGHT_MAX, "step":HEIGHT_STEP} \
+      "speed":{"legend":"Speed", "dflt":SPEED_MOD_DEFAULT, "min":SPEED_MOD_MIN, \
+         "max":SPEED_MOD_MAX, "step":SPEED_MOD_STEP}, \
+      "delay":{"legend":"Delay", "dflt":DELAY_MOD_DEFAULT/DELAY_UI_FACTOR, "min":DELAY_MOD_MIN/DELAY_UI_FACTOR, \
+         "max":DELAY_MOD_MAX/DELAY_UI_FACTOR, "step":DELAY_UI_STEP/DELAY_UI_FACTOR}, \
+      "height":{"legend":"Height", "dflt":ELEVATION_ANGLE_MOD_DEFAULT, "min":ELEVATION_ANGLE_MOD_MIN, \
+         "max":ELEVATION_ANGLE_MOD_MAX, "step":ELEVATION_ANGLE_MOD_STEP} \
    }
          
    previous_url = "/" + inspect.currentframe().f_code.co_name
@@ -404,6 +444,25 @@ def drill():
       installation_title = custom_installation_title, \
       installation_icon = custom_installation_icon, \
       options = stepper_options, \
+      footer_center = "Mode: " + mode_string)
+
+@app.route(CALIB_DRILL_URL, methods=DEFAULT_METHODS)
+def calib_drill():
+   global calib_drill_id
+ 
+   mode_string = f"'{calib_drill_id}' Drill"
+   mode = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: calib_drill_id}
+   rc, code = send_msg(PUT_METHOD, MODE_RSRC, mode)
+   if not rc:
+      app.logger.error("PUT Mode failed, code: {}".format(code))
+   else:
+      rc, code = send_msg(PUT_METHOD, STRT_RSRC)
+      if not rc:
+         app.logger.error("PUT START failed, code: {}".format(code))
+
+   return render_template(DRILL_TEMPLATE, \
+      installation_title = custom_installation_title, \
+      installation_icon = custom_installation_icon, \
       footer_center = "Mode: " + mode_string)
 
 
@@ -423,13 +482,9 @@ def handle_change_params(data):          # change_params() is the event callback
     print('change opts: {}'.format(item_to_change))
     # send_msg(PUT_METHOD, OPTS_RSRC, item_to_change)
 
-@socketio.on('pause')
-def handle_pause():
-    print('received pause.')
-
-@socketio.on('resume')
-def handle_resume():
-    print('received resume.')
+@socketio.on('pause_resume')
+def handle_pause_resume():
+    print('received pause_resume.')
 
 @socketio.on('get_updates')
 def handle_get_updates(data):
@@ -450,13 +505,22 @@ def check_base(process_name):
       #base_pid is empty if base is not running
       if base_pid:
          # verify responding to FIFO
-         base_state_tmp = is_active()
-         if base_state_tmp:
-            base_state = STATUS_ACTIVE
-         elif (base_state_tmp == False):
+         msg_ok, status_msg = send_msg()
+         if not msg_ok:
             base_state = STATUS_IDLE
          else:
-            base_state = STATUS_NOT_RESPONDING
+            if (status_msg is not None):
+               if (STATUS_PARAM in status_msg):
+                  base_state = base_state_e(status_msg[STATUS_PARAM]).name.title()
+               # if (HARD_FAULT_PARAM in status_msg):
+               #    fault_count = int(status_msg[HARD_FAULT_PARAM])
+         # base_state_tmp = is_active()
+         # if base_state_tmp:
+         #    base_state = STATUS_ACTIVE
+         # elif (base_state_tmp == False):
+         #    base_state = STATUS_IDLE
+         # else:
+         #    base_state = STATUS_NOT_RESPONDING
       else:
          base_state = STATUS_NOT_RUNNING
       # the following didn't work: the emit didn't get to the client
@@ -483,13 +547,6 @@ if __name__ == '__main__':
       print_base_thread = Thread(target = print_base_status, args =(20, ))
       print_base_thread.daemon = True
       print_base_thread.start() 
-
-   # TODO: customize header from a file
-   custom_installation_title = "Red Oak Sports Club  --  Boomer 1"
-   custom_installation_icon = "/static/red-oaks-icon.png"
-   my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
-            <img src="/static/home.png" style="height:64px;"> \
-          </button>')
 
    # app.run(host="0.0.0.0", port=IP_PORT, debug = True)
    socketio.run(app, host="0.0.0.0", port=IP_PORT, debug = True)

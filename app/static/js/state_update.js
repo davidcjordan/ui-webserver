@@ -10,6 +10,24 @@ socket.on('state_update', function(data) {
     if (IdToUpdate) {
       if (key === 'base_state') {
         IdToUpdate.innerHTML = "Status: " + data[key];
+        // set pause/resume icon on game/drill/workout active pages
+        var IdPauseResume = document.getElementById("pause-resume");
+        if (IdPauseResume != null)
+        {
+          var classPauseResume = document.getElementById("pause-resume").className;
+          // console.log('classPauseResume:' + classPauseResume)
+          if (data[key] == 'Paused') {
+            if (classPauseResume.endsWith("pause")) {
+              IdPauseResume.classList.toggle("pause") //removes paused
+              IdPauseResume.classList.toggle("resume") //adds resume
+            }
+          } else {
+            if (classPauseResume.endsWith("resume")) {
+              IdPauseResume.classList.toggle("resume")
+              IdPauseResume.classList.toggle("pause")
+            }
+          }
+        }
       } else if (key === 'server') {
         if (data[key] == 'b') {
           IdToUpdate.innerHTML = "Boomer's serve"
