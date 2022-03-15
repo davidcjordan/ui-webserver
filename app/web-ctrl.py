@@ -12,10 +12,16 @@ app = Flask(__name__)
 
 import inspect
 import os  # for sending favicon 
+import json
+user_dir = '/home/pi'
+boomer_dir = 'boomer'
+repos_dir = 'repos'
+site_data_dir = 'this_boomers_data'
+settings_dir = f'{user_dir}/{boomer_dir}/{site_data_dir}'
 
 # the following requires: export PYTHONPATH='/Users/tom/Documents/Projects/Boomer/control_ipc_utils'
 import sys
-sys.path.append('/home/pi/repos/control_ipc_utils')
+sys.path.append(f'{user_dir}/{repos_dir}/control_ipc_utils')
 # print(sys.path)
 try:
    from ctrl_messaging_routines import send_msg, is_state
@@ -24,7 +30,7 @@ except:
    print("Missing 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
    exit()
 
-sys.path.append('/home/pi/boomer/drills')
+sys.path.append(f'{user_dir}/{boomer_dir}/drills')
 try:
    from ui_drill_selection_lists import *
 except:
@@ -40,13 +46,17 @@ from random import randint
 base_state = None
 client_state = False
 
-# TODO: customize header from a file
-custom_installation_title = "Red Oak Sports Club  --  Boomer 1"
-custom_installation_icon = "/static/red-oaks-icon.png"
+try:
+   with open(f'{settings_dir}/ui_customization.json') as f:
+      customization_dict = json.load(f)
+except:
+   customization_dict = {"title": "Welcome to Boomer", "icon": "/static/favicon.ico"}
+
 my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
          <img src="/static/home.png" style="height:64px;"> \
          </button>')
 
+settings_dict = {}
 DO_SCP_FOR_CALIBRATION = False
 
 IP_PORT = 1111 # picked what is hopefully an unused port  (can't use 44)
@@ -130,8 +140,8 @@ def cam_position():
    }
    return render_template(CAM_POSITION_TEMPLATE, \
       home_button = my_home_button, \
-      installation_title = custom_installation_title, \
-      installation_icon = custom_installation_icon, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
       options = position_options, \
       footer_center = "Mode: " + "Get Cam Position")
 
@@ -179,8 +189,8 @@ def cam_calib():
    return render_template(CAM_CALIBRATION_TEMPLATE, \
       court_pic = "static/" + cam_lower + "_court.png", \
       home_button = my_home_button, \
-      installation_title = custom_installation_title, \
-      installation_icon = custom_installation_icon, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
       footer_center = "Mode: " + mode_str)
 
 
@@ -229,8 +239,8 @@ def cam_calib_done():
    button_label = cam_side + " Cam Calib Done"
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
-      installation_title = custom_installation_title, \
-      installation_icon = custom_installation_icon, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
       onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL}], \
       footer_center = "Mode: " + button_label)
 
@@ -253,8 +263,8 @@ def index():
    # ]
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
-      installation_title = custom_installation_title, \
-      installation_icon = custom_installation_icon, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
       onclick_choices = onclick_choice_list, \
       # form_choices = form_choice_list, \
       url_for_post = CAM_CALIB_URL, \
@@ -289,10 +299,10 @@ def settings():
 		# flat_calibration_mode=(drill_number==786)			? true : false;
    ]
 
-   return render_template(CHOICE_INPUTS_TEMPLATE, \
+   return render_template(SETTINGS_TEMPLATE, \
       home_button = my_home_button, \
-      installation_title = custom_installation_title, \
-      installation_icon = custom_installation_icon, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
       onclick_choices = onclick_choice_list, \
       # form_choices = form_choice_list, \
       # url_for_post = CAM_CALIB_URL, \
@@ -311,8 +321,8 @@ def game_options():
    previous_url = "/" + inspect.currentframe().f_code.co_name
    return render_template(GAME_OPTIONS_TEMPLATE, \
       home_button = my_home_button, \
-      installation_title = custom_installation_title, \
-      installation_icon = custom_installation_icon, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
       optional_form_begin = Markup('<form action ="' + GAME_URL + '" method="post">'), \
       optional_form_end = Markup('</form>'), \
       # point_delay_dflt = GAME_POINT_DELAY_DEFAULT, \
@@ -340,8 +350,8 @@ def game():
          print("grunts: {}".format(request.form['grunts']))
       
    return render_template(GAME_TEMPLATE, \
-      installation_title = custom_installation_title, \
-      installation_icon = custom_installation_icon, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
       level_dflt = LEVEL_DEFAULT/LEVEL_UI_FACTOR, \
       level_min = LEVEL_MIN/LEVEL_UI_FACTOR, \
       level_max = LEVEL_MAX/LEVEL_UI_FACTOR, \
@@ -364,8 +374,8 @@ def drill_select_type():
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
-      installation_title = custom_installation_title, \
-      installation_icon = custom_installation_icon, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
       form_choices = drill_select_type_list, \
       url_for_post = DRILL_SELECT_URL, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
@@ -393,8 +403,8 @@ def drill_select():
    if len(drill_list[0]) > 2:
       return render_template(DRILL_SELECT_FILTERED_TEMPLATE, \
          home_button = my_home_button, \
-         installation_title = custom_installation_title, \
-         installation_icon = custom_installation_icon, \
+         installation_title = customization_dict['title'], \
+         installation_icon = customization_dict['icon'], \
          optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
          drills = drill_list, \
          optional_form_end = Markup('</form>'), \
@@ -402,8 +412,8 @@ def drill_select():
    else:
       return render_template(DRILL_SELECT_UNFILTERED_TEMPLATE, \
          home_button = my_home_button, \
-         installation_title = custom_installation_title, \
-         installation_icon = custom_installation_icon, \
+         installation_title = customization_dict['title'], \
+         installation_icon = customization_dict['icon'], \
          optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
          drills = drill_list, \
          optional_form_end = Markup('</form>'), \
@@ -441,8 +451,8 @@ def drill():
          
    previous_url = "/" + inspect.currentframe().f_code.co_name
    return render_template(DRILL_TEMPLATE, \
-      installation_title = custom_installation_title, \
-      installation_icon = custom_installation_icon, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
       options = stepper_options, \
       footer_center = "Mode: " + mode_string)
 
@@ -461,8 +471,8 @@ def calib_drill():
          app.logger.error("PUT START failed, code: {}".format(code))
 
    return render_template(DRILL_TEMPLATE, \
-      installation_title = custom_installation_title, \
-      installation_icon = custom_installation_icon, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
       footer_center = "Mode: " + mode_string)
 
 
@@ -484,11 +494,24 @@ def handle_change_params(data):          # change_params() is the event callback
 
 @socketio.on('pause_resume')
 def handle_pause_resume():
-    print('received pause_resume.')
+   app.logger.debug('received pause_resume.')
+   rc, code = send_msg(PUT_METHOD, PAUS_RSRC)
+   if not rc:
+      app.logger.error("PUT PAUSE failed, code: {}".format(code))
+
+@socketio.on('settings')
+def handle_settings(data):
+   app.logger.debug(f'received settings: {data}')
+   # settings_dict['grunts'] = int(data)
+   # with open(f'{settings_dir}/settings.json', 'w') as f:
+   #    json.dump(settings_dict, f)
+   # rc, code = send_msg(PUT_METHOD, BCFG_RSRC, {GRUNTS_PARAM: int(data)})
+   # if not rc:
+   #    app.logger.error("PUT base_config grunts failed, code: {}".format(code))
+
 
 @socketio.on('get_updates')
 def handle_get_updates(data):
-   # print('get_updates data: ', data)
    json_data = json.loads(data)
    # print(f"json_data: {json_data}")
    if (("page" in json_data) and (json_data["page"] == "game")):
@@ -507,20 +530,13 @@ def check_base(process_name):
          # verify responding to FIFO
          msg_ok, status_msg = send_msg()
          if not msg_ok:
-            base_state = STATUS_IDLE
+            base_state = STATUS_NOT_RESPONDING
          else:
             if (status_msg is not None):
                if (STATUS_PARAM in status_msg):
                   base_state = base_state_e(status_msg[STATUS_PARAM]).name.title()
                # if (HARD_FAULT_PARAM in status_msg):
                #    fault_count = int(status_msg[HARD_FAULT_PARAM])
-         # base_state_tmp = is_active()
-         # if base_state_tmp:
-         #    base_state = STATUS_ACTIVE
-         # elif (base_state_tmp == False):
-         #    base_state = STATUS_IDLE
-         # else:
-         #    base_state = STATUS_NOT_RESPONDING
       else:
          base_state = STATUS_NOT_RUNNING
       # the following didn't work: the emit didn't get to the client

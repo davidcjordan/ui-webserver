@@ -1,0 +1,25 @@
+{% extends "layouts/base.html" %}
+{% block selections %}
+<div>
+  {% for choice in onclick_choices %}
+    <input class="block_b" type="submit" name="choice" value="{{choice['value']}}" onclick="window.location.href='{{choice['onclick_url']}}';">
+  {% endfor %}
+  <fieldset class="radio-slider-buttons">
+    <label>Grunts:</label>
+    <input type="radio" id="grunts_off" name="grunts" value=0>
+      <label for="grunts_off">Off</label>
+    <input type="radio" id="grunts_on"name="grunts" value=1 checked>
+      <label for="grunts_on">On</label>
+  </fieldset>
+  <script type="text/javascript" charset="utf-8">
+    var radios = document.querySelectorAll('input[type=radio]')
+    for(var i = 0, max = radios.length; i < max; i++) {
+        radios[i].onclick = function() {
+          // var setting = {[this.name] : Number(this.value)}
+          // console.log("setting: " + JSON.stringify(setting))
+          socket.emit('settings', {[this.name] : Number(this.value)});
+        }
+    }
+  </script>  
+</div>
+{% endblock %}
