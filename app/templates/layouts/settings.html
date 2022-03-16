@@ -15,8 +15,6 @@
     var radios = document.querySelectorAll('input[type=radio]')
     for(var i = 0, max = radios.length; i < max; i++) {
         radios[i].onclick = function() {
-          // var setting = {[this.name] : Number(this.value)}
-          // console.log("setting: " + JSON.stringify(setting))
           socket.emit('settings', {[this.name] : Number(this.value)});
         }
     }

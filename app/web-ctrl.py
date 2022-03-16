@@ -85,7 +85,6 @@ DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
 CAM_CALIBRATION_TEMPLATE = '/layouts' + CAM_CALIB_URL + '.html'
 CAM_POSITION_TEMPLATE = '/layouts' + CAM_POSITION_URL + '.html'
 WORKOUT_SELECTION_TEMPLATE = '/layouts' + WORKOUT_SELECTION_URL + '.html'
-SETTINGS_TEMPLATE = '/layouts' + SETTINGS_URL + '.html'
 
 # base process status strings:
 STATUS_NOT_RUNNING = "Down"
@@ -123,11 +122,24 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 @app.route(CAM_POSITION_URL, methods=DEFAULT_METHODS)
 def cam_position():
+   global cam_side
+   if request.method=='POST':
+      # print(f"POST to CAM_POSITION request.form: {request.form}")
+      # POST to CAM_POSITION request.form: ImmutableMultiDict([('choice', 'Left Cam Calib')])
+      if ('choice' in request.form) and request.form['choice'].lower().startswith('r'):
+         cam_side = 'Right'
+      else:
+         cam_side = 'Left'
+
+   cam_loc_filepath = f'{settings_dir}/{cam_side}_cam_location.json'
    try:
-      with open("/home/pi/boomer/site_data/left_cam_location.json") as infile:
+      with open(cam_loc_filepath) as infile:
          loc_dict = json.load(infile)
    except:
-      # default values if not persisted from a previous calibration
+      pass
+
+   if "loc_dict" not in locals() or "cam_x_ft" not in loc_dict:
+      # default values if not persisted from a previous calibration or the loaded file does have the parameters
       loc_dict = {"cam_x_ft": "0", "cam_x_in": "0", "cam_y_ft": "47", "cam_y_in": "0", "cam_z_ft": "0", "cam_z_in": "0"}
 
    position_options = { \
@@ -143,13 +155,12 @@ def cam_position():
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
       options = position_options, \
-      footer_center = "Mode: " + "Get Cam Position")
+      footer_center = f"Mode: Get {cam_side} Cam Position")
 
 
 @app.route(CAM_CALIB_URL, methods=DEFAULT_METHODS)
 def cam_calib():
    global cam_side, cam_mm, X, Y, Z
-   cam_side = "Left"
    loc_dict = {}
    if request.method=='POST':
       print(f"POST to CALIB request.form: {request.form}")
@@ -170,7 +181,7 @@ def cam_calib():
          cam_mm[Z] = int(((loc_dict['cam_z_ft'] * 12) + loc_dict['cam_z_in']) * INCHES_TO_MM)
       if len(cam_mm) > 2:
          #persist values for next calibration, so they don't have to be re-entered
-         with open(f"/home/pi/boomer/site_data/{cam_side.lower()}_cam_location.json", "w") as outfile:
+         with open(f"{settings_dir}/{cam_side.lower()}_cam_location.json", "w") as outfile:
             json.dump(loc_dict, outfile)
       # print(f"cam_mm set to: {cam_mm}")
 
@@ -253,21 +264,15 @@ def index():
    onclick_choice_list = [\
       {"value": "Game Mode", "onclick_url": GAME_OPTIONS_URL},\
       {"value": "Drills", "onclick_url": DRILL_SELECT_TYPE_URL},\
-      # {"value": "Cam Calibration", "onclick_url": CAM_POSITION_URL}\
       {"value": "Workouts", "onclick_url": CAM_POSITION_URL},\
       {"value": "Settings", "onclick_url": SETTINGS_URL}
    ]
-   # form_choice_list = [\
-   #    {"value": "Left Cam Calib"},\
-   #    {"value": "Right Cam Calib"}\
-   # ]
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
       onclick_choices = onclick_choice_list, \
-      # form_choices = form_choice_list, \
-      url_for_post = CAM_CALIB_URL, \
+      radio_options = {}, \
       footer_center = "Mode: --")
 
 '''
@@ -298,14 +303,24 @@ def settings():
 		# drop_calibration_mode=(drill_number==785)       ? true : false;
 		# flat_calibration_mode=(drill_number==786)			? true : false;
    ]
+   form_choice_list = [\
+      {"value": "Left Cam Calib"},\
+      {"value": "Right Cam Calib"}\
+   ]
 
-   return render_template(SETTINGS_TEMPLATE, \
+   settings_radio_options = { \
+   "grunts":{"legend":"Grunts", "buttons":[{"label":"Off", "value":0, "checked":0},{"label":"On","checked":1}]}, \
+   "talking":{"legend":"Trash Talking", "buttons":[{"label":"Off", "value":0, "checked":0},{"label":"On","checked":1}]}, \
+   }
+
+   return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
       onclick_choices = onclick_choice_list, \
-      # form_choices = form_choice_list, \
-      # url_for_post = CAM_CALIB_URL, \
+      radio_options = settings_radio_options, \
+      form_choices = form_choice_list, \
+      url_for_post = CAM_POSITION_URL, \
       footer_center = "Mode: --")
 
 
@@ -346,8 +361,6 @@ def game():
          print("running: {}".format(request.form['running']))
       if 'point_delay' in request.form:
          print("point_delay: {}".format(request.form['point_delay']))
-      if 'grunts' in request.form:
-         print("grunts: {}".format(request.form['grunts']))
       
    return render_template(GAME_TEMPLATE, \
       installation_title = customization_dict['title'], \
@@ -378,6 +391,7 @@ def drill_select_type():
       installation_icon = customization_dict['icon'], \
       form_choices = drill_select_type_list, \
       url_for_post = DRILL_SELECT_URL, \
+      radio_options = {}, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
 
@@ -438,7 +452,7 @@ def drill():
          if not rc:
             app.logger.error("PUT START failed, code: {}".format(code))
    
-   stepper_options = { \
+   drill_stepper_options = { \
       "level":{"legend":"Level", "dflt":LEVEL_DEFAULT/LEVEL_UI_FACTOR, "min":LEVEL_MIN/LEVEL_UI_FACTOR, \
          "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
       "speed":{"legend":"Speed", "dflt":SPEED_MOD_DEFAULT, "min":SPEED_MOD_MIN, \
@@ -453,7 +467,7 @@ def drill():
    return render_template(DRILL_TEMPLATE, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
-      options = stepper_options, \
+      stepper_options = drill_stepper_options, \
       footer_center = "Mode: " + mode_string)
 
 @app.route(CALIB_DRILL_URL, methods=DEFAULT_METHODS)

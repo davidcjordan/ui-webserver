@@ -8,7 +8,7 @@
 
 {% block selections %}
 <div class="selections">
-  {% for key,item in options.items() %}
+  {% for key,item in stepper_options.items() %}
   <div class="stepper">
     <label for="{{key}}">{{item['legend']}}:</label>
     <button type="button">–</button>
@@ -21,7 +21,7 @@
 
 {% block control %}
 <div class="start-stop">
-  <button type="button" id="pause-resume" class="pause-resume-button pause">
+  <button type="button" id="pause-resume" class="pause-resume-button resume">
   </button>
   <button type="submit" onclick="window.location.href='{{ url_for('drill_select_type') }}';">
     <img src="/static/stop.png">

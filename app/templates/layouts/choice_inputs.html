@@ -4,10 +4,29 @@
   {% for choice in onclick_choices %}
     <input class="block_b" type="submit" name="choice" value="{{choice['value']}}" onclick="window.location.href='{{choice['onclick_url']}}';">
   {% endfor %}
+
+  {% for key,item in radio_options.items() %}
+  <fieldset class="radio-slider-buttons">
+    <label for="{{key}}">{{item['legend']}}:</label>
+    {% for button in item['buttons'] %}
+    <input type="radio" id="{{key}}_{{button['label']}}" name="{{key}}" value={{button['value']}}>
+      <label for="{{key}}_{{button['label']}}">{{button['label']}}</label>
+    {% endfor %}
+  </fieldset>
+  {% endfor %}
+
   <form method="post" action="{{url_for_post}}">
     {% for choice in form_choices %}
     <input class="block_b" type="submit" name="choice" value="{{choice['value']}}"></input>
     {% endfor %}
    </form>
 </div>
+<script type="text/javascript" charset="utf-8">
+  var radios = document.querySelectorAll('input[type=radio]')
+  for(var i = 0, max = radios.length; i < max; i++) {
+      radios[i].onclick = function() {
+        socket.emit('settings', {[this.name] : Number(this.value)});
+      }
+  }
+</script>  
 {% endblock %}

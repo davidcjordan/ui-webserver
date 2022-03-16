@@ -4,6 +4,7 @@
 <p> Camera position: distance from left singles sideline directly under the net to the center of the camera.</p>
 <form method="post" action="{{ url_for('cam_calib') }}">
   <div class="selections-drill"> 
+<!-- 
     <fieldset  class="radio-slider-buttons">
       <label>Camera: </label>
       <input type="radio" id="left" name="cam_id" value="l" checked>
@@ -11,6 +12,7 @@
       <input type="radio" id="right" name="cam_id" value="r">
       <label for="right">Right</label><br>
     </fieldset>
+     -->
     <table>
       {% for key,item in options.items() %}
         {% if (item['start_div'] != null) %}<tr><td>{{item['start_div']}}</td>{% endif %}
