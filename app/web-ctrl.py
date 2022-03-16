@@ -272,7 +272,6 @@ def index():
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
       onclick_choices = onclick_choice_list, \
-      radio_options = {}, \
       footer_center = "Mode: --")
 
 '''
@@ -309,8 +308,8 @@ def settings():
    ]
 
    settings_radio_options = { \
-   "grunts":{"legend":"Grunts", "buttons":[{"label":"Off", "value":0, "checked":0},{"label":"On","checked":1}]}, \
-   "talking":{"legend":"Trash Talking", "buttons":[{"label":"Off", "value":0, "checked":0},{"label":"On","checked":1}]}, \
+   "grunts":{"legend":"Grunts", "buttons":[{"label":"Off", "value":0},{"label":"On","value":1,"checked":1}]}, \
+   "talking":{"legend":"Trash Talking", "buttons":[{"label":"Off", "value":0, "checked":1},{"label":"On"}]}, \
    }
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
@@ -391,7 +390,6 @@ def drill_select_type():
       installation_icon = customization_dict['icon'], \
       form_choices = drill_select_type_list, \
       url_for_post = DRILL_SELECT_URL, \
-      radio_options = {}, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
 

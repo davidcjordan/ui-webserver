@@ -5,15 +5,17 @@
     <input class="block_b" type="submit" name="choice" value="{{choice['value']}}" onclick="window.location.href='{{choice['onclick_url']}}';">
   {% endfor %}
 
-  {% for key,item in radio_options.items() %}
+  {% if radio_options is defined %}
+    {% for key,item in radio_options.items() %}
   <fieldset class="radio-slider-buttons">
     <label for="{{key}}">{{item['legend']}}:</label>
     {% for button in item['buttons'] %}
-    <input type="radio" id="{{key}}_{{button['label']}}" name="{{key}}" value={{button['value']}}>
+    <input type="radio" id="{{key}}_{{button['label']}}" name="{{key}}" value={{button['value']}} {% if button['checked'] is defined %}checked{% endif %}>
       <label for="{{key}}_{{button['label']}}">{{button['label']}}</label>
     {% endfor %}
   </fieldset>
-  {% endfor %}
+    {% endfor %}
+  {% endif %}
 
   <form method="post" action="{{url_for_post}}">
     {% for choice in form_choices %}
