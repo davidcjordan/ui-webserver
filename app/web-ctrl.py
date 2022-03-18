@@ -10,6 +10,9 @@ except:
 
 app = Flask(__name__)
 
+# import logging
+# logging.basicConfig(level=logging.DEBUG)
+
 import inspect
 import os  # for sending favicon 
 import json
@@ -18,6 +21,7 @@ boomer_dir = 'boomer'
 repos_dir = 'repos'
 site_data_dir = 'this_boomers_data'
 settings_dir = f'{user_dir}/{boomer_dir}/{site_data_dir}'
+settings_filename = "drill_game_settings.json"
 
 # the following requires: export PYTHONPATH='/Users/tom/Documents/Projects/Boomer/control_ipc_utils'
 import sys
@@ -47,7 +51,7 @@ base_state = None
 client_state = False
 
 try:
-   with open(f'{settings_dir}/ui_customization.json') as f:
+   with open(f'{settings_dir}/{ui_customization.json}') as f:
       customization_dict = json.load(f)
 except:
    customization_dict = {"title": "Welcome to Boomer", "icon": "/static/favicon.ico"}
@@ -56,7 +60,14 @@ my_home_button = Markup('          <button type="submit" onclick="window.locatio
          <img src="/static/home.png" style="height:64px;"> \
          </button>')
 
-settings_dict = {}
+try:
+   with open(f'{settings_dir}/{settings_filename}') as f:
+      settings_dict = json.load(f)
+      app.logger.debug("Settings restpred: {settings_dict}")
+except:
+   settings_dict = {}
+
+
 DO_SCP_FOR_CALIBRATION = False
 
 IP_PORT = 1111 # picked what is hopefully an unused port  (can't use 44)
@@ -308,8 +319,8 @@ def settings():
    ]
 
    settings_radio_options = { \
-   "grunts":{"legend":"Grunts", "buttons":[{"label":"Off", "value":0},{"label":"On","value":1,"checked":1}]}, \
-   "talking":{"legend":"Trash Talking", "buttons":[{"label":"Off", "value":0, "checked":1},{"label":"On"}]}, \
+   GRUNTS_PARAM:{"legend":"Grunts", "buttons":[{"label":"Off", "value":0},{"label":"On","value":1,"checked":1}]}, \
+   TRASHT_PARAM:{"legend":"Trash Talking", "buttons":[{"label":"Off", "value":0, "checked":1},{"label":"On"}]}, \
    }
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
@@ -351,11 +362,12 @@ def game():
    back_url = previous_url
 
    # print("{} on {}, data: {}".format(request.method, inspect.currentframe().f_code.co_name, request.data))
+   # TODO: the following is redundant with the emit on radio button toggle - remove:?
    if request.method=='POST':
-      if 'serve_mode' in request.form:
-         print("serve_mode: {}".format(request.form['serve_mode']))
-      if 'scoring' in request.form:
-         print("scoring: {}".format(request.form['scoring']))
+      if SERVE_MODE_PARAM in request.form:
+         print("serve_mode: {}".format(request.form[SERVE_MODE_PARAM]))
+      if TIEBREAKER_PARAM in request.form:
+         print("scoring: {}".format(request.form[TIEBREAKER_PARAM]))
       if 'running' in request.form:
          print("running: {}".format(request.form['running']))
       if 'point_delay' in request.form:
@@ -451,13 +463,13 @@ def drill():
             app.logger.error("PUT START failed, code: {}".format(code))
    
    drill_stepper_options = { \
-      "level":{"legend":"Level", "dflt":LEVEL_DEFAULT/LEVEL_UI_FACTOR, "min":LEVEL_MIN/LEVEL_UI_FACTOR, \
+      LEVEL_PARAM:{"legend":"Level", "dflt":LEVEL_DEFAULT/LEVEL_UI_FACTOR, "min":LEVEL_MIN/LEVEL_UI_FACTOR, \
          "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
-      "speed":{"legend":"Speed", "dflt":SPEED_MOD_DEFAULT, "min":SPEED_MOD_MIN, \
+      SPEED_MOD_PARAM:{"legend":"Speed", "dflt":SPEED_MOD_DEFAULT, "min":SPEED_MOD_MIN, \
          "max":SPEED_MOD_MAX, "step":SPEED_MOD_STEP}, \
-      "delay":{"legend":"Delay", "dflt":DELAY_MOD_DEFAULT/DELAY_UI_FACTOR, "min":DELAY_MOD_MIN/DELAY_UI_FACTOR, \
+      DELAY_MOD_PARAM:{"legend":"Delay", "dflt":DELAY_MOD_DEFAULT/DELAY_UI_FACTOR, "min":DELAY_MOD_MIN/DELAY_UI_FACTOR, \
          "max":DELAY_MOD_MAX/DELAY_UI_FACTOR, "step":DELAY_UI_STEP/DELAY_UI_FACTOR}, \
-      "height":{"legend":"Height", "dflt":ELEVATION_ANGLE_MOD_DEFAULT, "min":ELEVATION_ANGLE_MOD_MIN, \
+      ELEVATION_MOD_PARAM:{"legend":"Height", "dflt":ELEVATION_ANGLE_MOD_DEFAULT, "min":ELEVATION_ANGLE_MOD_MIN, \
          "max":ELEVATION_ANGLE_MOD_MAX, "step":ELEVATION_ANGLE_MOD_STEP} \
    }
          
@@ -499,10 +511,36 @@ def handle_message(data):
 
 @socketio.on('change_params')     # Decorator to catch an event named change_params
 def handle_change_params(data):          # change_params() is the event callback function.
-    print('change_params data: ', data)      # data is a json string: {"speed":102}
-    item_to_change = json.loads(data)
-    print('change opts: {}'.format(item_to_change))
+   #  print('change_params data: ', data)      # data is a json string: {"speed":102}
+   #  item_to_change = json.loads(data)
+   #  print('change opts: {}'.format(item_to_change))
     # send_msg(PUT_METHOD, OPTS_RSRC, item_to_change)
+   app.logger.debug(f'received change_params: {data}')
+   for k in data.keys():
+      app.logger.debug(f'Setting: {k} to {int(data[k])}')
+      if (k == LEVEL_PARAM):
+         settings_dict[k] = 10* int(data[k])
+      elif (k == DELAY_MOD_PARAM):
+         settings_dict[k] = int(data[k]*1000)
+      else:
+         settings_dict[k] = int(data[k])
+      if (k == LEVEL_PARAM or k == GRUNTS_PARAM or k == TRASHT_PARAM):
+         rc, code = send_msg(PUT_METHOD, BCFG_RSRC, {k: settings_dict[k]})
+      elif (k == SPEED_MOD_PARAM or k == DELAY_MOD_PARAM or k == ELEVATION_MOD_PARAM):
+         rc, code = send_msg(PUT_METHOD, DCFG_RSRC, {k: settings_dict[k]})
+      elif (k == SERVE_MODE_PARAM or k == TIEBREAKER_PARAM or k == POINTS_DELAY_PARAM):
+         rc, code = send_msg(PUT_METHOD, GCFG_RSRC, {k: settings_dict[k]})
+      elif (k == 'drill_id'):
+         # ignore for now - taking ID on POST
+         rc = True
+      else:
+         app.logger.error(f"Unrecognized key in change_params: {k}")
+         rc = True
+      if not rc:
+         app.logger.error(f"PUT base_config {k} failed, code: {code}")
+      with open(f'{settings_dir}/{settings_filename}', 'w') as f:
+         json.dump(settings_dict, f)
+
 
 @socketio.on('pause_resume')
 def handle_pause_resume():
@@ -510,16 +548,6 @@ def handle_pause_resume():
    rc, code = send_msg(PUT_METHOD, PAUS_RSRC)
    if not rc:
       app.logger.error("PUT PAUSE failed, code: {}".format(code))
-
-@socketio.on('settings')
-def handle_settings(data):
-   app.logger.debug(f'received settings: {data}')
-   # settings_dict['grunts'] = int(data)
-   # with open(f'{settings_dir}/settings.json', 'w') as f:
-   #    json.dump(settings_dict, f)
-   # rc, code = send_msg(PUT_METHOD, BCFG_RSRC, {GRUNTS_PARAM: int(data)})
-   # if not rc:
-   #    app.logger.error("PUT base_config grunts failed, code: {}".format(code))
 
 
 @socketio.on('get_updates')

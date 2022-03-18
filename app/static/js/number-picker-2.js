@@ -43,8 +43,8 @@ function stepperInput(id, s, m) {
   if (updated) {
     // console.log("(iteration 2) forms count: " + document.forms.length);
     if (document.forms.length === 0) {
-      let data = {};
-      data[el.name] = Number(el.value);
+      // let data = {};
+      // data[el.name] = Number(el.value);
       // -- Before using websockets, then did a post, as follows:
       // fetch("/active", {
       //   method: "POST", 
@@ -54,8 +54,9 @@ function stepperInput(id, s, m) {
       // });
       // var socket = io();
       if (typeof socket !== 'undefined') {
-        socket.emit('change_params', JSON.stringify(data));
-        console.log("Emitted: change_params");
+        // socket.emit('change_params', JSON.stringify(data));
+        socket.emit('change_params', {[el.name]:Number(el.value)});
+        // console.log("Emitted: change_params");
       }
       else {
         console.log("Number picker: socket not defined");
