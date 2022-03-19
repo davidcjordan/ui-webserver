@@ -48,6 +48,7 @@ import json
 from random import randint
 
 base_state = None
+previous_base_state = None
 client_state = False
 
 try:
@@ -63,10 +64,12 @@ my_home_button = Markup('          <button type="submit" onclick="window.locatio
 try:
    with open(f'{settings_dir}/{settings_filename}') as f:
       settings_dict = json.load(f)
-      app.logger.debug("Settings restpred: {settings_dict}")
+      app.logger.debug("Settings restored: {settings_dict}")
 except:
-   settings_dict = {}
-
+   settings_dict = {GRUNTS_PARAM: 0, TRASHT_PARAM: 0, LEVEL_PARAM: LEVEL_DEFAULT, \
+         SERVE_MODE_PARAM: 1, TIEBREAKER_PARAM: 0, \
+         SPEED_MOD_PARAM: SPEED_MOD_DEFAULT, DELAY_MOD_PARAM: DELAY_MOD_DEFAULT, \
+         ELEVATION_MOD_PARAM: ELEVATION_ANGLE_MOD_DEFAULT}
 
 DO_SCP_FOR_CALIBRATION = False
 
@@ -99,10 +102,7 @@ WORKOUT_SELECTION_TEMPLATE = '/layouts' + WORKOUT_SELECTION_URL + '.html'
 
 # base process status strings:
 STATUS_NOT_RUNNING = "Down"
-STATUS_RUNNING = "Running"
-STATUS_NOT_RESPONDING = "Faulted"
-STATUS_IDLE = "Idle"
-STATUS_ACTIVE = "Active"
+STATUS_NOT_RESPONDING = "Error"
 MODE_NONE = " --"
 MODE_GAME = "Game --"
 MODE_DRILL_NOT_SELECTED = "Drills --"
@@ -319,9 +319,14 @@ def settings():
    ]
 
    settings_radio_options = { \
-   GRUNTS_PARAM:{"legend":"Grunts", "buttons":[{"label":"Off", "value":0},{"label":"On","value":1,"checked":1}]}, \
-   TRASHT_PARAM:{"legend":"Trash Talking", "buttons":[{"label":"Off", "value":0, "checked":1},{"label":"On"}]}, \
+   GRUNTS_PARAM:{"legend":"Grunts", "buttons":[{"label":"Off", "value":0},{"label":"On","value":1}]}, \
+   TRASHT_PARAM:{"legend":"Trash Talking", "buttons":[{"label":"Off", "value":0},{"label":"On"}]}, \
    }
+   # the following adds checked to  param[buttons][index]
+   settings_radio_options[GRUNTS_PARAM]["buttons"][settings_dict[GRUNTS_PARAM]]["checked"] = 1
+   settings_radio_options[TRASHT_PARAM]["buttons"][settings_dict[TRASHT_PARAM]]["checked"] = 1
+
+   # print(f"settings_radio_options: {settings_radio_options}")
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
@@ -344,12 +349,23 @@ def game_options():
    global back_url, previous_url
    back_url = '/'
    previous_url = "/" + inspect.currentframe().f_code.co_name
+
+   game_radio_options = { \
+      SERVE_MODE_PARAM:{"legend":"Serves", "buttons":[{"label":"Alternate", "value":0},\
+         {"label":"All Player","value":1},{"label":"All Boomer","value":2}]}, \
+      TIEBREAKER_PARAM:{"legend":"Scoring", "buttons":[{"label":"Standard", "value":0},{"label":"Tie Breaker", "value":1}]}, \
+      # RUN_REDUCE_PARAM:{"legend":"Running", "buttons":[{"label":"Standard", "value":0},{"label":"Less", "value":1}]} \
+   }
+   game_radio_options[SERVE_MODE_PARAM]["buttons"][settings_dict[SERVE_MODE_PARAM]]["checked"] = 1
+   game_radio_options[TIEBREAKER_PARAM]["buttons"][settings_dict[TIEBREAKER_PARAM]]["checked"] = 1
+
    return render_template(GAME_OPTIONS_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
       optional_form_begin = Markup('<form action ="' + GAME_URL + '" method="post">'), \
       optional_form_end = Markup('</form>'), \
+      radio_options = game_radio_options, \
       # point_delay_dflt = GAME_POINT_DELAY_DEFAULT, \
       # point_delay_min = GAME_POINT_DELAY_MIN, \
       # point_delay_max = GAME_POINT_DELAY_MAX, \
@@ -376,7 +392,7 @@ def game():
    return render_template(GAME_TEMPLATE, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
-      level_dflt = LEVEL_DEFAULT/LEVEL_UI_FACTOR, \
+      level_dflt = settings_dict[LEVEL_PARAM]/LEVEL_UI_FACTOR, \
       level_min = LEVEL_MIN/LEVEL_UI_FACTOR, \
       level_max = LEVEL_MAX/LEVEL_UI_FACTOR, \
       level_step = LEVEL_UI_STEP/LEVEL_UI_FACTOR, \
@@ -462,15 +478,16 @@ def drill():
          if not rc:
             app.logger.error("PUT START failed, code: {}".format(code))
    
+   # the defaults are set from what was last saved in the settings file
    drill_stepper_options = { \
-      LEVEL_PARAM:{"legend":"Level", "dflt":LEVEL_DEFAULT/LEVEL_UI_FACTOR, "min":LEVEL_MIN/LEVEL_UI_FACTOR, \
-         "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
-      SPEED_MOD_PARAM:{"legend":"Speed", "dflt":SPEED_MOD_DEFAULT, "min":SPEED_MOD_MIN, \
-         "max":SPEED_MOD_MAX, "step":SPEED_MOD_STEP}, \
-      DELAY_MOD_PARAM:{"legend":"Delay", "dflt":DELAY_MOD_DEFAULT/DELAY_UI_FACTOR, "min":DELAY_MOD_MIN/DELAY_UI_FACTOR, \
-         "max":DELAY_MOD_MAX/DELAY_UI_FACTOR, "step":DELAY_UI_STEP/DELAY_UI_FACTOR}, \
-      ELEVATION_MOD_PARAM:{"legend":"Height", "dflt":ELEVATION_ANGLE_MOD_DEFAULT, "min":ELEVATION_ANGLE_MOD_MIN, \
-         "max":ELEVATION_ANGLE_MOD_MAX, "step":ELEVATION_ANGLE_MOD_STEP} \
+      LEVEL_PARAM:{"legend":"Level", "dflt":settings_dict[LEVEL_PARAM]/LEVEL_UI_FACTOR, \
+         "min":LEVEL_MIN/LEVEL_UI_FACTOR, "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
+      SPEED_MOD_PARAM:{"legend":"Speed", "dflt":settings_dict[SPEED_MOD_PARAM], \
+         "min":SPEED_MOD_MIN, "max":SPEED_MOD_MAX, "step":SPEED_MOD_STEP}, \
+      DELAY_MOD_PARAM:{"legend":"Delay", "dflt":settings_dict[DELAY_MOD_PARAM]/DELAY_UI_FACTOR, \
+         "min":DELAY_MOD_MIN/DELAY_UI_FACTOR, "max":DELAY_MOD_MAX/DELAY_UI_FACTOR, "step":DELAY_UI_STEP/DELAY_UI_FACTOR}, \
+      ELEVATION_MOD_PARAM:{"legend":"Height", "dflt":settings_dict[ELEVATION_MOD_PARAM], \
+         "min":ELEVATION_ANGLE_MOD_MIN, "max":ELEVATION_ANGLE_MOD_MAX, "step":ELEVATION_ANGLE_MOD_STEP} \
    }
          
    previous_url = "/" + inspect.currentframe().f_code.co_name
@@ -562,7 +579,7 @@ def handle_get_updates(data):
 
 
 def check_base(process_name):
-   global base_state, client_state, socketio
+   global base_state, previous_base_state, client_state, socketio
    while True:
       base_pid = os.popen(f"pgrep {process_name}").read()
       #base_pid is empty if base is not running
@@ -579,10 +596,29 @@ def check_base(process_name):
                #    fault_count = int(status_msg[HARD_FAULT_PARAM])
       else:
          base_state = STATUS_NOT_RUNNING
+      if (base_state != previous_base_state and not \
+            (base_state == STATUS_NOT_RUNNING or base_state == STATUS_NOT_RESPONDING)):
+         print("Base (or UI) started - configuring settings")
+         rc, code = send_msg(PUT_METHOD, BCFG_RSRC, \
+            {LEVEL_PARAM: settings_dict[LEVEL_PARAM], \
+               GRUNTS_PARAM: settings_dict[GRUNTS_PARAM], \
+               TRASHT_PARAM: settings_dict[TRASHT_PARAM]})
+
+         rc, code = send_msg(PUT_METHOD, DCFG_RSRC, \
+            {SPEED_MOD_PARAM: settings_dict[SPEED_MOD_PARAM], \
+               DELAY_MOD_PARAM: settings_dict[DELAY_MOD_PARAM], \
+               ELEVATION_MOD_PARAM: settings_dict[ELEVATION_MOD_PARAM]})
+ 
+         rc, code = send_msg(PUT_METHOD, GCFG_RSRC, \
+            {SERVE_MODE_PARAM: settings_dict[SERVE_MODE_PARAM], \
+               TIEBREAKER_PARAM: settings_dict[TIEBREAKER_PARAM]})
+               # POINTS_DELAY_PARAM: settings_dict[POINTS_DELAY_PARAM]})
+ 
       # the following didn't work: the emit didn't get to the client
       # if client_state:
       #    print(f"emitting: {{'base_state_update', {{\"base_state\": \"{base_state}\"}}}}")
       #    socketio.emit('base_state_update', {"base_state": base_state})
+      previous_base_state = base_state
       time.sleep(1)
 
 def print_base_status(iterations = 20):

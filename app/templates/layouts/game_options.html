@@ -7,32 +7,19 @@
 {% endblock %} 
 
 {% block selections %}
-  <div class="selections">
+<div class="selections">
+  {% for key,item in radio_options.items() %}
     <fieldset class="radio-slider-buttons">
-      <label>Serves: </label>
-      <input type="radio" id="alt_serve" name="wServes" value=0 checked>
-        <label for="alt_serve">Alternate</label>
-      <input type="radio" id="all_serve" name="wServes"value=1>
-        <label for="all_serve">All</label>
-      <input type="radio" id="no_serve" name="wServes" value=2>
-        <label for="no_serve">None</label>
+    <label for="{{key}}">{{item['legend']}}:</label>
+      {% for button in item['buttons'] %}
+      <input type="radio" id="{{key}}_{{button['label']}}" name="{{key}}" value={{button['value']}} {% if button['checked'] is defined %}checked{% endif %}>
+        <label for="{{key}}_{{button['label']}}">{{button['label']}}</label>
+      {% endfor %}
     </fieldset>
-    <fieldset class="radio-slider-buttons">
-      <label>Scoring:</label>
-      <input type="radio" id="standard_scoring" name="tiebreaker" value=0 checked>
-        <label for="standard_scoring">Standard</label>
-      <input type="radio" id="tiebreaker_scoring"name="tiebreaker" value=1>
-        <label for="tiebreaker_scoring">Tie Breaker</label>
-    </fieldset>
+  {% endfor %}
+</div>
 <!-- 
-    <fieldset class="radio-slider-buttons">
-      <label>Running:</label>
-      <input type="radio" id="less_running" name="running" value=1>
-        <label for="less_running">Less</label>
-      <input type="radio" id="standard_running"name="running" value=0 checked>
-        <label for="standard_running">Standard</label>
-    </fieldset>
-    <div class="stepper">
+      <div class="stepper">
       <label for="point_delay_stepper">Delay:</label>
       <button type="button">–</button>
       <input type="number" id="point_delay_stepper" name="point_delay" value={{point_delay_dflt}} min={{point_delay_min}}
@@ -40,8 +27,7 @@
       <button type="button">+</button>
       <p>After Point</p>
     </div>
-     -->
-  </div>
+ -->
 {% endblock %}
 
 {% block control %}
