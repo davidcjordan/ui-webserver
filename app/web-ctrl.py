@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 #from flask import ? session, abort
 from flask import Flask, render_template, Response, request, redirect, url_for, Markup, send_from_directory
 try:
@@ -8,10 +9,10 @@ except:
    print("Missing package 'flask_socketio', please run: python3 -m pip install flask-socketio")
    exit()
 
-app = Flask(__name__)
+import logging
+logging.basicConfig(level=logging.INFO)
 
-# import logging
-# logging.basicConfig(level=logging.DEBUG)
+app = Flask(__name__)
 
 import inspect
 import os  # for sending favicon 
@@ -31,14 +32,14 @@ try:
    from ctrl_messaging_routines import send_msg, is_state
    from control_ipc_defines import *
 except:
-   print("Missing 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
+   app.logger.error("Missing 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
    exit()
 
 sys.path.append(f'{user_dir}/{boomer_dir}/drills')
 try:
    from ui_drill_selection_lists import *
 except:
-   print("Missing 'ui_drill_selection_lists' modules, please run: git clone https://github.com/davidcjordon/drills")
+   app.logger.error("Missing 'ui_drill_selection_lists' modules, please run: git clone https://github.com/davidcjordon/drills")
    exit()
 
 from threading import Thread
@@ -84,7 +85,6 @@ DRILL_SELECT_URL = '/drill_select' # does not have a template
 DRILL_URL = '/drill'
 CAM_CALIB_URL = '/cam_calib'
 CAM_POSITION_URL = '/cam_position'
-CALIB_DRILL_URL = '/thrower_calib'
 WORKOUT_SELECTION_URL = '/workout_selection'
 SETTINGS_URL = '/settings'
 
@@ -98,7 +98,7 @@ DRILL_SELECT_UNFILTERED_TEMPLATE = '/layouts' + '/drill_select_unfiltered' + '.h
 DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
 CAM_CALIBRATION_TEMPLATE = '/layouts' + CAM_CALIB_URL + '.html'
 CAM_POSITION_TEMPLATE = '/layouts' + CAM_POSITION_URL + '.html'
-WORKOUT_SELECTION_TEMPLATE = '/layouts' + WORKOUT_SELECTION_URL + '.html'
+# WORKOUT_SELECTION_TEMPLATE = '/layouts' + WORKOUT_SELECTION_URL + '.html'
 
 # base process status strings:
 STATUS_NOT_RUNNING = "Down"
@@ -114,6 +114,8 @@ DRILL_SELECT_TYPE_PLAYER = 'Player(s)'
 DRILL_SELECT_TYPE_INSTRUCTORS = 'Instructors'
 DRILL_SELECT_TYPE_TEST ='Test'
 
+WORKOUT_ID = 'workout_id'
+
 previous_url = None
 back_url = None
 
@@ -122,7 +124,7 @@ cam_mm = [0]*3 # global camera location
 X=0;Y=1;Z=2 # cam array enum
 INCHES_TO_MM = 25.4
 
-calib_drill_id = 780
+ROTARY_CALIB_ID = 780
 
 app.config['SECRET_KEY'] = 'secret!'
 # didn't find how to have multiple allowed origins
@@ -174,7 +176,7 @@ def cam_calib():
    global cam_side, cam_mm, X, Y, Z
    loc_dict = {}
    if request.method=='POST':
-      print(f"POST to CALIB request.form: {request.form}")
+      app.logger.info(f"POST to CALIB request.form: {request.form}")
       # example: ImmutableMultiDict([('cam_id', 'l'), ('cam_x_ft', '0'), ('cam_x_in', '0'), ('cam_y_ft', '47'), ('cam_y_in', '0'), ('cam_z_ft', '8'), ('cam_z_in', '0')])
       if ('cam_id' in request.form) and request.form['cam_id'].lower().startswith('r'):
          cam_side = 'Right'
@@ -205,7 +207,7 @@ def cam_calib():
       p = Popen(["cp", "/run/shm/frame.png", f"/home/pi/boomer/{cam_lower}_court.png"])
    stdoutdata, stderrdata = p.communicate()
    if p.returncode != 0:
-      print(f"scp of camera's frame.png to court.png failed: {p.returncode}")
+      app.logger.error(f"scp of camera's frame.png to court.png failed: {p.returncode}")
    # status = os.waitpid(p.pid, 0)
 
    return render_template(CAM_CALIBRATION_TEMPLATE, \
@@ -238,7 +240,7 @@ def cam_calib_done():
             f" --nscx {c['nscx']} --nscy {c['nscy']} --nsrx {c['nsrx']} --nsry {c['nsry']}"
             f" --camx {cam_mm[X]} --camy {cam_mm[Y]} --camz {cam_mm[Z]}" )
       else:
-         print(f"POST to CALIB_DONE request.form: {request.form}")
+         app.logger.debug(f"POST to CALIB_DONE request.form: {request.form}")
          # example: ImmutableMultiDict
          coord_args = (f"--fblx {int(request.form['fblx'])} --fbly {int(request.form['fbly'])}"
             f" --fbrx {int(request.form['fbrx'])} --fbry {int(request.form['fbry'])}"
@@ -254,9 +256,9 @@ def cam_calib_done():
             p = Popen(cmd, shell=True)
             stdoutdata, stderrdata = p.communicate()
             if p.returncode != 0:
-               print(f"gen_cam_params failed: {p.returncode}")
+               app.logger.error(f"gen_cam_params failed: {p.returncode}")
             else:
-               print("TODO: send parameters.txt, restart the cam, reload the param on the base")
+               app.logger.warning("TODO: send parameters.txt, restart the cam, reload the param on the base")
  
    button_label = cam_side + " Cam Calib Done"
    return render_template(CHOICE_INPUTS_TEMPLATE, \
@@ -275,7 +277,7 @@ def index():
    onclick_choice_list = [\
       {"value": "Game Mode", "onclick_url": GAME_OPTIONS_URL},\
       {"value": "Drills", "onclick_url": DRILL_SELECT_TYPE_URL},\
-      {"value": "Workouts", "onclick_url": CAM_POSITION_URL},\
+      {"value": "Workouts", "onclick_url": DRILL_SELECT_URL},\
       {"value": "Settings", "onclick_url": SETTINGS_URL}
    ]
 
@@ -303,9 +305,9 @@ def settings():
    global back_url, previous_url
    back_url = previous_url = "/"
 
+   # value is the label of the button
    onclick_choice_list = [\
-      {"value": "Cam Calibration", "onclick_url": CAM_POSITION_URL}, \
-      {"value": "Rotary Calibration", "onclick_url": CALIB_DRILL_URL}
+      {"value": "Rotary Calibration", "onclick_url": DRILL_URL, "param_name": WORKOUT_ID,"param_value": ROTARY_CALIB_ID}
  		# rotary_calibration_mode= (drill_number==780)	   ? true : false;
 		# elevator_calibration_mode= (drill_number==781)	? true : false;
 		# lob_calibration_mode= (drill_number==782)	      ? true : false;
@@ -325,8 +327,6 @@ def settings():
    # the following adds checked to  param[buttons][index]
    settings_radio_options[GRUNTS_PARAM]["buttons"][settings_dict[GRUNTS_PARAM]]["checked"] = 1
    settings_radio_options[TRASHT_PARAM]["buttons"][settings_dict[TRASHT_PARAM]]["checked"] = 1
-
-   # print(f"settings_radio_options: {settings_radio_options}")
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
@@ -379,6 +379,7 @@ def game():
 
    # print("{} on {}, data: {}".format(request.method, inspect.currentframe().f_code.co_name, request.data))
    # TODO: the following is redundant with the emit on radio button toggle - remove:?
+   '''
    if request.method=='POST':
       if SERVE_MODE_PARAM in request.form:
          print("serve_mode: {}".format(request.form[SERVE_MODE_PARAM]))
@@ -388,6 +389,7 @@ def game():
          print("running: {}".format(request.form['running']))
       if 'point_delay' in request.form:
          print("point_delay: {}".format(request.form['point_delay']))
+   '''
       
    return render_template(GAME_TEMPLATE, \
       installation_title = customization_dict['title'], \
@@ -405,6 +407,9 @@ def drill_select_type():
    rc, code = send_msg(PUT_METHOD, STOP_RSRC)
    if not rc:
       app.logger.error("PUT STOP failed, code: {}".format(code))
+
+   global back_url, previous_url
+   back_url = previous_url
 
    drill_select_type_list = [\
       {'value': DRILL_SELECT_TYPE_PLAYER},\
@@ -427,9 +432,11 @@ def drill_select():
    back_url = '/'
    previous_url = "/" + inspect.currentframe().f_code.co_name
 
+   app.logger.info(f"drill_select request: {request}")
+
    drill_select_type = None
    if request.method=='POST':
-      print(f"request_form_getlist_type: {request.form.getlist('choice')}")
+      app.logger.info(f"request_form_getlist_type: {request.form.getlist('choice')}")
       drill_select_type = request.form.getlist('choice')[0]
 
    # refer to /home/pi/boomer/drills/ui_drill_selection_lists for drill_list format
@@ -464,31 +471,45 @@ def drill():
    global back_url, previous_url
    back_url = previous_url
 
-   print("request_form: {}".format(request.form))
+   # app.logger.info(f"DRILL_URL request_form: {request.form}")
+   app.logger.info(f"DRILL_URL request_args: {request.args}")
+   id = int(request.args.get(WORKOUT_ID))
+   app.logger.info(f"workflow_id: {id}")
+   if id is None:
+      is_drill = True
+      if request.method=='POST' and 'drill_id' in request.form:
+         id = int(request.form['drill_id'])
+         mode = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: id}
+         mode_string = f"'{id}' Drill"
+   else:
+      mode = {MODE_PARAM: base_mode_e.WORKOUT.value, ID_PARAM: id}
+      mode_string = f"'{id}' Workout"
 
-   mode_string = "FIX-ME"
-   if request.method=='POST' and 'drill_id' in request.form:
-      mode_string = "'" + request.form['drill_id'] + "'" + " Drill"
-      mode = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: request.form['drill_id']}
+   if id is None:
+      app.logger.error("DRILL_URL - no drill_id!")
+   else:
       rc, code = send_msg(PUT_METHOD, MODE_RSRC, mode)
       if not rc:
-         app.logger.error("PUT Mode failed, code: {}".format(code))
+         app.logger.error("DRILL_URL: PUT Mode failed, code: {}".format(code))
       else:
          rc, code = send_msg(PUT_METHOD, STRT_RSRC)
          if not rc:
             app.logger.error("PUT START failed, code: {}".format(code))
-   
-   # the defaults are set from what was last saved in the settings file
-   drill_stepper_options = { \
-      LEVEL_PARAM:{"legend":"Level", "dflt":settings_dict[LEVEL_PARAM]/LEVEL_UI_FACTOR, \
-         "min":LEVEL_MIN/LEVEL_UI_FACTOR, "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
-      SPEED_MOD_PARAM:{"legend":"Speed", "dflt":settings_dict[SPEED_MOD_PARAM], \
-         "min":SPEED_MOD_MIN, "max":SPEED_MOD_MAX, "step":SPEED_MOD_STEP}, \
-      DELAY_MOD_PARAM:{"legend":"Delay", "dflt":settings_dict[DELAY_MOD_PARAM]/DELAY_UI_FACTOR, \
-         "min":DELAY_MOD_MIN/DELAY_UI_FACTOR, "max":DELAY_MOD_MAX/DELAY_UI_FACTOR, "step":DELAY_UI_STEP/DELAY_UI_FACTOR}, \
-      ELEVATION_MOD_PARAM:{"legend":"Height", "dflt":settings_dict[ELEVATION_MOD_PARAM], \
-         "min":ELEVATION_ANGLE_MOD_MIN, "max":ELEVATION_ANGLE_MOD_MAX, "step":ELEVATION_ANGLE_MOD_STEP} \
-   }
+
+   if (id != ROTARY_CALIB_ID):
+      # the defaults are set from what was last saved in the settings file
+      drill_stepper_options = { \
+         LEVEL_PARAM:{"legend":"Level", "dflt":settings_dict[LEVEL_PARAM]/LEVEL_UI_FACTOR, \
+            "min":LEVEL_MIN/LEVEL_UI_FACTOR, "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
+         SPEED_MOD_PARAM:{"legend":"Speed", "dflt":settings_dict[SPEED_MOD_PARAM], \
+            "min":SPEED_MOD_MIN, "max":SPEED_MOD_MAX, "step":SPEED_MOD_STEP}, \
+         DELAY_MOD_PARAM:{"legend":"Delay", "dflt":settings_dict[DELAY_MOD_PARAM]/DELAY_UI_FACTOR, \
+            "min":DELAY_MOD_MIN/DELAY_UI_FACTOR, "max":DELAY_MOD_MAX/DELAY_UI_FACTOR, "step":DELAY_UI_STEP/DELAY_UI_FACTOR}, \
+         ELEVATION_MOD_PARAM:{"legend":"Height", "dflt":settings_dict[ELEVATION_MOD_PARAM], \
+            "min":ELEVATION_ANGLE_MOD_MIN, "max":ELEVATION_ANGLE_MOD_MAX, "step":ELEVATION_ANGLE_MOD_STEP} \
+      }
+   else:
+      drill_stepper_options = {}
          
    previous_url = "/" + inspect.currentframe().f_code.co_name
    return render_template(DRILL_TEMPLATE, \
@@ -497,19 +518,6 @@ def drill():
       stepper_options = drill_stepper_options, \
       footer_center = "Mode: " + mode_string)
 
-@app.route(CALIB_DRILL_URL, methods=DEFAULT_METHODS)
-def calib_drill():
-   global calib_drill_id
- 
-   mode_string = f"'{calib_drill_id}' Drill"
-   mode = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: calib_drill_id}
-   rc, code = send_msg(PUT_METHOD, MODE_RSRC, mode)
-   if not rc:
-      app.logger.error("PUT Mode failed, code: {}".format(code))
-   else:
-      rc, code = send_msg(PUT_METHOD, STRT_RSRC)
-      if not rc:
-         app.logger.error("PUT START failed, code: {}".format(code))
 
    return render_template(DRILL_TEMPLATE, \
       installation_title = customization_dict['title'], \
@@ -524,15 +532,13 @@ def favicon():
 
 @socketio.on('message')
 def handle_message(data):
-    print('received message: ' + data)
+    app.logger.debug('received message: ' + data)
 
 @socketio.on('change_params')     # Decorator to catch an event named change_params
 def handle_change_params(data):          # change_params() is the event callback function.
    #  print('change_params data: ', data)      # data is a json string: {"speed":102}
    #  item_to_change = json.loads(data)
-   #  print('change opts: {}'.format(item_to_change))
-    # send_msg(PUT_METHOD, OPTS_RSRC, item_to_change)
-   app.logger.debug(f'received change_params: {data}')
+   app.logger.info(f'received change_params: {data}')
    for k in data.keys():
       app.logger.debug(f'Setting: {k} to {int(data[k])}')
       if (k == LEVEL_PARAM):
@@ -598,7 +604,7 @@ def check_base(process_name):
          base_state = STATUS_NOT_RUNNING
       if (base_state != previous_base_state and not \
             (base_state == STATUS_NOT_RUNNING or base_state == STATUS_NOT_RESPONDING)):
-         print("Base (or UI) started - configuring settings")
+         app.logger.info("Base (or UI) started - configuring settings")
          rc, code = send_msg(PUT_METHOD, BCFG_RSRC, \
             {LEVEL_PARAM: settings_dict[LEVEL_PARAM], \
                GRUNTS_PARAM: settings_dict[GRUNTS_PARAM], \

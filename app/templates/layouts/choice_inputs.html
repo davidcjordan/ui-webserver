@@ -2,7 +2,8 @@
 {% block selections %}
 <div>
   {% for choice in onclick_choices %}
-    <input class="block_b" type="submit" name="choice" value="{{choice['value']}}" onclick="window.location.href='{{choice['onclick_url']}}';">
+    <input class="block_b" type="submit" name="choice" value="{{choice['value']}}" 
+      onclick="window.location.href='{{choice['onclick_url']}}?{{choice['param_name']}}={{choice['param_value']}}';">
   {% endfor %}
 
   {% if radio_options is defined %}
