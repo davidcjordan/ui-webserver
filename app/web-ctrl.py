@@ -77,11 +77,13 @@ DO_SCP_FOR_CALIBRATION = False
 IP_PORT = 1111 # picked what is hopefully an unused port  (can't use 44)
 DEFAULT_METHODS = ['POST', 'GET']
 
+#NOTE: drill and workout use the same pages and templates, but populate based on the mode (drill/workout)
+
 MAIN_URL = '/'
 GAME_OPTIONS_URL = '/game_options'
 GAME_URL = '/game'
 DRILL_SELECT_TYPE_URL = '/drill_select_type'
-DRILL_SELECT_URL = '/drill_select' # does not have a template
+DRILL_SELECT_URL = '/drill_select'
 DRILL_URL = '/drill'
 CAM_CALIB_URL = '/cam_calib'
 CAM_POSITION_URL = '/cam_position'
@@ -94,11 +96,9 @@ GAME_OPTIONS_TEMPLATE = '/layouts' + GAME_OPTIONS_URL + '.html'
 GAME_TEMPLATE = '/layouts' + GAME_URL + '.html'
 CHOICE_INPUTS_TEMPLATE = '/layouts' + '/choice_inputs' + '.html'
 DRILL_SELECT_FILTERED_TEMPLATE = '/layouts' + '/drill_select_filtered' + '.html'
-DRILL_SELECT_UNFILTERED_TEMPLATE = '/layouts' + '/drill_select_unfiltered' + '.html'
 DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
 CAM_CALIBRATION_TEMPLATE = '/layouts' + CAM_CALIB_URL + '.html'
 CAM_POSITION_TEMPLATE = '/layouts' + CAM_POSITION_URL + '.html'
-# WORKOUT_SELECTION_TEMPLATE = '/layouts' + WORKOUT_SELECTION_URL + '.html'
 
 # base process status strings:
 STATUS_NOT_RUNNING = "Down"
@@ -125,6 +125,16 @@ X=0;Y=1;Z=2 # cam array enum
 INCHES_TO_MM = 25.4
 
 ROTARY_CALIB_ID = 780
+
+filter_js = []
+filter_js.append(Markup('<script src="/static/js/jquery-3.3.1.min.js"></script>'))
+filter_js.append(Markup('<script src="/static/js/b_filtrify.js"></script>'))
+filter_js.append(Markup('<script src="/static/js/invoke_filtrify.js"></script>'))
+filter_js.append(Markup('<link rel="stylesheet" href="/static/css/b_filtrify.css">'))
+# unused/alternate scripts:
+# <script src="/static/js/filtrify.min.js"></script>
+# <script src="/static/js/highlight.pack.js"></script>
+# <script src="/static/js/script.js"></script>
 
 app.config['SECRET_KEY'] = 'secret!'
 # didn't find how to have multiple allowed origins
@@ -439,7 +449,7 @@ def drill_select():
       app.logger.info(f"request_form_getlist_type: {request.form.getlist('choice')}")
       drill_select_type = request.form.getlist('choice')[0]
 
-   # refer to /home/pi/boomer/drills/ui_drill_selection_lists for drill_list format
+   # refer to /home/pi/boomer/drills/ui_drill_selection_lists.py for drill_list format
    if drill_select_type == DRILL_SELECT_TYPE_TEST:
       drill_list = drill_list_test
    elif drill_select_type == DRILL_SELECT_TYPE_INSTRUCTORS:
@@ -448,42 +458,43 @@ def drill_select():
       drill_list = drill_list_player
 
    if len(drill_list[0]) > 2:
-      return render_template(DRILL_SELECT_FILTERED_TEMPLATE, \
-         home_button = my_home_button, \
-         installation_title = customization_dict['title'], \
-         installation_icon = customization_dict['icon'], \
-         optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
-         drills = drill_list, \
-         optional_form_end = Markup('</form>'), \
-         footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
+      page_js = filter_js
    else:
-      return render_template(DRILL_SELECT_UNFILTERED_TEMPLATE, \
-         home_button = my_home_button, \
-         installation_title = customization_dict['title'], \
-         installation_icon = customization_dict['icon'], \
-         optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
-         drills = drill_list, \
-         optional_form_end = Markup('</form>'), \
-         footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
+      page_js = []
 
+   return render_template(DRILL_SELECT_FILTERED_TEMPLATE, \
+      home_button = my_home_button, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
+      optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
+      drills = drill_list, \
+      optional_form_end = Markup('</form>'), \
+      footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED, \
+      page_specific_js = page_js
+   )
+ 
 @app.route(DRILL_URL, methods=DEFAULT_METHODS)
 def drill():
    global back_url, previous_url
    back_url = previous_url
 
-   # app.logger.info(f"DRILL_URL request_form: {request.form}")
+   app.logger.info(f"DRILL_URL request_form: {request.form}")
    app.logger.info(f"DRILL_URL request_args: {request.args}")
-   id = int(request.args.get(WORKOUT_ID))
-   app.logger.info(f"workflow_id: {id}")
-   if id is None:
-      is_drill = True
+   is_workout = request.args.get('mode')
+   app.logger.info(f"is_workout in request_args: {is_workout}")
+   id = request.args.get(WORKOUT_ID)
+   app.logger.info(f"WORKOUT_ID in request_args: {WORKOUT_ID}")
+   if id is not None:
+      id = int(id)
+      mode = {MODE_PARAM: base_mode_e.WORKOUT.value, ID_PARAM: id}
+      mode_string = f"'{id}' Workout"
+   else:
       if request.method=='POST' and 'drill_id' in request.form:
          id = int(request.form['drill_id'])
          mode = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: id}
          mode_string = f"'{id}' Drill"
-   else:
-      mode = {MODE_PARAM: base_mode_e.WORKOUT.value, ID_PARAM: id}
-      mode_string = f"'{id}' Workout"
+
+   # app.logger.info(f"workout_id: {id}")
 
    if id is None:
       app.logger.error("DRILL_URL - no drill_id!")

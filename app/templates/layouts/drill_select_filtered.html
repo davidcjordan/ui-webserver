@@ -12,21 +12,6 @@
     {% endfor %}
   </fieldset>
 </div>
-
-<!-- 
-<div class="selections">
-  <div id="placeHolder"> </div>
-  <fieldset id="container" class="radio-text-buttons">
-    <input type="radio" id="DRL001" name="drill_id" value="DRL001" data-Type="speed">
-    <label for="DRL001" data-Type="speed">speed test</label>
-    <input type="radio" id="DRL002" name="drill_id" value="DRL002" data-Type="groundstroke">
-    <label for="DRL002" data-Type="groundstroke">2-line groundstroke footwork</label>
-    <input type="radio" id="DRL003" name="drill_id" value="DRL003" data-Type="suicide">
-    <label for="DRL003" data-Type="suicide">2-line suicide</label>
-  </fieldset>
-</div>
- -->
-
 {% endblock %}
 
 {% block control %}
@@ -36,20 +21,3 @@
     </button>
   </div>
 {% endblock %}
-
-{% block page_specific_js %} 
-<script src="/static/js/jquery-3.3.1.min.js"></script>
-<!-- <script src="/static/js/filtrify.min.js"></script> -->
-<script src="/static/js/b_filtrify.js"></script>
-<!-- 
-<script src="/static/js/highlight.pack.js"></script>
-<script src="/static/js/script.js"></script>
- -->
-<script type="text/javascript">
-  $(function() {
-    $.filtrify("container", "placeHolder");
-  });
-</script>    
-<link rel="stylesheet" href="/static/css/b_filtrify.css">
-
-{% endblock %} 

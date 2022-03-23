@@ -1,0 +1,4 @@
+$(function() {
+   $.filtrify("container", "placeHolder");
+});
+ 

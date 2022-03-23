@@ -29,7 +29,36 @@ jquery.js is already installed on Raspbian, but a symbolic link needs to be made
 ```
 ./make_links.sh
 ```
-
 # Other dependencies:
 
 git clone https://github.com/davidcjordan/drills to ~/boomer should have already been performed. The file *ui_drill_selection_lists.py* in the drills directory is used by the UI to present a subset of drills to select.
+
+# Implementation notes:
+## Drill selection
+A file 'ui_drill_selection_lists.py' has lists of drills as follows, where the player list has extra key/value pairs
+used to filter drills during the selection process. The test ```len(drill_list[0]) > 2``` tells whether there are filter keys.
+```
+drill_list_test = [\
+   {'id': '100', 'name': 'Test 100'},\
+   {'id': '800', 'name': 'Test servoing'},\
+...]
+
+drill_list_player = [\
+   {'id': '005', 'name': 'Groundstrokes Random 20 balls', 'type': 'Development', 'stroke': 'Ground', 'difficulty': 'Medium'},\
+...]
+```
+
+The drill_select.html page generates drill buttons as in the following example, although this only has one filter key (speed)
+```
+<div class="selections">
+  <div id="placeHolder"> </div>
+  <fieldset id="container" class="radio-text-buttons">
+    <input type="radio" id="DRL001" name="drill_id" value="DRL001" data-Type="speed">
+    <label for="DRL001" data-Type="speed">speed test</label>
+    <input type="radio" id="DRL002" name="drill_id" value="DRL002" data-Type="groundstroke">
+    <label for="DRL002" data-Type="groundstroke">2-line groundstroke footwork</label>
+    <input type="radio" id="DRL003" name="drill_id" value="DRL003" data-Type="suicide">
+    <label for="DRL003" data-Type="suicide">2-line suicide</label>
+  </fieldset>
+</div>
+```

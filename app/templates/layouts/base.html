@@ -36,10 +36,14 @@
       </div>
     </div>
     <!--  if javascript was in header, then the javascripts didnt work.  Reconmendation is they should be here -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
+    <!-- 
+      https://flask-socketio.readthedocs.io/en/latest/intro.html
+     -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="utf-8"> var socket = io(); </script>
+
     <!-- The following will be used when socket.io.js is installed locally, which needs to be done: -->
     <!-- <script src="/socket.io/socket.io.js"></script> -->
-    <script type="text/javascript" charset="utf-8"> var socket = io(); </script>
     <!-- <script type="text/javascript">
       var socket = io.connect('http://' + document.domain + ':' + location.port);
       console.log("Sending client_connected")
@@ -76,6 +80,10 @@
         }
       }
     </script>
-    {% block page_specific_js %} {% endblock %} 
+    {% block page_specific_js %} 
+      {% for line in page_specific_js %}
+        {{line}}
+      {% endfor %}
+    {% endblock %} 
   </body>
 </html>
