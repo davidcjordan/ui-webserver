@@ -5,10 +5,18 @@
   <div id="placeHolder"> </div>
   <fieldset id="container" class="radio-text-buttons">
     {% for drill in drills %}
+      {% if 'filters' in drill %}
     <input type="radio" id="{{drill['id']}}" name="drill_id" value="{{drill['id']}}" 
-      data-Type="{{drill['type']}}" data-Stroke="{{drill['stroke']}}" data-Difficulty="{{drill['difficulty']}}">
-    <label for="{{drill['id']}}" data-Type="{{drill['type']}}" data-Stroke="{{drill['stroke']}}"
-      data-Difficulty="{{drill['difficulty']}}">{{drill['name']}}</label>
+      data-Type="{{drill['filters']['type']}}" data-Stroke="{{drill['filters']['stroke']}}"
+      data-Difficulty="{{drill['filters']['difficulty']}}">
+    <label for="{{drill['id']}}"
+      data-Type="{{drill['filters']['type']}}" data-Stroke="{{drill['filters']['stroke']}}"
+      data-Difficulty="{{drill['filters']['difficulty']}}">{{drill['name']}}</label>
+      {% else %}
+    <input type="radio" id="{{drill['id']}}" name="drill_id" value="{{drill['id']}}">
+    <label for="{{drill['id']}}">{{drill['name']}}</label>
+      {% endif %}
+
     {% endfor %}
   </fieldset>
 </div>

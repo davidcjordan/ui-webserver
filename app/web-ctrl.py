@@ -455,12 +455,22 @@ def drill_select():
    elif drill_select_type == DRILL_SELECT_TYPE_INSTRUCTORS:
       drill_list = drill_list_instructor
    else:
-      drill_list = drill_list_player
+      # drill_list = drill_list_player
+      drill_list_filters = ['data-Type', 'data-Stroke', 'data-Difficulty']
+      drill_list = [\
+         {'id': '005', 'name': 'Groundstrokes Random 20 balls', \
+            'filters': {'type': 'Development', 'stroke': 'Ground', 'difficulty': 'Medium'}},\
+         {'id': '006', 'name': 'Net Random 9 balls', \
+            'filters': {'type': 'Development', 'stroke': 'Net', 'difficulty': 'Medium'}},\
+         {'id': '007', 'name': 'Volley Random 12 balls', \
+            'filters': {'type': 'Development', 'stroke': 'Volley', 'difficulty': 'Medium'}},\
+      ]
 
-   if len(drill_list[0]) > 2:
+   if 'filters' in drill_list[0]:
       page_js = filter_js
    else:
       page_js = []
+
 
    return render_template(DRILL_SELECT_FILTERED_TEMPLATE, \
       home_button = my_home_button, \
