@@ -55,14 +55,6 @@
     <script src="/static/js/state_update.js"></script>
     <script src="/static/js/number-picker-2.js"></script>
     <script type="text/javascript" charset="utf-8">
-      var radios = document.querySelectorAll('input[type=radio]')
-      for(var i = 0, max = radios.length; i < max; i++) {
-          radios[i].onclick = function() {
-            socket.emit('change_params', {[this.name] : Number(this.value)});
-          }
-      }
-    </script>    
-    <script type="text/javascript" charset="utf-8">
       var data_get_update = {};
       data_get_update["page"] = window.location.pathname.split("/").pop();
       // console.log("json: " + data_get_update + " page: " + page );

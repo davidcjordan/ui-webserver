@@ -34,31 +34,46 @@ jquery.js is already installed on Raspbian, but a symbolic link needs to be made
 git clone https://github.com/davidcjordan/drills to ~/boomer should have already been performed. The file *ui_drill_selection_lists.py* in the drills directory is used by the UI to present a subset of drills to select.
 
 # Implementation notes:
+
+## templates
+The base template has a section for page specific javascript.  This is used on the following pages:
+* select.html: whether to enable filtrify (or not); NOT include
+* game and drill.html: enable pause_resume, number-picker
+* choice_inputs: enable emits per radio button
+
+## Flow
+###
+* Main (POST)-> drill_select_type (POST with form)-> select (POST on start button) -> drill
+* Main (POST-with-mode=workout)-> select
+* Main (POST)-> game_options
+
 ## Drill selection
-A file 'ui_drill_selection_lists.py' has lists of drills as follows, where the player list has extra key/value pairs
-used to filter drills during the selection process. The test ```len(drill_list[0]) > 2``` tells whether there are filter keys.
+Refer to [Drill Categorization and Filtering](https://docs.google.com/document/d/1V0n3HToN0-XzfUT8dVTWYwKsZZYaLfdsvD9uuKcMHIQ)
+
+### Lists of Drills/Workflows
+Without filtering a drill list is as follows:
 ```
 drill_list_test = [\
    {'id': '100', 'name': 'Test 100'},\
    {'id': '800', 'name': 'Test servoing'},\
 ...]
-
-drill_list_player = [\
-   {'id': '005', 'name': 'Groundstrokes Random 20 balls', 'type': 'Development', 'stroke': 'Ground', 'difficulty': 'Medium'},\
-...]
 ```
 
-The drill_select.html page generates drill buttons as in the following example, although this only has one filter key (speed)
+### Filters
+Filters are used to reduce the number of buttons (drills or workflows) the user can select from - to shrink the list of drills from an overwhelming number.
+
+To use filters on the select.html page, a filter list needs to be provided, e.g.
 ```
-<div class="selections">
-  <div id="placeHolder"> </div>
-  <fieldset id="container" class="radio-text-buttons">
-    <input type="radio" id="DRL001" name="drill_id" value="DRL001" data-Type="speed">
-    <label for="DRL001" data-Type="speed">speed test</label>
-    <input type="radio" id="DRL002" name="drill_id" value="DRL002" data-Type="groundstroke">
-    <label for="DRL002" data-Type="groundstroke">2-line groundstroke footwork</label>
-    <input type="radio" id="DRL003" name="drill_id" value="DRL003" data-Type="suicide">
-    <label for="DRL003" data-Type="suicide">2-line suicide</label>
-  </fieldset>
-</div>
+drill_filter_list = ['data-Type', 'data-Stroke', 'data-Difficulty']
+```
+The 'data-' prefix is used by the filtrify javascript to filter the items.  So the example filters are Type, Stroke and Difficulty.
+
+Additionally, each drill in the drill list needs to have a  key 'filter_values' containing a list of values to assign for each filter, e.g.:
+```
+{'id': '005', 'name': 'Groundstrokes Random 20 balls', 'filter_values': ['Development', 'Ground', 'Medium']}
+
+```
+When a filter_list is provided, and the drill_list includes filter_values, the select.html buttons will have extra attribute for each filter, e.g. 
+```
+data-Type="Development"
 ```

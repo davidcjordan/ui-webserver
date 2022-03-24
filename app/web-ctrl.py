@@ -83,7 +83,7 @@ MAIN_URL = '/'
 GAME_OPTIONS_URL = '/game_options'
 GAME_URL = '/game'
 DRILL_SELECT_TYPE_URL = '/drill_select_type'
-DRILL_SELECT_URL = '/drill_select'
+SELECT_URL = '/select'
 DRILL_URL = '/drill'
 CAM_CALIB_URL = '/cam_calib'
 CAM_POSITION_URL = '/cam_position'
@@ -95,7 +95,7 @@ MAIN_TEMPLATE = 'index.html'
 GAME_OPTIONS_TEMPLATE = '/layouts' + GAME_OPTIONS_URL + '.html'
 GAME_TEMPLATE = '/layouts' + GAME_URL + '.html'
 CHOICE_INPUTS_TEMPLATE = '/layouts' + '/choice_inputs' + '.html'
-SELECT_TEMPLATE = '/layouts' + '/select' + '.html'
+SELECT_TEMPLATE = '/layouts' + SELECT_URL + '.html'
 DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
 CAM_CALIBRATION_TEMPLATE = '/layouts' + CAM_CALIB_URL + '.html'
 CAM_POSITION_TEMPLATE = '/layouts' + CAM_POSITION_URL + '.html'
@@ -115,6 +115,8 @@ DRILL_SELECT_TYPE_INSTRUCTORS = 'Instructors'
 DRILL_SELECT_TYPE_TEST ='Test'
 
 WORKOUT_ID = 'workout_id'
+ONCLICK_MODE_KEY = 'mode'
+ONCLICK_MODE_WORKOUT_VALUE = 'workouts'
 
 previous_url = None
 back_url = None
@@ -287,7 +289,8 @@ def index():
    onclick_choice_list = [\
       {"value": "Game Mode", "onclick_url": GAME_OPTIONS_URL},\
       {"value": "Drills", "onclick_url": DRILL_SELECT_TYPE_URL},\
-      {"value": "Workouts", "onclick_url": DRILL_SELECT_URL},\
+      {"value": "Workouts", "onclick_url": SELECT_URL, \
+         "param_name": ONCLICK_MODE_KEY, "param_value": ONCLICK_MODE_WORKOUT_VALUE}, \
       {"value": "Settings", "onclick_url": SETTINGS_URL}
    ]
 
@@ -338,6 +341,9 @@ def settings():
    settings_radio_options[GRUNTS_PARAM]["buttons"][settings_dict[GRUNTS_PARAM]]["checked"] = 1
    settings_radio_options[TRASHT_PARAM]["buttons"][settings_dict[TRASHT_PARAM]]["checked"] = 1
 
+   page_js = []
+   page_js.append(Markup('<script src="/static/js/radio-button-emit.js"></script>'))
+
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
@@ -346,6 +352,7 @@ def settings():
       radio_options = settings_radio_options, \
       form_choices = form_choice_list, \
       url_for_post = CAM_POSITION_URL, \
+      page_specific_js = page_js, \
       footer_center = "Mode: --")
 
 
@@ -369,6 +376,9 @@ def game_options():
    game_radio_options[SERVE_MODE_PARAM]["buttons"][settings_dict[SERVE_MODE_PARAM]]["checked"] = 1
    game_radio_options[TIEBREAKER_PARAM]["buttons"][settings_dict[TIEBREAKER_PARAM]]["checked"] = 1
 
+   page_js = []
+   page_js.append(Markup('<script src="/static/js/radio-button-emit.js"></script>'))
+
    return render_template(GAME_OPTIONS_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
@@ -380,6 +390,7 @@ def game_options():
       # point_delay_min = GAME_POINT_DELAY_MIN, \
       # point_delay_max = GAME_POINT_DELAY_MAX, \
       # point_delay_step = GAME_POINT_DELAY_STEP, \
+      page_specific_js = page_js, \
       footer_center = "Mode: " + MODE_GAME)
 
 @app.route(GAME_URL, methods=DEFAULT_METHODS)
@@ -388,7 +399,7 @@ def game():
    back_url = previous_url
 
    # print("{} on {}, data: {}".format(request.method, inspect.currentframe().f_code.co_name, request.data))
-   # TODO: the following is redundant with the emit on radio button toggle - remove:?
+   # Using emit on radio buttons instead of taking the post data
    '''
    if request.method=='POST':
       if SERVE_MODE_PARAM in request.form:
@@ -400,7 +411,6 @@ def game():
       if 'point_delay' in request.form:
          print("point_delay: {}".format(request.form['point_delay']))
    '''
-      
    return render_template(GAME_TEMPLATE, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
@@ -432,17 +442,25 @@ def drill_select_type():
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
       form_choices = drill_select_type_list, \
-      url_for_post = DRILL_SELECT_URL, \
+      url_for_post = SELECT_URL, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
 
-@app.route(DRILL_SELECT_URL, methods=DEFAULT_METHODS)
-def drill_select():
+@app.route(SELECT_URL, methods=DEFAULT_METHODS)
+def select():
    global back_url, previous_url
    back_url = '/'
    previous_url = "/" + inspect.currentframe().f_code.co_name
 
-   app.logger.info(f"drill_select request: {request}")
+   app.logger.debug(f"select request: {request}")
+
+   #enter this page from drill categories (player, instructor), or from Main (workflows)
+   # a parameter (mode) indicates the if workflow or drills should be selected
+   if request.args.get(ONCLICK_MODE_KEY) == ONCLICK_MODE_WORKOUT_VALUE:
+      is_workout = True
+   else:
+      is_workout = False
+   app.logger.debug(f"select: is_workout={is_workout}")
 
    drill_select_type = None
    if request.method=='POST':
@@ -494,7 +512,7 @@ def drill():
 
    app.logger.info(f"DRILL_URL request_form: {request.form}")
    app.logger.info(f"DRILL_URL request_args: {request.args}")
-   is_workout = request.args.get('mode')
+   is_workout = request.args.get(ONCLICK_MODE_KEY)
    app.logger.info(f"is_workout in request_args: {is_workout}")
    id = request.args.get(WORKOUT_ID)
    app.logger.info(f"WORKOUT_ID in request_args: {WORKOUT_ID}")
