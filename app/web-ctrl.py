@@ -449,6 +449,7 @@ def drill_select():
       app.logger.info(f"request_form_getlist_type: {request.form.getlist('choice')}")
       drill_select_type = request.form.getlist('choice')[0]
 
+   drill_filter_list = []
    # refer to /home/pi/boomer/drills/ui_drill_selection_lists.py for drill_list format
    if drill_select_type == DRILL_SELECT_TYPE_TEST:
       drill_list = drill_list_test
@@ -456,17 +457,20 @@ def drill_select():
       drill_list = drill_list_instructor
    else:
       # drill_list = drill_list_player
-      drill_list_filters = ['data-Type', 'data-Stroke', 'data-Difficulty']
+      drill_filter_list = ['data-Type', 'data-Stroke', 'data-Difficulty']
       drill_list = [\
          {'id': '005', 'name': 'Groundstrokes Random 20 balls', \
-            'filters': {'type': 'Development', 'stroke': 'Ground', 'difficulty': 'Medium'}},\
+            # 'filters': {'type': 'Development', 'stroke': 'Ground', 'difficulty': 'Medium'}},\
+            'filter_values': ['Development', 'Ground', 'Medium']},\
          {'id': '006', 'name': 'Net Random 9 balls', \
-            'filters': {'type': 'Development', 'stroke': 'Net', 'difficulty': 'Medium'}},\
+            # 'filters': {'type': 'Development', 'stroke': 'Net', 'difficulty': 'Medium'}},\
+            'filter_values': ['Development', 'Net', 'Medium']},\
          {'id': '007', 'name': 'Volley Random 12 balls', \
-            'filters': {'type': 'Development', 'stroke': 'Volley', 'difficulty': 'Medium'}},\
+            # 'filters': {'type': 'Development', 'stroke': 'Volley', 'difficulty': 'Medium'}},\
+            'filter_values': ['Development', 'Volley', 'Medium']},\
       ]
 
-   if 'filters' in drill_list[0]:
+   if len(drill_filter_list) > 0:
       page_js = filter_js
    else:
       page_js = []
@@ -478,6 +482,7 @@ def drill_select():
       installation_icon = customization_dict['icon'], \
       optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
       drills = drill_list, \
+      filters = drill_filter_list, \
       optional_form_end = Markup('</form>'), \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED, \
       page_specific_js = page_js

@@ -1,22 +1,20 @@
 {% extends "layouts/base.html" %}
 
+<!--  the minus sigh after the <% below keeps ninja2 from emitting a newline   -->
 {% block selections %}
 <div class="selections-drill">
   <div id="placeHolder"> </div>
   <fieldset id="container" class="radio-text-buttons">
-    {% for drill in drills %}
-      {% if 'filters' in drill %}
+    {%- for drill in drills %}
+      {%- if filters|length > 0 %}
     <input type="radio" id="{{drill['id']}}" name="drill_id" value="{{drill['id']}}" 
-      data-Type="{{drill['filters']['type']}}" data-Stroke="{{drill['filters']['stroke']}}"
-      data-Difficulty="{{drill['filters']['difficulty']}}">
-    <label for="{{drill['id']}}"
-      data-Type="{{drill['filters']['type']}}" data-Stroke="{{drill['filters']['stroke']}}"
-      data-Difficulty="{{drill['filters']['difficulty']}}">{{drill['name']}}</label>
-      {% else %}
+      {% for filter in filters %}{{filter}}="{{drill['filter_values'][loop.index-1]}}"{% endfor %}>
+    <label for="{{drill['id']}}" {% for filter in filters %}{{filter}}="{{drill['filter_values'][loop.index-1]}}"{% endfor %}
+      >{{drill['name']}}</label>
+      {%- else %}
     <input type="radio" id="{{drill['id']}}" name="drill_id" value="{{drill['id']}}">
     <label for="{{drill['id']}}">{{drill['name']}}</label>
-      {% endif %}
-
+      {%- endif %}
     {% endfor %}
   </fieldset>
 </div>
