@@ -95,7 +95,7 @@ MAIN_TEMPLATE = 'index.html'
 GAME_OPTIONS_TEMPLATE = '/layouts' + GAME_OPTIONS_URL + '.html'
 GAME_TEMPLATE = '/layouts' + GAME_URL + '.html'
 CHOICE_INPUTS_TEMPLATE = '/layouts' + '/choice_inputs' + '.html'
-DRILL_SELECT_FILTERED_TEMPLATE = '/layouts' + '/drill_select_filtered' + '.html'
+SELECT_TEMPLATE = '/layouts' + '/select' + '.html'
 DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
 CAM_CALIBRATION_TEMPLATE = '/layouts' + CAM_CALIB_URL + '.html'
 CAM_POSITION_TEMPLATE = '/layouts' + CAM_POSITION_URL + '.html'
@@ -475,8 +475,7 @@ def drill_select():
    else:
       page_js = []
 
-
-   return render_template(DRILL_SELECT_FILTERED_TEMPLATE, \
+   return render_template(SELECT_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
