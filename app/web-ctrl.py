@@ -383,8 +383,9 @@ def game_options():
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
-      optional_form_begin = Markup('<form action ="' + GAME_URL + '" method="post">'), \
-      optional_form_end = Markup('</form>'), \
+      url_for_post = GAME_URL, \
+      # optional_form_begin = Markup('<form action ="' + GAME_URL + '" method="post">'), \
+      # optional_form_end = Markup('</form>'), \
       radio_options = game_radio_options, \
       # point_delay_dflt = GAME_POINT_DELAY_DEFAULT, \
       # point_delay_min = GAME_POINT_DELAY_MIN, \
@@ -397,6 +398,15 @@ def game_options():
 def game():
    global back_url, previous_url
    back_url = previous_url
+
+   rc, code = send_msg(PUT_METHOD, MODE_RSRC, {MODE_PARAM: base_mode_e.GAME.value})
+   if not rc:
+      app.logger.error("GAME_URL: PUT Mode failed, code: {}".format(code))
+   else:
+      rc, code = send_msg(PUT_METHOD, STRT_RSRC)
+      if not rc:
+         app.logger.error("PUT START failed, code: {}".format(code))
+
 
    # print("{} on {}, data: {}".format(request.method, inspect.currentframe().f_code.co_name, request.data))
    # Using emit on radio buttons instead of taking the post data
@@ -573,13 +583,18 @@ def handle_change_params(data):          # change_params() is the event callback
    #  item_to_change = json.loads(data)
    app.logger.info(f'received change_params: {data}')
    for k in data.keys():
-      app.logger.debug(f'Setting: {k} to {int(data[k])}')
-      if (k == LEVEL_PARAM):
-         settings_dict[k] = 10* int(data[k])
-      elif (k == DELAY_MOD_PARAM):
-         settings_dict[k] = int(data[k]*1000)
+      if data[k] == None:
+         new_value = 0
+         app.logger.warning(f'Received NoneType for {k}')
       else:
-         settings_dict[k] = int(data[k])
+         new_value = int(data[k])
+      app.logger.debug(f'Setting: {k} to {new_value}')
+      if (k == LEVEL_PARAM):
+         settings_dict[k] = new_value*10
+      elif (k == DELAY_MOD_PARAM):
+         settings_dict[k] = new_value*1000
+      else:
+         settings_dict[k] = new_value
       if (k == LEVEL_PARAM or k == GRUNTS_PARAM or k == TRASHT_PARAM):
          rc, code = send_msg(PUT_METHOD, BCFG_RSRC, {k: settings_dict[k]})
       elif (k == SPEED_MOD_PARAM or k == DELAY_MOD_PARAM or k == ELEVATION_MOD_PARAM):

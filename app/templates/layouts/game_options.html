@@ -1,23 +1,23 @@
 {% extends "layouts/base.html" %}
-
 {% block stats %}
   <div class="statistics-display">
     <br>
   </div>  
 {% endblock %} 
 
-{% block selections %}
-<div class="selections">
-  {% for key,item in radio_options.items() %}
-    <fieldset class="radio-slider-buttons">
-    <label for="{{key}}">{{item['legend']}}:</label>
-      {% for button in item['buttons'] %}
-      <input type="radio" id="{{key}}_{{button['label']}}" name="{{key}}" value={{button['value']}} {% if button['checked'] is defined %}checked{% endif %}>
-        <label for="{{key}}_{{button['label']}}">{{button['label']}}</label>
-      {% endfor %}
-    </fieldset>
-  {% endfor %}
-</div>
+{%- block selections %}
+<form method="post" action="{{url_for_post}}">
+  <div class="selections">
+    {%- for key,item in radio_options.items() %}
+      <fieldset class="radio-slider-buttons">
+      <label for="{{key}}">{{item['legend']}}:</label>
+        {%- for button in item['buttons'] %}
+        <input type="radio" id="{{key}}_{{button['label']}}" name="{{key}}" value={{button['value']}} {%- if button['checked'] is defined %} checked{% endif %}>
+          <label for="{{key}}_{{button['label']}}">{{button['label']}}</label>
+        {%- endfor %}
+      </fieldset>
+    {%- endfor %}
+  </div>
 <!-- 
       <div class="stepper">
       <label for="point_delay_stepper">Delay:</label>
@@ -30,10 +30,11 @@
  -->
 {% endblock %}
 
-{% block control %}
+{%- block control %}
   <div class="start-stop">
     <button type="submit">
       <img src="/static/start.png">
     </button>
   </div>
-{% endblock %}
+</form>
+{%- endblock %}
