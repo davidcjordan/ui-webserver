@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 #from flask import ? session, abort
 from flask import Flask, render_template, Response, request, redirect, url_for, Markup, send_from_directory
 try:
@@ -11,6 +10,7 @@ except:
 
 import logging
 logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 
@@ -87,7 +87,7 @@ SELECT_URL = '/select'
 DRILL_URL = '/drill'
 CAM_CALIB_URL = '/cam_calib'
 CAM_POSITION_URL = '/cam_position'
-WORKOUT_SELECTION_URL = '/workout_selection'
+# WORKOUT_SELECTION_URL = '/workout_selection'
 SETTINGS_URL = '/settings'
 
 # Flask looks for following in the 'templates' directory
@@ -456,39 +456,29 @@ def select():
 
    #enter this page from drill categories (player, instructor), or from Main (workflows)
    # a parameter (mode) indicates the if workflow or drills should be selected
+   select_post_param = []
+   filter_list = []
    if request.args.get(ONCLICK_MODE_KEY) == ONCLICK_MODE_WORKOUT_VALUE:
       is_workout = True
+      selection_list = workout_list
+      select_post_param = {"name": ONCLICK_MODE_KEY, "value": ONCLICK_MODE_WORKOUT_VALUE}
    else:
       is_workout = False
-   app.logger.debug(f"select: is_workout={is_workout}")
+      drill_select_type = None
+      if request.method=='POST':
+         app.logger.info(f"request_form_getlist_type: {request.form.getlist('choice')}")
+         drill_select_type = request.form.getlist('choice')[0]
 
-   drill_select_type = None
-   if request.method=='POST':
-      app.logger.info(f"request_form_getlist_type: {request.form.getlist('choice')}")
-      drill_select_type = request.form.getlist('choice')[0]
+      # refer to /home/pi/boomer/drills/ui_drill_selection_lists.py for drill_list format
+      if drill_select_type == DRILL_SELECT_TYPE_TEST:
+         selection_list = drill_list_test
+      elif drill_select_type == DRILL_SELECT_TYPE_INSTRUCTORS:
+         selection_list = drill_list_instructor
+      else:
+         selection_list = drill_list_player
+         filter_list = ['data-Type', 'data-Stroke', 'data-Difficulty']
 
-   drill_filter_list = []
-   # refer to /home/pi/boomer/drills/ui_drill_selection_lists.py for drill_list format
-   if drill_select_type == DRILL_SELECT_TYPE_TEST:
-      drill_list = drill_list_test
-   elif drill_select_type == DRILL_SELECT_TYPE_INSTRUCTORS:
-      drill_list = drill_list_instructor
-   else:
-      # drill_list = drill_list_player
-      drill_filter_list = ['data-Type', 'data-Stroke', 'data-Difficulty']
-      drill_list = [\
-         {'id': '005', 'name': 'Groundstrokes Random 20 balls', \
-            # 'filters': {'type': 'Development', 'stroke': 'Ground', 'difficulty': 'Medium'}},\
-            'filter_values': ['Development', 'Ground', 'Medium']},\
-         {'id': '006', 'name': 'Net Random 9 balls', \
-            # 'filters': {'type': 'Development', 'stroke': 'Net', 'difficulty': 'Medium'}},\
-            'filter_values': ['Development', 'Net', 'Medium']},\
-         {'id': '007', 'name': 'Volley Random 12 balls', \
-            # 'filters': {'type': 'Development', 'stroke': 'Volley', 'difficulty': 'Medium'}},\
-            'filter_values': ['Development', 'Volley', 'Medium']},\
-      ]
-
-   if len(drill_filter_list) > 0:
+   if len(filter_list) > 0:
       page_js = filter_js
    else:
       page_js = []
@@ -497,10 +487,10 @@ def select():
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
-      optional_form_begin = Markup('<form action ="' + DRILL_URL + '" method="post">'), \
-      drills = drill_list, \
-      filters = drill_filter_list, \
-      optional_form_end = Markup('</form>'), \
+      url_for_post = DRILL_URL, \
+      post_param = select_post_param, \
+      choices = selection_list, \
+      filters = filter_list, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED, \
       page_specific_js = page_js
    )
@@ -515,21 +505,21 @@ def drill():
    is_workout = request.args.get(ONCLICK_MODE_KEY)
    app.logger.info(f"is_workout in request_args: {is_workout}")
    id = request.args.get(WORKOUT_ID)
-   app.logger.info(f"WORKOUT_ID in request_args: {WORKOUT_ID}")
+   app.logger.info(f"WORKOUT_ID in request_args: {id}")
    if id is not None:
       id = int(id)
       mode = {MODE_PARAM: base_mode_e.WORKOUT.value, ID_PARAM: id}
       mode_string = f"'{id}' Workout"
    else:
-      if request.method=='POST' and 'drill_id' in request.form:
-         id = int(request.form['drill_id'])
+      if request.method=='POST' and 'choice_id' in request.form:
+         id = int(request.form['choice_id'])
          mode = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: id}
          mode_string = f"'{id}' Drill"
 
    # app.logger.info(f"workout_id: {id}")
 
    if id is None:
-      app.logger.error("DRILL_URL - no drill_id!")
+      app.logger.error("DRILL_URL - no drill or workout id!")
    else:
       rc, code = send_msg(PUT_METHOD, MODE_RSRC, mode)
       if not rc:
@@ -645,7 +635,9 @@ def check_base(process_name):
                #    fault_count = int(status_msg[HARD_FAULT_PARAM])
       else:
          base_state = STATUS_NOT_RUNNING
-      if (base_state != previous_base_state and not \
+      if base_state != previous_base_state:
+         app.logger.info(f"Base state change: {previous_base_state} -> {base_state}")
+      if (0 and base_state != previous_base_state and not \
             (base_state == STATUS_NOT_RUNNING or base_state == STATUS_NOT_RESPONDING)):
          app.logger.info("Base (or UI) started - configuring settings")
          rc, code = send_msg(PUT_METHOD, BCFG_RSRC, \

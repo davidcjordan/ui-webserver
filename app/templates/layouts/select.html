@@ -2,22 +2,23 @@
 
 <!--  the minus sigh after the <% below keeps ninja2 from emitting a newline   -->
 {% block selections %}
-<div class="selections-drill">
-  <div id="placeHolder"> </div>
-  <fieldset id="container" class="radio-text-buttons">
-    {%- for drill in drills %}
-      {%- if filters|length > 0 %}
-    <input type="radio" id="{{drill['id']}}" name="drill_id" value="{{drill['id']}}" 
-      {% for filter in filters %}{{filter}}="{{drill['filter_values'][loop.index-1]}}"{% endfor %}>
-    <label for="{{drill['id']}}" {% for filter in filters %}{{filter}}="{{drill['filter_values'][loop.index-1]}}"{% endfor %}
-      >{{drill['name']}}</label>
-      {%- else %}
-    <input type="radio" id="{{drill['id']}}" name="drill_id" value="{{drill['id']}}">
-    <label for="{{drill['id']}}">{{drill['name']}}</label>
-      {%- endif %}
-    {% endfor %}
-  </fieldset>
-</div>
+<form method="post" action="{{url_for_post}}"{%- if post_param|length > 0 %}?{{post_param['name']}}={{post_param['value']}}{%- endif %}>
+  <div class="selections-class">
+    <div id="placeHolder"> </div>
+    <fieldset id="container" class="radio-text-buttons">
+      {%- for choice in choices %}
+        {%- if filters|length > 0 %}
+      <input type="radio" id="{{choice['id']}}" name="choice_id" value="{{choice['id']}}" 
+        {% for filter in filters %}{{filter}}="{{choice['filter_values'][loop.index-1]}}"{% endfor %}>
+      <label for="{{choice['id']}}" {% for filter in filters %}{{filter}}="{{choice['filter_values'][loop.index-1]}}"{% endfor %}
+        >{{choice['title']}}</label>
+        {%- else %}
+      <input type="radio" id="{{choice['id']}}" name="choice_id" value="{{choice['id']}}">
+      <label for="{{choice['id']}}">{{choice['title']}}</label>
+        {%- endif %}
+      {% endfor %}
+    </fieldset>
+  </div>
 {% endblock %}
 
 {% block control %}
@@ -26,4 +27,5 @@
       <img src="/static/start.png">
     </button>
   </div>
+</form>
 {% endblock %}

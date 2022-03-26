@@ -67,7 +67,7 @@ body {
 }
 
 /* vertical-align: middle; */
-.statistics-display, .selections, .selections-drill, .start-stop {
+.statistics-display, .selections, .selections-class, .start-stop {
   display: inline-block;
   vertical-align: top;      
 }
@@ -77,7 +77,7 @@ body {
 .selections {
   width: 45%;            
 }
-.selections-drill {
+.selections-class {
   width: 90%;
 }
 .start-stop {

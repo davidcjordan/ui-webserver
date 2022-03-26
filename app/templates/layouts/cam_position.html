@@ -1,9 +1,9 @@
 {% extends "layouts/base.html" %}
 
-{% block selections %}
+{%- block selections %}
 <p> Camera position: distance from left singles sideline directly under the net to the center of the camera.</p>
 <form method="post" action="{{ url_for('cam_calib') }}">
-  <div class="selections-drill"> 
+  <div class="selections-class"> 
 <!-- 
     <fieldset  class="radio-slider-buttons">
       <label>Camera: </label>
@@ -14,16 +14,16 @@
     </fieldset>
      -->
     <table>
-      {% for key,item in options.items() %}
-        {% if (item['start_div'] != null) %}<tr><td>{{item['start_div']}}</td>{% endif %}
+      {%- for key,item in options.items() %}
+        {%- if (item['start_div'] != null) %}<tr><td>{{item['start_div']}}</td>{% endif %}
         <td class="stepper">
           <label for="{{key}}">{{item['legend']}}:</label>
           <button type="button">–</button>
             <input type="number" id="{{key}}-stepper" name="{{key}}" value={{item['dflt']}} min={{item['min']}} max={{item['max']}} step={{item['step']}} readonly>
           <button type="button">+</button>
         </td>
-        {% if (item['end_div'] == "Y") %}</tr>{% endif %}
-      {% endfor %}
+        {%- if (item['end_div'] == "Y") %}</tr>{%- endif %}
+      {%- endfor %}
     </table>
   <button type="submit" value="Submit">
   </div>

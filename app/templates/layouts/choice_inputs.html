@@ -1,27 +1,29 @@
 {% extends "layouts/base.html" %}
 {% block selections %}
 <div>
-  {% for choice in onclick_choices %}
+  {%- for choice in onclick_choices %}
     <input class="block_b" type="submit" name="choice" value="{{choice['value']}}" 
-      onclick="window.location.href='{{choice['onclick_url']}}?{{choice['param_name']}}={{choice['param_value']}}';">
-  {% endfor %}
+      onclick="window.location.href='{{choice['onclick_url']}}{%- if choice|length > 2 %}?{{choice['param_name']}}={{choice['param_value']}}{%- endif %}';">
+  {%- endfor %}
 
-  {% if radio_options is defined %}
-    {% for key,item in radio_options.items() %}
+  {%- if radio_options is defined %}
+    {%- for key,item in radio_options.items() %}
   <fieldset class="radio-slider-buttons">
     <label for="{{key}}">{{item['legend']}}:</label>
-    {% for button in item['buttons'] %}
-    <input type="radio" id="{{key}}_{{button['label']}}" name="{{key}}" value={{button['value']}} {% if button['checked'] is defined %}checked{% endif %}>
+    {%- for button in item['buttons'] %}
+    <input type="radio" id="{{key}}_{{button['label']}}" name="{{key}}" value={{button['value']}} {%- if button['checked'] is defined %}checked{%- endif %}>
       <label for="{{key}}_{{button['label']}}">{{button['label']}}</label>
-    {% endfor %}
+    {%- endfor %}
   </fieldset>
-    {% endfor %}
-  {% endif %}
+    {%- endfor %}
+  {%- endif %}
 
+  {%- if url_for_post is defined %}
   <form method="post" action="{{url_for_post}}">
-    {% for choice in form_choices %}
+    {%- for choice in form_choices %}
     <input class="block_b" type="submit" name="choice" value="{{choice['value']}}"></input>
-    {% endfor %}
-   </form>
+    {%- endfor %}
+  </form>
+  {%- endif %}
 </div>
 {% endblock %}
