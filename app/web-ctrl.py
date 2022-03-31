@@ -17,15 +17,18 @@ app = Flask(__name__)
 import inspect
 import os  # for sending favicon 
 import json
+import enum
+
 user_dir = '/home/pi'
 boomer_dir = 'boomer'
-repos_dir = 'repos'
 site_data_dir = 'this_boomers_data'
 settings_dir = f'{user_dir}/{boomer_dir}/{site_data_dir}'
 settings_filename = "drill_game_settings.json"
+staged_dir = f"{user_dir}/{boomer_dir}/staged"
 
 # the following requires: export PYTHONPATH='/Users/tom/Documents/Projects/Boomer/control_ipc_utils'
 import sys
+repos_dir = 'repos'
 sys.path.append(f'{user_dir}/{repos_dir}/control_ipc_utils')
 # print(sys.path)
 try:
@@ -72,7 +75,6 @@ except:
          SPEED_MOD_PARAM: SPEED_MOD_DEFAULT, DELAY_MOD_PARAM: DELAY_MOD_DEFAULT, \
          ELEVATION_MOD_PARAM: ELEVATION_ANGLE_MOD_DEFAULT}
 
-DO_SCP_FOR_CALIBRATION = False
 
 IP_PORT = 1111 # picked what is hopefully an unused port  (can't use 44)
 DEFAULT_METHODS = ['POST', 'GET']
@@ -122,9 +124,17 @@ previous_url = None
 back_url = None
 
 cam_side = None  # a global on which camera is being calibrated
-cam_mm = [0]*3 # global camera location
-X=0;Y=1;Z=2 # cam array enum
+cam_location_mm = [0]*3 # global camera location
+class axis(enum.Enum):
+   X = 0
+   Y = 1
+   Z = 2
+# X=0;Y=1;Z=2 # cam array enum
 INCHES_TO_MM = 25.4
+
+COURT_POINT_KEYS = ['fblx','fbly','fbrx','fbry', \
+   'nslx', 'nsly', 'nscx', 'nscy', 'nsrx', 'nsry', 'nblx', 'nbly', 'nbrx', 'nbry']
+court_points_dict = {}
 
 ROTARY_CALIB_ID = 780
 
@@ -156,24 +166,21 @@ def cam_position():
       else:
          cam_side = 'Left'
 
-   cam_loc_filepath = f'{settings_dir}/{cam_side}_cam_location.json'
+   cam_loc_filepath = f'{settings_dir}/{cam_side.lower()}_cam_location.json'
    try:
       with open(cam_loc_filepath) as infile:
-         loc_dict = json.load(infile)
+         cam_loc_dict = json.load(infile)
    except:
-      pass
-
-   if "loc_dict" not in locals() or "cam_x_ft" not in loc_dict:
-      # default values if not persisted from a previous calibration or the loaded file does have the parameters
-      loc_dict = {"cam_x_ft": "0", "cam_x_in": "0", "cam_y_ft": "47", "cam_y_in": "0", "cam_z_ft": "0", "cam_z_in": "0"}
+      app.logger.info(f"using default values for cam_location; couldn't read {cam_loc_filepath}")
+      cam_loc_dict = {"cam_x_ft": "0", "cam_x_in": "0", "cam_y_ft": "47", "cam_y_in": "0", "cam_z_ft": "0", "cam_z_in": "0"}
 
    position_options = { \
-      "cam_x_ft":{"legend":"Feet", "dflt":loc_dict['cam_x_ft'], "min":-10, "max":20, "step":1, "start_div":"From Left Singles"}, \
-      "cam_x_in":{"legend":"Inches", "dflt":loc_dict['cam_x_in'], "min":-11, "max":11, "step":1, "end_div":"Y"}, \
-      "cam_y_ft":{"legend":"Feet", "dflt":loc_dict['cam_y_ft'], "min":39, "max":60, "step":1, "start_div":"From Net"}, \
-      "cam_y_in":{"legend":"Inches", "dflt":loc_dict['cam_y_in'], "min":0, "max":11, "step":1, "end_div":"Y"}, \
-      "cam_z_ft":{"legend":"Feet", "dflt":loc_dict['cam_z_ft'], "min":0, "max":20, "step":1, "start_div":"Height"}, \
-      "cam_z_in":{"legend":"Inches", "dflt":loc_dict['cam_z_in'], "min":0, "max":11, "step":1, "end_div":"Y"} \
+      "cam_x_ft":{"legend":"Feet", "dflt":cam_loc_dict['cam_x_ft'], "min":-10, "max":20, "step":1, "start_div":"From Left Singles"}, \
+      "cam_x_in":{"legend":"Inches", "dflt":cam_loc_dict['cam_x_in'], "min":-11, "max":11, "step":1, "end_div":"Y"}, \
+      "cam_y_ft":{"legend":"Feet", "dflt":cam_loc_dict['cam_y_ft'], "min":39, "max":60, "step":1, "start_div":"From Net"}, \
+      "cam_y_in":{"legend":"Inches", "dflt":cam_loc_dict['cam_y_in'], "min":0, "max":11, "step":1, "end_div":"Y"}, \
+      "cam_z_ft":{"legend":"Feet", "dflt":cam_loc_dict['cam_z_ft'], "min":0, "max":20, "step":1, "start_div":"Height"}, \
+      "cam_z_in":{"legend":"Inches", "dflt":cam_loc_dict['cam_z_in'], "min":0, "max":11, "step":1, "end_div":"Y"} \
    }
    return render_template(CAM_POSITION_TEMPLATE, \
       home_button = my_home_button, \
@@ -185,26 +192,24 @@ def cam_position():
 
 @app.route(CAM_CALIB_URL, methods=DEFAULT_METHODS)
 def cam_calib():
-   global cam_side, cam_mm, X, Y, Z
+   global cam_side, cam_location_mm
    loc_dict = {}
    if request.method=='POST':
-      app.logger.info(f"POST to CALIB request.form: {request.form}")
+      app.logger.info(f"POST to CALIB (location) request.form: {request.form}")
       # example: ImmutableMultiDict([('cam_id', 'l'), ('cam_x_ft', '0'), ('cam_x_in', '0'), ('cam_y_ft', '47'), ('cam_y_in', '0'), ('cam_z_ft', '8'), ('cam_z_in', '0')])
-      if ('cam_id' in request.form) and request.form['cam_id'].lower().startswith('r'):
-         cam_side = 'Right'
       if ('cam_x_ft' in request.form) and ('cam_x_in' in request.form):
          loc_dict['cam_x_ft'] = int(request.form['cam_x_ft'])
          loc_dict['cam_x_in'] = int(request.form['cam_x_in'])
-         cam_mm[X] = int(((loc_dict['cam_x_ft'] * 12) + loc_dict['cam_x_in']) * INCHES_TO_MM)
+         cam_location_mm[axis.X.value] = int(((loc_dict['cam_x_ft'] * 12) + loc_dict['cam_x_in']) * INCHES_TO_MM)
       if ('cam_y_ft' in request.form) and ('cam_y_in' in request.form):
          loc_dict['cam_y_ft'] = int(request.form['cam_y_ft'])
          loc_dict['cam_y_in'] = int(request.form['cam_y_in'])
-         cam_mm[Y] = int(((loc_dict['cam_y_ft'] * 12) + loc_dict['cam_y_in']) * INCHES_TO_MM)
+         cam_location_mm[axis.Y.value] = int(((loc_dict['cam_y_ft'] * 12) + loc_dict['cam_y_in']) * INCHES_TO_MM)
       if ('cam_z_ft' in request.form) and ('cam_z_in' in request.form):
          loc_dict['cam_z_ft'] = int(request.form['cam_z_ft'])
          loc_dict['cam_z_in'] = int(request.form['cam_z_in'])
-         cam_mm[Z] = int(((loc_dict['cam_z_ft'] * 12) + loc_dict['cam_z_in']) * INCHES_TO_MM)
-      if len(cam_mm) > 2:
+         cam_location_mm[axis.Z.value] = int(((loc_dict['cam_z_ft'] * 12) + loc_dict['cam_z_in']) * INCHES_TO_MM)
+      if len(cam_location_mm) > 2:
          #persist values for next calibration, so they don't have to be re-entered
          with open(f"{settings_dir}/{cam_side.lower()}_cam_location.json", "w") as outfile:
             json.dump(loc_dict, outfile)
@@ -213,8 +218,9 @@ def cam_calib():
    mode_str = f"{cam_side} Court Coord"
    cam_lower = cam_side.lower()
    # copy the lastest PNG from the camera to the base
+   DO_SCP_FOR_CALIBRATION = True #False
    if DO_SCP_FOR_CALIBRATION:
-      p = Popen(["scp", f"{cam_lower}:/run/shm/frame.png", f"/home/pi/boomer/{cam_lower}_court.png"])
+      p = Popen(["scp", f"{cam_lower}:/run/shm/frame_even.png", f"/home/pi/boomer/{cam_lower}_court.png"])
    else:
       p = Popen(["cp", "/run/shm/frame.png", f"/home/pi/boomer/{cam_lower}_court.png"])
    stdoutdata, stderrdata = p.communicate()
@@ -232,11 +238,7 @@ def cam_calib():
 
 @app.route('/cam_calib_done', methods=DEFAULT_METHODS)
 def cam_calib_done():
-   global cam_side, cam_mm, X, Y, Z
-   if cam_side.lower() == "left":
-      cam_arg = "--left"
-   else:
-      cam_arg = "--right"
+   global cam_side, cam_location_mm
 
    if request.method=='POST':
       if (request.content_type.startswith('application/json')):
@@ -250,27 +252,36 @@ def cam_calib_done():
             f" --fbrx {c['fbrx']} --fbry {c['fbry']} --nblx {c['nblx']} --nbly {c['nbly']}"
             f" --nbrx {c['nbrx']} --nbry {c['nbry']} --nslx {c['nslx']} --nsly {c['nsly']}"
             f" --nscx {c['nscx']} --nscy {c['nscy']} --nsrx {c['nsrx']} --nsry {c['nsry']}"
-            f" --camx {cam_mm[X]} --camy {cam_mm[Y]} --camz {cam_mm[Z]}" )
+            f" --camx {cam_location_mm[axis.X.value]} --camy {cam_location_mm[axis.Y.value]} --camz {cam_location_mm[axis.Z.value]}" )
       else:
-         app.logger.debug(f"POST to CALIB_DONE request.form: {request.form}")
+         app.logger.info(f"POST to CALIB_DONE request.form: {request.form}")
          # example: ImmutableMultiDict
-         coord_args = (f"--fblx {int(request.form['fblx'])} --fbly {int(request.form['fbly'])}"
-            f" --fbrx {int(request.form['fbrx'])} --fbry {int(request.form['fbry'])}"
-            f" --nblx {int(request.form['nblx'])} --nbly {int(request.form['nbly'])}"
-            f" --nbrx {int(request.form['nbrx'])} --nbry {int(request.form['nbry'])}"
-            f" --nslx {int(request.form['nslx'])} --nsly {int(request.form['nsly'])}"
-            f" --nscx {int(request.form['nscx'])} --nscy {int(request.form['nscy'])}"
-            f" --nsrx {int(request.form['nsrx'])} --nsry {int(request.form['nsry'])}"
-            f" --camx {cam_mm[X]} --camy {cam_mm[Y]} --camz {cam_mm[Z]}" )
-         cmd = "/home/pi/boomer/staged/gen_cam_params.out " + cam_arg + " " + coord_args
+         coord_args = ""
+         for key in COURT_POINT_KEYS:
+            if key in request.form:
+               court_points_dict[key] = int(request.form[key])
+               coord_args = coord_args + f"--{key} {court_points_dict[key]} "
+            else:
+               app.logger.error(f"Missing key in cam_calib_done post: {key}")
+         coord_args = coord_args + \
+            f" --camx {cam_location_mm[axis.X.value]} --camy {cam_location_mm[axis.Y.value]} --camz {cam_location_mm[axis.Z.value]}"
+
+         if cam_side == None:
+            # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
+            cam_side == "Left"
+            app.logger.warning("cam_side was None in cam_calib_done")
+         cmd = f"{staged_dir}/gen_cam_params.out --{cam_side.lower()} {coord_args}"
+         app.logger.info(f"gen_cam_cmd: {cmd}")
          process_data = True
          if (process_data):
+            #persist values for next calibration, so they don't necessarily have to be re-entered
+            with open(f"{settings_dir}/{cam_side.lower()}_court_points.json", "w") as outfile:
+               json.dump(court_points_dict, outfile)
             p = Popen(cmd, shell=True)
             stdoutdata, stderrdata = p.communicate()
             if p.returncode != 0:
                app.logger.error(f"gen_cam_params failed: {p.returncode}")
-            else:
-               app.logger.warning("TODO: send parameters.txt, restart the cam, reload the param on the base")
+            # NOTE:  process_staged_files.sh incron script copies cam_parameters.new files to the appropriate places
  
    button_label = cam_side + " Cam Calib Done"
    return render_template(CHOICE_INPUTS_TEMPLATE, \
