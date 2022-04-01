@@ -15,19 +15,23 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
 
 import inspect
-import os  # for sending favicon 
+import os  # for sending favicon & checking the base is running (pgrep)
 import json
 import enum
+from threading import Thread
+from subprocess import Popen
+import time
+from random import randint # for score updates - will be deleted
+import sys # for sys.path to search
 
 user_dir = '/home/pi'
 boomer_dir = 'boomer'
 site_data_dir = 'this_boomers_data'
 settings_dir = f'{user_dir}/{boomer_dir}/{site_data_dir}'
 settings_filename = "drill_game_settings.json"
-staged_dir = f"{user_dir}/{boomer_dir}/staged"
+execs_dir = f"{user_dir}/{boomer_dir}/execs"
 
 # the following requires: export PYTHONPATH='/Users/tom/Documents/Projects/Boomer/control_ipc_utils'
-import sys
 repos_dir = 'repos'
 sys.path.append(f'{user_dir}/{repos_dir}/control_ipc_utils')
 # print(sys.path)
@@ -44,12 +48,6 @@ try:
 except:
    app.logger.error("Missing 'ui_drill_selection_lists' modules, please run: git clone https://github.com/davidcjordon/drills")
    exit()
-
-from threading import Thread
-from subprocess import Popen
-import time
-import json
-from random import randint
 
 base_state = None
 previous_base_state = None
@@ -175,7 +173,7 @@ def cam_position():
       cam_loc_dict = {"cam_x_ft": "0", "cam_x_in": "0", "cam_y_ft": "47", "cam_y_in": "0", "cam_z_ft": "0", "cam_z_in": "0"}
 
    position_options = { \
-      "cam_x_ft":{"legend":"Feet", "dflt":cam_loc_dict['cam_x_ft'], "min":-10, "max":20, "step":1, "start_div":"From Left Singles"}, \
+      "cam_x_ft":{"legend":"Feet", "dflt":cam_loc_dict['cam_x_ft'], "min":-10, "max":40, "step":1, "start_div":"From Left Singles"}, \
       "cam_x_in":{"legend":"Inches", "dflt":cam_loc_dict['cam_x_in'], "min":-11, "max":11, "step":1, "end_div":"Y"}, \
       "cam_y_ft":{"legend":"Feet", "dflt":cam_loc_dict['cam_y_ft'], "min":39, "max":60, "step":1, "start_div":"From Net"}, \
       "cam_y_in":{"legend":"Inches", "dflt":cam_loc_dict['cam_y_in'], "min":0, "max":11, "step":1, "end_div":"Y"}, \
@@ -270,7 +268,7 @@ def cam_calib_done():
             # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
             cam_side == "Left"
             app.logger.warning("cam_side was None in cam_calib_done")
-         cmd = f"{staged_dir}/gen_cam_params.out --{cam_side.lower()} {coord_args}"
+         cmd = f"{execs_dir}/gen_cam_params.out --{cam_side.lower()} {coord_args}"
          app.logger.info(f"gen_cam_cmd: {cmd}")
          process_data = True
          if (process_data):
