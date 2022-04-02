@@ -14,10 +14,11 @@
     </fieldset>
      -->
     <table>
-      {%- for key,item in options.items() %}
+      <tr><td></td><td>Feet</td><td>Inches</td><td>Quarters</td></tr>
+      {% for key,item in options.items() %}
         {%- if (item['start_div'] != null) %}<tr><td>{{item['start_div']}}</td>{% endif %}
         <td class="stepper">
-          <label for="{{key}}">{{item['legend']}}:</label>
+          <!-- <label for="{{key}}">{{item['legend']}}:</label> -->
           <button type="button">–</button>
             <input type="number" id="{{key}}-stepper" name="{{key}}" value={{item['dflt']}} min={{item['min']}} max={{item['max']}} step={{item['step']}} readonly>
           <button type="button">+</button>

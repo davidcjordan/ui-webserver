@@ -122,17 +122,26 @@ previous_url = None
 back_url = None
 
 cam_side = None  # a global on which camera is being calibrated
-cam_location_mm = [0]*3 # global camera location
-class axis(enum.Enum):
-   X = 0
-   Y = 1
-   Z = 2
-# X=0;Y=1;Z=2 # cam array enum
+class Axis(enum.Enum):
+   x = 0
+   y = 1
+   z = 2
+class English_units(enum.Enum):
+   feet = 0
+   inch = 1
+   quar = 2 #quarter
+class Metric_units(enum.Enum):
+   meter = 0
+   cm = 1
+   mm = 2
+
+Units = English_units
 INCHES_TO_MM = 25.4
 
 COURT_POINT_KEYS = ['fblx','fbly','fbrx','fbry', \
    'nslx', 'nsly', 'nscx', 'nscy', 'nsrx', 'nsry', 'nblx', 'nbly', 'nbrx', 'nbry']
 court_points_dict = {}
+new_cam_location_mm = [0]*3
 
 ROTARY_CALIB_ID = 780
 
@@ -155,7 +164,7 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 @app.route(CAM_POSITION_URL, methods=DEFAULT_METHODS)
 def cam_position():
-   global cam_side
+   global cam_side, Units
    if request.method=='POST':
       # print(f"POST to CAM_POSITION request.form: {request.form}")
       # POST to CAM_POSITION request.form: ImmutableMultiDict([('choice', 'Left Cam Calib')])
@@ -167,19 +176,34 @@ def cam_position():
    cam_loc_filepath = f'{settings_dir}/{cam_side.lower()}_cam_location.json'
    try:
       with open(cam_loc_filepath) as infile:
-         cam_loc_dict = json.load(infile)
+         previous_cam_location_mm = json.load(infile)
    except:
       app.logger.info(f"using default values for cam_location; couldn't read {cam_loc_filepath}")
-      cam_loc_dict = {"cam_x_ft": "0", "cam_x_in": "0", "cam_y_ft": "47", "cam_y_in": "0", "cam_z_ft": "0", "cam_z_in": "0"}
+      previous_cam_location_mm = [0, 14326, 2438] # default global camera location; y=47ft, z=8ft
 
-   position_options = { \
-      "cam_x_ft":{"legend":"Feet", "dflt":cam_loc_dict['cam_x_ft'], "min":-10, "max":40, "step":1, "start_div":"From Left Singles"}, \
-      "cam_x_in":{"legend":"Inches", "dflt":cam_loc_dict['cam_x_in'], "min":-11, "max":11, "step":1, "end_div":"Y"}, \
-      "cam_y_ft":{"legend":"Feet", "dflt":cam_loc_dict['cam_y_ft'], "min":39, "max":60, "step":1, "start_div":"From Net"}, \
-      "cam_y_in":{"legend":"Inches", "dflt":cam_loc_dict['cam_y_in'], "min":0, "max":11, "step":1, "end_div":"Y"}, \
-      "cam_z_ft":{"legend":"Feet", "dflt":cam_loc_dict['cam_z_ft'], "min":0, "max":20, "step":1, "start_div":"Height"}, \
-      "cam_z_in":{"legend":"Inches", "dflt":cam_loc_dict['cam_z_in'], "min":0, "max":11, "step":1, "end_div":"Y"} \
-   }
+   cam_loc = [[0 for i in range(len(Axis))] for j in range(len(Units))]
+   for axis, value in enumerate(previous_cam_location_mm):
+      inches = 0.039370 * value
+      cam_loc[axis][0] = int(inches / 12)
+      cam_loc[axis][1] = int(inches % 12)
+      cam_loc[axis][2] = int((inches % 12 % 1)/.25)
+  
+   position_options = {}
+   for i in Axis:
+      for j in Units:
+         main_key = f"{Axis(i).name}_{Units(j).name}"
+         position_options[main_key] = {"dflt":cam_loc[Axis(i).value][Units(j).value], "min":0, "max":60, "step":1}
+         if j == Units(0):
+            if i == Axis(0):
+               position_options[main_key]["start_div"] = "From Left"
+            if i == Axis(1):
+               position_options[main_key]["start_div"] = "From Net"
+            if i == Axis(2):
+               position_options[main_key]["start_div"] = "Height"
+         if j == Units(2):
+               position_options[main_key]["end_div"] = "Y"
+   print(f"position_options={position_options}")
+
    return render_template(CAM_POSITION_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
@@ -190,28 +214,38 @@ def cam_position():
 
 @app.route(CAM_CALIB_URL, methods=DEFAULT_METHODS)
 def cam_calib():
-   global cam_side, cam_location_mm
-   loc_dict = {}
+   global cam_side, Units, new_cam_location_mm
+
    if request.method=='POST':
       app.logger.info(f"POST to CALIB (location) request.form: {request.form}")
-      # example: ImmutableMultiDict([('cam_id', 'l'), ('cam_x_ft', '0'), ('cam_x_in', '0'), ('cam_y_ft', '47'), ('cam_y_in', '0'), ('cam_z_ft', '8'), ('cam_z_in', '0')])
-      if ('cam_x_ft' in request.form) and ('cam_x_in' in request.form):
-         loc_dict['cam_x_ft'] = int(request.form['cam_x_ft'])
-         loc_dict['cam_x_in'] = int(request.form['cam_x_in'])
-         cam_location_mm[axis.X.value] = int(((loc_dict['cam_x_ft'] * 12) + loc_dict['cam_x_in']) * INCHES_TO_MM)
-      if ('cam_y_ft' in request.form) and ('cam_y_in' in request.form):
-         loc_dict['cam_y_ft'] = int(request.form['cam_y_ft'])
-         loc_dict['cam_y_in'] = int(request.form['cam_y_in'])
-         cam_location_mm[axis.Y.value] = int(((loc_dict['cam_y_ft'] * 12) + loc_dict['cam_y_in']) * INCHES_TO_MM)
-      if ('cam_z_ft' in request.form) and ('cam_z_in' in request.form):
-         loc_dict['cam_z_ft'] = int(request.form['cam_z_ft'])
-         loc_dict['cam_z_in'] = int(request.form['cam_z_in'])
-         cam_location_mm[axis.Z.value] = int(((loc_dict['cam_z_ft'] * 12) + loc_dict['cam_z_in']) * INCHES_TO_MM)
-      if len(cam_location_mm) > 2:
+      # example: 
+      # POST to CALIB (location) request.form: ImmutableMultiDict([('x_feet', '6'), ('x_inch', '6'), ('x_quar', '2'), ('y_feet', '54'), ('y_inch', '6'), ('y_quar', '3'), ('z_feet', '13'), ('z_inch', '8'), ('z_quar', '3')])
+      for i in Axis:
+         for j in Units:
+            key = f"{Axis(i).name}_{Units(j).name}"
+            if key in request.form:
+               if j == Units['feet']:
+                  new_cam_location_mm[Axis(i).value] += int(request.form[key]) * 12 * INCHES_TO_MM
+               if j == Units['inch']:
+                  new_cam_location_mm[Axis(i).value] += int(request.form[key]) * INCHES_TO_MM
+               if j == Units['quar']:
+                  new_cam_location_mm[Axis(i).value] += int(request.form[key]) * (INCHES_TO_MM/4)
+            else:
+               app.logger.error("Missing key '{key}' in POST of camera location axis")
+      # if ('cam_x_ft' in request.form) and ('cam_x_in' in request.form):
+      #    cam_location_mm[Axis.x.value] = int(((int(request.form['cam_x_ft']) * 12) + int(request.form['cam_x_ft'])) * INCHES_TO_MM)
+      # if ('cam_y_ft' in request.form) and ('cam_y_in' in request.form):
+      #    cam_location_mm[Axis.y.value] = int(((int(request.form['cam_y_ft']) * 12) + int(request.form['cam_y_ft'])) * INCHES_TO_MM)
+      # if ('cam_z_ft' in request.form) and ('cam_z_in' in request.form):
+      #    cam_location_mm[Axis.z.value] = int(((int(request.form['cam_z_ft']) * 12) + int(request.form['cam_z_ft'])) * INCHES_TO_MM)
+      if len(new_cam_location_mm) == 3:
+         for i in Axis:
+            new_cam_location_mm[Axis(i).value] = int(new_cam_location_mm[Axis(i).value])
          #persist values for next calibration, so they don't have to be re-entered
          with open(f"{settings_dir}/{cam_side.lower()}_cam_location.json", "w") as outfile:
-            json.dump(loc_dict, outfile)
-      # print(f"cam_mm set to: {cam_mm}")
+            json.dump(new_cam_location_mm, outfile)
+      else:
+         app.logger.error("Missing or extra axis in cam_location: {new_cam_location_mm}")
 
    mode_str = f"{cam_side} Court Coord"
    cam_lower = cam_side.lower()
@@ -236,7 +270,7 @@ def cam_calib():
 
 @app.route('/cam_calib_done', methods=DEFAULT_METHODS)
 def cam_calib_done():
-   global cam_side, cam_location_mm
+   global cam_side, new_cam_location_mm
 
    if request.method=='POST':
       if (request.content_type.startswith('application/json')):
@@ -250,7 +284,7 @@ def cam_calib_done():
             f" --fbrx {c['fbrx']} --fbry {c['fbry']} --nblx {c['nblx']} --nbly {c['nbly']}"
             f" --nbrx {c['nbrx']} --nbry {c['nbry']} --nslx {c['nslx']} --nsly {c['nsly']}"
             f" --nscx {c['nscx']} --nscy {c['nscy']} --nsrx {c['nsrx']} --nsry {c['nsry']}"
-            f" --camx {cam_location_mm[axis.X.value]} --camy {cam_location_mm[axis.Y.value]} --camz {cam_location_mm[axis.Z.value]}" )
+            f" --camx {new_cam_location_mm[Axis.x.value]} --camy {new_cam_location_mm[Axis.y.value]} --camz {new_cam_location_mm[Axis.z.value]}" )
       else:
          app.logger.info(f"POST to CALIB_DONE request.form: {request.form}")
          # example: ImmutableMultiDict
@@ -262,7 +296,7 @@ def cam_calib_done():
             else:
                app.logger.error(f"Missing key in cam_calib_done post: {key}")
          coord_args = coord_args + \
-            f" --camx {cam_location_mm[axis.X.value]} --camy {cam_location_mm[axis.Y.value]} --camz {cam_location_mm[axis.Z.value]}"
+            f" --camx {new_cam_location_mm[Axis.x.value]} --camy {new_cam_location_mm[Axis.y.value]} --camz {new_cam_location_mm[Axis.z.value]}"
 
          if cam_side == None:
             # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
