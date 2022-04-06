@@ -24,6 +24,7 @@ The following python packages have to be installed:
 ```
 python3 -m pip install flask-socketio
 python3 -m pip install eventlet
+python3 -m pip install waitress
 ```
 jquery.js is already installed on Raspbian, but a symbolic link needs to be made.  Run the following script which is the app directory.
 ```

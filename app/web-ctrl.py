@@ -13,6 +13,7 @@ logging.basicConfig(level=logging.INFO)
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
+from waitress import serve
 
 import inspect
 import os  # for sending favicon & checking the base is running (pgrep)
@@ -36,7 +37,7 @@ repos_dir = 'repos'
 sys.path.append(f'{user_dir}/{repos_dir}/control_ipc_utils')
 # print(sys.path)
 try:
-   from ctrl_messaging_routines import send_msg, is_state
+   from ctrl_messaging_routines import send_msg
    from control_ipc_defines import *
 except:
    app.logger.error("Missing 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
@@ -741,5 +742,6 @@ if __name__ == '__main__':
 
    # app.run(host="0.0.0.0", port=IP_PORT, debug = True)
    socketio.run(app, host="0.0.0.0", port=IP_PORT, debug = True)
+   serve(app, host="0.0.0.0", port=IP_PORT)
 
    check_base_thread.join()
