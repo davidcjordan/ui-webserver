@@ -1,0 +1,52 @@
+{% extends "layouts/base.html" %}
+
+{% block selections %} 
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+<table id="fault_table" class="w3-table w3-striped w3-border">
+   <thead>
+      <tr>
+         <th></th>
+         <th>Fault</th>
+         <th>Where</th>
+         <th>When</th>
+      </tr>
+   </thead>
+   <tbody>
+   </tbody>
+</table>
+{% endblock %} 
+
+{% block control %} 
+<button type="button" id="test">Test</button>
+{% endblock %} 
+
+{% block page_specific_js %} 
+<script type="text/javascript" charset="utf-8">
+   document.getElementById("test").addEventListener("click", function (e) {
+   socket.emit("fault_request");
+   // console.log("emitted fault_request")
+ }, false);
+</script>
+
+
+<script type="text/javascript" charset="utf-8">
+socket.on('faults_update', function(faults) {
+   console.log("received faults_update")
+   // let faults = [
+   // { id: "A 2nd Fault", where: "Speaker", when: "Yesterday" },
+   // { id: "A 3rd Fault", where: "Right Camera", when: "Tomorrow" }
+   // ]
+   let table = document.getElementById("fault_table");
+   for (let element of faults) {
+    let row = table.insertRow();
+    for (key in element) {
+      let cell = row.insertCell();
+      let text = document.createTextNode(element[key]);
+      cell.appendChild(text);
+    }
+  }
+});
+</script>
+
+{% endblock %} 

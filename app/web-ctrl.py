@@ -88,8 +88,8 @@ SELECT_URL = '/select'
 DRILL_URL = '/drill'
 CAM_CALIB_URL = '/cam_calib'
 CAM_POSITION_URL = '/cam_position'
-# WORKOUT_SELECTION_URL = '/workout_selection'
 SETTINGS_URL = '/settings'
+FAULTS_URL = '/faults'
 
 # Flask looks for following in the 'templates' directory
 MAIN_TEMPLATE = 'index.html'
@@ -100,6 +100,7 @@ SELECT_TEMPLATE = '/layouts' + SELECT_URL + '.html'
 DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
 CAM_CALIBRATION_TEMPLATE = '/layouts' + CAM_CALIB_URL + '.html'
 CAM_POSITION_TEMPLATE = '/layouts' + CAM_POSITION_URL + '.html'
+FAULTS_TEMPLATE = '/layouts' + FAULTS_URL + '.html'
 
 # base process status strings:
 STATUS_NOT_RUNNING = "Down"
@@ -606,10 +607,19 @@ def drill():
       footer_center = "Mode: " + mode_string)
 
 
-   return render_template(DRILL_TEMPLATE, \
+@app.route(FAULTS_URL, methods=DEFAULT_METHODS)
+def faults():
+   global back_url, previous_url
+   back_url = previous_url
+
+   # msg_ok, faults_list = send_msg(PUT_METHOD, FLTS_RSRC)
+   # if not msg_ok:
+   #    app.logger.error(f"GET faults failed, code: {code}")
+
+   return render_template(FAULTS_TEMPLATE, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
-      footer_center = "Mode: " + mode_string)
+      footer_center = "Mode: " + "--")
 
 
 @app.route('/favicon.ico')
@@ -619,7 +629,16 @@ def favicon():
 
 @socketio.on('message')
 def handle_message(data):
-    app.logger.debug('received message: ' + data)
+   app.logger.debug('received message: ' + data)
+
+@socketio.on('fault_request')
+def handle_fault_request():
+   app.logger.info('received fault_request')
+   emit('faults_update', [ \
+   { "idx": 1, "id": "A 2nd Fault", "where": "Speaker", "when": "Yesterday" }, \
+   { "idx": 2, "id": "A 3rd Fault", "where": "Right Camera", "when": "Tomorrow" } \
+   ])
+
 
 @socketio.on('change_params')     # Decorator to catch an event named change_params
 def handle_change_params(data):          # change_params() is the event callback function.
