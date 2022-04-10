@@ -19,6 +19,8 @@ import inspect
 import os  # for sending favicon & checking the base is running (pgrep)
 import json
 import enum
+import copy
+import datetime
 from threading import Thread
 from subprocess import Popen
 import time
@@ -145,6 +147,7 @@ COURT_POINT_KEYS = ['fblx','fbly','fbrx','fbry', \
 court_points_dict = {}
 new_cam_location_mm = [0]*3
 
+faults_table = {}
 ROTARY_CALIB_ID = 780
 
 filter_js = []
@@ -633,12 +636,23 @@ def handle_message(data):
 
 @socketio.on('fault_request')
 def handle_fault_request():
+   global faults_table
    app.logger.info('received fault_request')
-   emit('faults_update', [ \
-   { "idx": 1, "id": "A 2nd Fault", "where": "Speaker", "when": "Yesterday" }, \
-   { "idx": 2, "id": "A 3rd Fault", "where": "Right Camera", "when": "Tomorrow" } \
-   ])
+   # example fault table:
+   # faults: [{'fCod': 20, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 22, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 15, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 6, 'fLoc': 0, 'fTim': 1649434843}, {'fCod': 6, 'fLoc': 1, 'fTim': 1649434843}, {'fCod': 6, 'fLoc': 2, 'fTim': 1649434843}]
 
+   print(f"table: {faults_table}")
+   textified_faults_table = []
+   for fault in faults_table:
+      row_dict = {}
+      row_dict[FLT_CODE_PARAM] = fault_e(fault[FLT_CODE_PARAM]).name
+      row_dict[FLT_LOCATION_PARAM] = net_device_e(fault[FLT_LOCATION_PARAM]).name
+      timestamp = datetime.datetime.fromtimestamp(fault[FLT_TIMESTAMP_PARAM])
+      row_dict[FLT_TIMESTAMP_PARAM] = timestamp.strftime("%Y/%m/%d_%H:%M:%S")
+      textified_faults_table.append(row_dict)
+
+   emit('faults_update', json.dumps(textified_faults_table))
+ 
 
 @socketio.on('change_params')     # Decorator to catch an event named change_params
 def handle_change_params(data):          # change_params() is the event callback function.
@@ -686,6 +700,7 @@ def handle_pause_resume():
 
 @socketio.on('get_updates')
 def handle_get_updates(data):
+   global base_state
    json_data = json.loads(data)
    # print(f"json_data: {json_data}")
    if (("page" in json_data) and (json_data["page"] == "game")):
@@ -697,6 +712,7 @@ def handle_get_updates(data):
 
 def check_base(process_name):
    global base_state, previous_base_state, client_state, socketio
+   global faults_table, previous_fault_table
    while True:
       base_pid = os.popen(f"pgrep {process_name}").read()
       #base_pid is empty if base is not running
@@ -709,10 +725,16 @@ def check_base(process_name):
             if (status_msg is not None):
                if (STATUS_PARAM in status_msg):
                   base_state = base_state_e(status_msg[STATUS_PARAM]).name.title()
-               # if (HARD_FAULT_PARAM in status_msg):
-               #    fault_count = int(status_msg[HARD_FAULT_PARAM])
+               if (HARD_FAULT_PARAM in status_msg and status_msg[HARD_FAULT_PARAM] > 0):
+                  previous_fault_table = copy.deepcopy(faults_table)
+                  msg_ok, faults_table = send_msg(GET_METHOD, FLTS_RSRC)
+                  if not msg_ok:
+                     app.logger.info("Error getting fault table")
+                  # else:
+                  #    print(f"faults: {faults_table}")
       else:
          base_state = STATUS_NOT_RUNNING
+
       if base_state != previous_base_state:
          app.logger.info(f"Base state change: {previous_base_state} -> {base_state}")
       if (0 and base_state != previous_base_state and not \
