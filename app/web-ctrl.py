@@ -641,17 +641,22 @@ def handle_fault_request():
    # example fault table:
    # faults: [{'fCod': 20, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 22, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 15, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 6, 'fLoc': 0, 'fTim': 1649434843}, {'fCod': 6, 'fLoc': 1, 'fTim': 1649434843}, {'fCod': 6, 'fLoc': 2, 'fTim': 1649434843}]
 
-   print(f"table: {faults_table}")
-   textified_faults_table = []
-   for fault in faults_table:
-      row_dict = {}
-      row_dict[FLT_CODE_PARAM] = fault_e(fault[FLT_CODE_PARAM]).name
-      row_dict[FLT_LOCATION_PARAM] = net_device_e(fault[FLT_LOCATION_PARAM]).name
-      timestamp = datetime.datetime.fromtimestamp(fault[FLT_TIMESTAMP_PARAM])
-      row_dict[FLT_TIMESTAMP_PARAM] = timestamp.strftime("%Y/%m/%d_%H:%M:%S")
-      textified_faults_table.append(row_dict)
+   # the faults_table gets erroneously populated with the status when multiple instances are running.
+   if (type(faults_table) is list):
+      textified_faults_table = []
+      for fault in faults_table:
+         print(f"fault: {fault}")
+         row_dict = {}
+         row_dict[FLT_CODE_PARAM] = fault_e(fault[FLT_CODE_PARAM]).name
+         row_dict[FLT_LOCATION_PARAM] = net_device_e(fault[FLT_LOCATION_PARAM]).name
+         row_dict[FLT_LOCATION_PARAM] = fault[FLT_LOCATION_PARAM]
+         timestamp = datetime.datetime.fromtimestamp(fault[FLT_TIMESTAMP_PARAM])
+         row_dict[FLT_TIMESTAMP_PARAM] = timestamp.strftime("%Y/%m/%d_%H:%M:%S")
+         textified_faults_table.append(row_dict)
 
-   emit('faults_update', json.dumps(textified_faults_table))
+      emit('faults_update', json.dumps(textified_faults_table))
+   else:
+      app.logger.error(f"bogus fault table in fault_request: {faults_table}")
  
 
 @socketio.on('change_params')     # Decorator to catch an event named change_params
@@ -718,6 +723,7 @@ def check_base(process_name):
       #base_pid is empty if base is not running
       if base_pid:
          # verify responding to FIFO
+         # app.logger.info("Getting status message")
          msg_ok, status_msg = send_msg()
          if not msg_ok:
             base_state = STATUS_NOT_RESPONDING
@@ -727,16 +733,18 @@ def check_base(process_name):
                   base_state = base_state_e(status_msg[STATUS_PARAM]).name.title()
                if (HARD_FAULT_PARAM in status_msg and status_msg[HARD_FAULT_PARAM] > 0):
                   previous_fault_table = copy.deepcopy(faults_table)
+                  # app.logger.info("Getting fault table")
                   msg_ok, faults_table = send_msg(GET_METHOD, FLTS_RSRC)
                   if not msg_ok:
                      app.logger.info("Error getting fault table")
-                  # else:
-                  #    print(f"faults: {faults_table}")
+
+               # app.logger.info(f"faults: {faults_table[0]}")
       else:
          base_state = STATUS_NOT_RUNNING
 
       if base_state != previous_base_state:
          app.logger.info(f"Base state change: {previous_base_state} -> {base_state}")
+
       if (0 and base_state != previous_base_state and not \
             (base_state == STATUS_NOT_RUNNING or base_state == STATUS_NOT_RESPONDING)):
          app.logger.info("Base (or UI) started - configuring settings")
@@ -760,7 +768,7 @@ def check_base(process_name):
       #    print(f"emitting: {{'base_state_update', {{\"base_state\": \"{base_state}\"}}}}")
       #    socketio.emit('base_state_update', {"base_state": base_state})
       previous_base_state = base_state
-      time.sleep(1)
+      time.sleep(2.0)
 
 def print_base_status(iterations = 20):
    global base_state

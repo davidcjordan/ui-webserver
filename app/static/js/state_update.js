@@ -10,7 +10,11 @@ socket.on('state_update', function(data) {
     if (IdToUpdate) {
       if (key === 'base_state') {
         if ((data[key] === 'Faulted') && !window.location.href.includes("faults")) {
+          console.log("Faulted status detected; switching to /faults")
           location.href = '/faults';
+        } else if ((data[key] !== 'Faulted') && window.location.href.includes("faults")) {
+          console.log("NON-Faulted status detected; switching to /")
+          location.href = '/';
         } else {
           IdToUpdate.innerHTML = "Status: " + data[key];
           // set pause/resume icon on game/drill/workout active pages
