@@ -1,8 +1,6 @@
 {% extends "layouts/base.html" %}
 
 {% block selections %} 
-<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-
 <script type="text/javascript" charset="utf-8">
    document.addEventListener('DOMContentLoaded',() => {
       // console.log("faults onload")
@@ -10,12 +8,13 @@
 });
 </script>
 
-<table id="fault_table" class="w3-table w3-striped w3-border">
+<table id="fault_table" class="Table">
+   <caption class="Title">Boomer Problems</caption>
    <thead>
-      <tr>
-         <th>Fault</th>
-         <th>Where</th>
-         <th>When</th>
+      <tr class="Heading">
+         <th class="Cell">Problem</th>
+         <th class="Cell">Where</th>
+         <th class="Cell">When</th>
       </tr>
    </thead>
    <tbody>
@@ -24,7 +23,7 @@
 {% endblock %} 
 
 {% block control %} 
-<button type="button" id="test">Test</button>
+<!-- <button type="button" id="test">Test</button> -->
 {% endblock %} 
 
 {% block page_specific_js %} 
@@ -50,6 +49,7 @@
             let cell = row.insertCell();
             let text = document.createTextNode(element[key]);
             cell.appendChild(text);
+            cell.className = 'Cell';
          }
       }
    });

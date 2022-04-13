@@ -615,10 +615,6 @@ def faults():
    global back_url, previous_url
    back_url = previous_url
 
-   # msg_ok, faults_list = send_msg(PUT_METHOD, FLTS_RSRC)
-   # if not msg_ok:
-   #    app.logger.error(f"GET faults failed, code: {code}")
-
    return render_template(FAULTS_TEMPLATE, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
@@ -645,13 +641,13 @@ def handle_fault_request():
    if (type(faults_table) is list):
       textified_faults_table = []
       for fault in faults_table:
-         print(f"fault: {fault}")
+         # print(f"fault: {fault}")
          row_dict = {}
          row_dict[FLT_CODE_PARAM] = fault_e(fault[FLT_CODE_PARAM]).name
          row_dict[FLT_LOCATION_PARAM] = net_device_e(fault[FLT_LOCATION_PARAM]).name
-         row_dict[FLT_LOCATION_PARAM] = fault[FLT_LOCATION_PARAM]
          timestamp = datetime.datetime.fromtimestamp(fault[FLT_TIMESTAMP_PARAM])
-         row_dict[FLT_TIMESTAMP_PARAM] = timestamp.strftime("%Y/%m/%d_%H:%M:%S")
+         #TODO: compare date and put "yesterday" or "days ago"
+         row_dict[FLT_TIMESTAMP_PARAM] = timestamp.strftime("%H:%M:%S")
          textified_faults_table.append(row_dict)
 
       emit('faults_update', json.dumps(textified_faults_table))
