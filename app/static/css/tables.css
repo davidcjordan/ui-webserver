@@ -1,5 +1,6 @@
 .Table {
   display: table;
+  /* font-size: smaller; */
 }
 /* used to have: font-size: larger; */
 .Title {

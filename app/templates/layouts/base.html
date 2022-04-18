@@ -42,13 +42,13 @@
     <script type="text/javascript" charset="utf-8"> var socket = io(); </script>
     <!-- The following will be used when socket.io.js is installed locally, which needs to be done: -->
     <!-- <script src="/socket.io/socket.io.js"></script> -->
-    <!-- <script type="text/javascript">
+    <script type="text/javascript">
       var socket = io.connect('http://' + document.domain + ':' + location.port);
       console.log("Sending client_connected")
       socket.on('connect', function() {
         socket.emit('client_connected', {data: 'New client!'});
       });
-    </script>   -->
+    </script>  
     <script src="/static/js/state_update.js"></script>
     <script type="text/javascript" charset="utf-8">
       var data_get_update = {};

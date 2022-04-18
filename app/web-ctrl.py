@@ -630,16 +630,14 @@ def favicon():
 def handle_message(data):
    app.logger.debug('received message: ' + data)
 
-@socketio.on('fault_request')
-def handle_fault_request():
+def textify_faults_table():
    global faults_table
-   app.logger.info('received fault_request')
    # example fault table:
    # faults: [{'fCod': 20, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 22, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 15, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 6, 'fLoc': 0, 'fTim': 1649434843}, {'fCod': 6, 'fLoc': 1, 'fTim': 1649434843}, {'fCod': 6, 'fLoc': 2, 'fTim': 1649434843}]
 
    # the faults_table gets erroneously populated with the status when multiple instances are running.
+   textified_faults_table = []
    if (type(faults_table) is list):
-      textified_faults_table = []
       for fault in faults_table:
          # print(f"fault: {fault}")
          row_dict = {}
@@ -649,11 +647,20 @@ def handle_fault_request():
          #TODO: compare date and put "yesterday" or "days ago"
          row_dict[FLT_TIMESTAMP_PARAM] = timestamp.strftime("%H:%M:%S")
          textified_faults_table.append(row_dict)
-
-      emit('faults_update', json.dumps(textified_faults_table))
    else:
       app.logger.error(f"bogus fault table in fault_request: {faults_table}")
+   return textified_faults_table
+
+@socketio.on('fault_request')
+def handle_fault_request():
+   global faults_table
+   app.logger.info('received fault_request')
+   # emit('faults_update', json.dumps(textified_faults_table))
+   emit('faults_update', json.dumps(textify_faults_table()))
  
+@socketio.on('client_connected')
+def handle_client_connected(data):
+   app.logger.info(f"received client_connected: {data}")
 
 @socketio.on('change_params')     # Decorator to catch an event named change_params
 def handle_change_params(data):          # change_params() is the event callback function.
@@ -704,11 +711,15 @@ def handle_get_updates(data):
    global base_state
    json_data = json.loads(data)
    # print(f"json_data: {json_data}")
-   if (("page" in json_data) and (json_data["page"] == "game")):
-      emit('state_update', {"base_state": base_state, "pp": randint(0,3), \
-         "bp": 1, "pg": 3, "bg": 2, "ps": 5, "bs": 4, "pt": 6, "bt": 7, "server": "b"})
-   else:
-      emit('state_update', {"base_state": base_state})
+   if ("page" in json_data):
+      if (json_data["page"] == "game"):
+         emit('state_update', {"base_state": base_state, "pp": randint(0,3), \
+            "bp": 1, "pg": 3, "bg": 2, "ps": 5, "bs": 4, "pt": 6, "bt": 7, "server": "b"})
+      # if (json_data["page"] == "faults"):
+      #    #TODO: if (len(faults_table) != len(previous_faults_table)):
+      #    emit('faults_update', json.dumps(textified_faults_table()))
+
+   emit('state_update', {"base_state": base_state})
 
 
 def check_base(process_name):

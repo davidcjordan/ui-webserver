@@ -2,63 +2,64 @@
 
 {% block stats %} 
 <div class="statistics-display">
-          <div class="Table">
-            <!-- <div class="Title">
-              <p>Game Score</p>
-            </div> -->
-            <div class="Heading">
-              <div class="Col1Row1Cell">
-                <p></p>
-              </div>
-              <div class="Cell">
-                <p>Set</p>
-              </div>
-              <div class="Cell">
-                <p>Game</p>
-              </div>
-              <div class="Cell">
-                <p>Points</p>
-              </div>
-              <div class="Cell">
-                <p>Tie Points</p>
-              </div>
-            </div>
-            <div class="Row">
-              <div class="Col1Cell">
-                <p>Boomer</p>
-              </div>
-              <div class="Cell">
-                <p id="bs">0</p>
-              </div>
-              <div class="Cell">
-                <p id="bg">0</p>
-              </div>
-              <div class="Cell">
-                <p id="bp">0</p>
-              </div>
-              <div class="Cell">
-                <p id="bt">0</p>
-              </div>
-            </div>
-            <div class="Row">
-              <div class="Col1Cell">
-                <p>Player</p>
-              </div>
-              <div class="Cell">
-                <p id="ps">0</p>
-              </div>
-              <div class="Cell">
-                <p id="pg">0</p>
-              </div>
-              <div class="Cell">
-                <p id="pp">0</p>
-              </div>
-              <div class="Cell">
-                <p id="pt">0</p>
-              </div>
-            </div>
-          </div>
-          <p id="server">TBD's serve</p>
+  <p id="server">TBD's serve</p>
+  <br>
+  <div class="Table">
+    <!-- <div class="Title">
+      <p>Game Score</p>
+    </div> -->
+    <div class="Heading">
+      <div class="Col1Row1Cell">
+        <p></p>
+      </div>
+      <div class="Cell">
+        <p>Set</p>
+      </div>
+      <div class="Cell">
+        <p>Game</p>
+      </div>
+      <div class="Cell">
+        <p>Points</p>
+      </div>
+      <div class="Cell">
+        <p>Tie Points</p>
+      </div>
+    </div>
+    <div class="Row">
+      <div class="Col1Cell">
+        <p>Boomer</p>
+      </div>
+      <div class="Cell">
+        <p id="bs">0</p>
+      </div>
+      <div class="Cell">
+        <p id="bg">0</p>
+      </div>
+      <div class="Cell">
+        <p id="bp">0</p>
+      </div>
+      <div class="Cell">
+        <p id="bt">0</p>
+      </div>
+    </div>
+    <div class="Row">
+      <div class="Col1Cell">
+        <p>Player</p>
+      </div>
+      <div class="Cell">
+        <p id="ps">0</p>
+      </div>
+      <div class="Cell">
+        <p id="pg">0</p>
+      </div>
+      <div class="Cell">
+        <p id="pp">0</p>
+      </div>
+      <div class="Cell">
+        <p id="pt">0</p>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %} 
 
@@ -88,16 +89,3 @@
 <script src="/static/js/pause_resume.js"></script>
 <script src="/static/js/number-picker-2.js"></script>
 {% endblock %} 
-
-<!-- 
-  <script type="text/javascript" charset="utf-8">
-      document.getElementById("test").addEventListener("click", function (e) {
-      socket.emit("test");
-      console.log("emitted test")
-    }, false);
-
-    // socket.on('connect', function() {
-    //   socket.emit('message', 'Connected!');
-    // });
-  </script>
- -->

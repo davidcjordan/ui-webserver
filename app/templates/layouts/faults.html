@@ -8,7 +8,7 @@
 });
 </script>
 
-<table id="fault_table" class="Table">
+<table style="font-size:0.8em" id="fault_table" class="Table">
    <caption class="Title">Boomer Problems</caption>
    <thead>
       <tr class="Heading">
@@ -27,12 +27,12 @@
 {% endblock %} 
 
 {% block page_specific_js %} 
-<script type="text/javascript" charset="utf-8">
+<!-- <script type="text/javascript" charset="utf-8">
    document.getElementById("test").addEventListener("click", function (e) {
       socket.emit("fault_request");
       // console.log("emitted fault_request")
    }, false);
-</script>
+</script> -->
 
 <script type="text/javascript" charset="utf-8">
    socket.on('faults_update', function(faults) {

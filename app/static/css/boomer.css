@@ -63,7 +63,7 @@ body {
 /* touchscreen height is 800; header=90; footer=50; -> section is 640 */
 .section {
   width: 100%;
-  min-height: 640px;
+  min-height: 636px;
 }
 
 /* vertical-align: middle; */
