@@ -1,7 +1,8 @@
 {% extends "layouts/base.html" %}
 
 {%- block selections %}
-<p> Camera position: distance from left singles sideline directly under the net to the center of the camera.</p>
+<p> Camera position: Measure 'A' from camera plumb bob mark to the left doubles corner; 
+  'B' is from camera plumb bob mark to the right doubles corner.</p>
 <form method="post" action="{{ url_for('cam_calib') }}">
   <div class="selections-class"> 
 <!-- 
@@ -45,4 +46,8 @@
     background-color: #999999;
   }
 </style>
+{% endblock %}
+
+{% block page_specific_js %} 
+<script src="/static/js/number-picker-2.js"></script>
 {% endblock %} 

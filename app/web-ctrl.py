@@ -126,6 +126,10 @@ previous_url = None
 back_url = None
 
 cam_side = None  # a global on which camera is being calibrated
+class Measurement(enum.Enum):
+   a = 0
+   b = 1
+   z = 2
 class Axis(enum.Enum):
    x = 0
    y = 1
@@ -145,7 +149,7 @@ INCHES_TO_MM = 25.4
 COURT_POINT_KEYS = ['fblx','fbly','fbrx','fbry', \
    'nslx', 'nsly', 'nscx', 'nscy', 'nsrx', 'nsry', 'nblx', 'nbly', 'nbrx', 'nbry']
 court_points_dict = {}
-new_cam_location_mm = [0]*3
+new_cam_measurement_mm = [0]*3
 
 faults_table = {}
 ROTARY_CALIB_ID = 780
@@ -178,36 +182,37 @@ def cam_position():
       else:
          cam_side = 'Left'
 
-   cam_loc_filepath = f'{settings_dir}/{cam_side.lower()}_cam_location.json'
+   cam_loc_filepath = f'{settings_dir}/{cam_side.lower()}_cam_measurements.json'
    try:
       with open(cam_loc_filepath) as infile:
-         previous_cam_location_mm = json.load(infile)
+         previous_cam_measurement_mm = json.load(infile)
    except:
       app.logger.info(f"using default values for cam_location; couldn't read {cam_loc_filepath}")
-      previous_cam_location_mm = [0, 14326, 2438] # default global camera location; y=47ft, z=8ft
+      previous_cam_measurement_mm = [6000, 12000, 2438] # default global camera location; z=8ft
 
-   cam_loc = [[0 for i in range(len(Axis))] for j in range(len(Units))]
-   for axis, value in enumerate(previous_cam_location_mm):
+   unit_lengths = [[0 for i in range(len(Measurement))] for j in range(len(Units))]
+   for measurement, value in enumerate(previous_cam_measurement_mm):
       inches = 0.039370 * value
-      cam_loc[axis][0] = int(inches / 12)
-      cam_loc[axis][1] = int(inches % 12)
-      cam_loc[axis][2] = int((inches % 12 % 1)/.25)
+      unit_lengths[measurement][0] = int(inches / 12)
+      unit_lengths[measurement][1] = int(inches % 12)
+      unit_lengths[measurement][2] = int((inches % 12 % 1)/.25)
   
    position_options = {}
-   for i in Axis:
+   for i in Measurement:
       for j in Units:
-         main_key = f"{Axis(i).name}_{Units(j).name}"
-         position_options[main_key] = {"dflt":cam_loc[Axis(i).value][Units(j).value], "min":0, "max":60, "step":1}
+         main_key = f"{Measurement(i).name}_{Units(j).name}"
+         # TODO: fix defaults for inches and quarters!
+         position_options[main_key] = {"dflt":unit_lengths[Measurement(i).value][Units(j).value], "min":0, "max":60, "step":1}
          if j == Units(0):
-            if i == Axis(0):
-               position_options[main_key]["start_div"] = "From Left"
-            if i == Axis(1):
-               position_options[main_key]["start_div"] = "From Net"
-            if i == Axis(2):
+            if i == Measurement(0):
+               position_options[main_key]["start_div"] = "A"
+            if i == Measurement(1):
+               position_options[main_key]["start_div"] = "B"
+            if i == Measurement(2):
                position_options[main_key]["start_div"] = "Height"
          if j == Units(2):
                position_options[main_key]["end_div"] = "Y"
-   print(f"position_options={position_options}")
+   # print(f"position_options={position_options}")
 
    return render_template(CAM_POSITION_TEMPLATE, \
       home_button = my_home_button, \
@@ -216,41 +221,70 @@ def cam_position():
       options = position_options, \
       footer_center = f"Mode: Get {cam_side} Cam Position")
 
-
 @app.route(CAM_CALIB_URL, methods=DEFAULT_METHODS)
 def cam_calib():
-   global cam_side, Units, new_cam_location_mm
+   global cam_side, Units, new_cam_measurement_mm
 
    if request.method=='POST':
       app.logger.info(f"POST to CALIB (location) request.form: {request.form}")
       # example: 
       # POST to CALIB (location) request.form: ImmutableMultiDict([('x_feet', '6'), ('x_inch', '6'), ('x_quar', '2'), ('y_feet', '54'), ('y_inch', '6'), ('y_quar', '3'), ('z_feet', '13'), ('z_inch', '8'), ('z_quar', '3')])
-      for i in Axis:
+      for i in Measurement:
          for j in Units:
-            key = f"{Axis(i).name}_{Units(j).name}"
+            key = f"{Measurement(i).name}_{Units(j).name}"
             if key in request.form:
                if j == Units['feet']:
-                  new_cam_location_mm[Axis(i).value] += int(request.form[key]) * 12 * INCHES_TO_MM
+                  new_cam_measurement_mm[Measurement(i).value] += int(request.form[key]) * 12 * INCHES_TO_MM
                if j == Units['inch']:
-                  new_cam_location_mm[Axis(i).value] += int(request.form[key]) * INCHES_TO_MM
+                  new_cam_measurement_mm[Measurement(i).value] += int(request.form[key]) * INCHES_TO_MM
                if j == Units['quar']:
-                  new_cam_location_mm[Axis(i).value] += int(request.form[key]) * (INCHES_TO_MM/4)
+                  new_cam_measurement_mm[Measurement(i).value] += int(request.form[key]) * (INCHES_TO_MM/4)
             else:
-               app.logger.error("Missing key '{key}' in POST of camera location axis")
+               app.logger.error("Missing key '{key}' in POST of camera location measurement")
       # if ('cam_x_ft' in request.form) and ('cam_x_in' in request.form):
-      #    cam_location_mm[Axis.x.value] = int(((int(request.form['cam_x_ft']) * 12) + int(request.form['cam_x_ft'])) * INCHES_TO_MM)
+      #    cam_location_mm[Measurement.a.value] = int(((int(request.form['cam_a_ft']) * 12) + int(request.form['cam_a_ft'])) * INCHES_TO_MM)
       # if ('cam_y_ft' in request.form) and ('cam_y_in' in request.form):
-      #    cam_location_mm[Axis.y.value] = int(((int(request.form['cam_y_ft']) * 12) + int(request.form['cam_y_ft'])) * INCHES_TO_MM)
+      #    cam_location_mm[Measurement.b.value] = int(((int(request.form['cam_b_ft']) * 12) + int(request.form['cam_b_ft'])) * INCHES_TO_MM)
       # if ('cam_z_ft' in request.form) and ('cam_z_in' in request.form):
-      #    cam_location_mm[Axis.z.value] = int(((int(request.form['cam_z_ft']) * 12) + int(request.form['cam_z_ft'])) * INCHES_TO_MM)
-      if len(new_cam_location_mm) == 3:
-         for i in Axis:
-            new_cam_location_mm[Axis(i).value] = int(new_cam_location_mm[Axis(i).value])
+      #    cam_location_mm[Measurement.z.value] = int(((int(request.form['cam_z_ft']) * 12) + int(request.form['cam_z_ft'])) * INCHES_TO_MM)
+      if len(new_cam_measurement_mm) == 3:
+         # convert from floating point to integer:
+         for i in Measurement:
+            new_cam_measurement_mm[Measurement(i).value] = int(new_cam_measurement_mm[Measurement(i).value])
          #persist values for next calibration, so they don't have to be re-entered
+         with open(f"{settings_dir}/{cam_side.lower()}_cam_measurements.json", "w") as outfile:
+            json.dump(new_cam_measurement_mm, outfile)
+         # convert measurements (A & B) to camera_location X and Y and save in file
+         new_cam_location_mm = [0]*3
+         court_width_mm = 39 * 12 * INCHES_TO_MM
+         # 		x1 = (1296 + A*A - B*B)/72;
+			# 		y1 = sqrt(A*A - x1*x1);
+			# 		Xworld = x1 - 4.5;	// in feet
+			# 		Yworld = y1 + 39;	// in feet
+         # A=20.00 B=20.00 x1=18.00 y1=8.72 Xworld=4114.8 Yworld=14544.4
+         # A=25.45 B=25.45 x1=18.00 y1=17.99 Xworld=4114.8 Yworld=17371.1
+
+         A = new_cam_measurement_mm[Measurement.a.value]
+         B = new_cam_measurement_mm[Measurement.b.value]
+         # pow(number, 2) is the same as squaring;  pow(number, 0.5) is squareroot
+         new_cam_location_mm[Axis.x.value] = int((pow(court_width_mm, 2) + pow(A, 2) - pow(B, 2)) / (court_width_mm/2))
+         X = new_cam_location_mm[Axis.x.value]
+         if X < 0:
+            app.logger.error(f"X distance calculation error; x={X}")
+            X = 0
+         Y = pow((pow(A, 2) - pow(X, 2)), 0.5)
+         if not isinstance(Y,float):
+            app.logger.error(f"Y distance calculation error; y={Y}")
+            Y = 0
+         new_cam_location_mm[Axis.y.value] = int(Y)
+         # adjust from doubles sideline to singles sideline ?
+         new_cam_location_mm[Axis.x.value] -= int(4.5 * 12 * INCHES_TO_MM)
+         new_cam_location_mm[Axis.y.value] += int(court_width_mm)
+         new_cam_location_mm[Axis.z.value] = new_cam_measurement_mm[Measurement.z.value]
          with open(f"{settings_dir}/{cam_side.lower()}_cam_location.json", "w") as outfile:
             json.dump(new_cam_location_mm, outfile)
       else:
-         app.logger.error("Missing or extra axis in cam_location: {new_cam_location_mm}")
+         app.logger.error("Missing or extra measurement in cam_measurements: {new_cam_measurement_mm}")
 
    mode_str = f"{cam_side} Court Coord"
    cam_lower = cam_side.lower()
@@ -275,7 +309,7 @@ def cam_calib():
 
 @app.route('/cam_calib_done', methods=DEFAULT_METHODS)
 def cam_calib_done():
-   global cam_side, new_cam_location_mm
+   global cam_side, new_cam_measurement_mm
 
    if request.method=='POST':
       if (request.content_type.startswith('application/json')):
