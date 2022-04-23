@@ -92,6 +92,7 @@ CAM_CALIB_URL = '/cam_calib'
 CAM_POSITION_URL = '/cam_position'
 SETTINGS_URL = '/settings'
 FAULTS_URL = '/faults'
+THROWER_CALIB_URL = '/thrower_calibration'
 
 # Flask looks for following in the 'templates' directory
 MAIN_TEMPLATE = 'index.html'
@@ -103,6 +104,7 @@ DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
 CAM_CALIBRATION_TEMPLATE = '/layouts' + CAM_CALIB_URL + '.html'
 CAM_POSITION_TEMPLATE = '/layouts' + CAM_POSITION_URL + '.html'
 FAULTS_TEMPLATE = '/layouts' + FAULTS_URL + '.html'
+THROWER_CALIB_TEMPLATE = '/layouts' + SELECT_URL + '.html'
 
 # base process status strings:
 STATUS_NOT_RUNNING = "Down"
@@ -119,6 +121,7 @@ DRILL_SELECT_TYPE_INSTRUCTORS = 'Instructors'
 DRILL_SELECT_TYPE_TEST ='Test'
 
 WORKOUT_ID = 'workout_id'
+DRILL_ID = 'drill_id'
 ONCLICK_MODE_KEY = 'mode'
 ONCLICK_MODE_WORKOUT_VALUE = 'workouts'
 
@@ -154,7 +157,11 @@ court_points_dict = {}
 new_cam_measurement_mm = [0]*3
 
 faults_table = {}
-ROTARY_CALIB_ID = 780
+#TODO: generate the dict by parsing the name in the drill description in the file
+thrower_calib_drill_dict = {"ROTARY":(THROWER_CALIB_DRILL_NUMBER_START), "ELEVATOR": (THROWER_CALIB_DRILL_NUMBER_START+1)}
+for i in range(balltype_e.SERVE.value, balltype_e.CUSTOM.value):
+   thrower_calib_drill_dict[balltype_e(i).name] = THROWER_CALIB_DRILL_NUMBER_START+i+1
+THROWER_CALIBRATION_WORKOUT_ID = 2
 
 filter_js = []
 filter_js.append(Markup('<script src="/static/js/jquery-3.3.1.min.js"></script>'))
@@ -430,13 +437,7 @@ def settings():
 
    # value is the label of the button
    onclick_choice_list = [\
-      {"value": "Rotary Calibration", "onclick_url": DRILL_URL, "param_name": WORKOUT_ID,"param_value": ROTARY_CALIB_ID}
- 		# rotary_calibration_mode= (drill_number==780)	   ? true : false;
-		# elevator_calibration_mode= (drill_number==781)	? true : false;
-		# lob_calibration_mode= (drill_number==782)	      ? true : false;
-		# serve_calibration_mode=(drill_number==784)      ? true : false;
-		# drop_calibration_mode=(drill_number==785)       ? true : false;
-		# flat_calibration_mode=(drill_number==786)			? true : false;
+      {"value": "Thrower Calibration", "onclick_url": THROWER_CALIB_URL}
    ]
    form_choice_list = [\
       {"value": "Left Cam Calib"},\
@@ -463,6 +464,24 @@ def settings():
       form_choices = form_choice_list, \
       url_for_post = CAM_POSITION_URL, \
       page_specific_js = page_js, \
+      footer_center = "Mode: --")
+
+@app.route(THROWER_CALIB_URL, methods=DEFAULT_METHODS)
+def thrower_calib():
+
+   # value is the label of the button
+   onclick_choice_list = [\
+      {"value": "Calibrate All", "onclick_url": DRILL_URL, "param_name": WORKOUT_ID,"param_value": THROWER_CALIBRATION_WORKOUT_ID}
+   ]
+   for parameter, drill_num in thrower_calib_drill_dict.items():
+      button_label = f"Calibrate {parameter.title()}"
+      onclick_choice_list.append({"value": button_label, "param_name": DRILL_ID, "onclick_url": DRILL_URL, "param_value": drill_num})
+
+   return render_template(CHOICE_INPUTS_TEMPLATE, \
+      home_button = my_home_button, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
+      onclick_choices = onclick_choice_list, \
       footer_center = "Mode: --")
 
 
