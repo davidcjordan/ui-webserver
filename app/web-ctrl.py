@@ -126,6 +126,8 @@ previous_url = None
 back_url = None
 
 cam_side = None  # a global on which camera is being calibrated
+cam_side_left_label = 'Left'
+cam_side_right_label = 'Right'
 class Measurement(enum.Enum):
    a = 0
    b = 1
@@ -178,9 +180,9 @@ def cam_position():
       # print(f"POST to CAM_POSITION request.form: {request.form}")
       # POST to CAM_POSITION request.form: ImmutableMultiDict([('choice', 'Left Cam Calib')])
       if ('choice' in request.form) and request.form['choice'].lower().startswith('r'):
-         cam_side = 'Right'
+         cam_side = cam_side_right_label
       else:
-         cam_side = 'Left'
+         cam_side = cam_side_left_label
 
    cam_loc_filepath = f'{settings_dir}/{cam_side.lower()}_cam_measurements.json'
    try:
@@ -188,7 +190,11 @@ def cam_position():
          previous_cam_measurement_mm = json.load(infile)
    except:
       app.logger.info(f"using default values for cam_location; couldn't read {cam_loc_filepath}")
-      previous_cam_measurement_mm = [6000, 12000, 2438] # default global camera location; z=8ft
+      if cam_side == cam_side_left_label:
+         previous_cam_measurement_mm = [6402, 12700, 2440]
+      else:
+         previous_cam_measurement_mm = [12700, 6402, 2440]
+
 
    unit_lengths = [[0 for i in range(len(Measurement))] for j in range(len(Units))]
    for measurement, value in enumerate(previous_cam_measurement_mm):
@@ -201,17 +207,39 @@ def cam_position():
    for i in Measurement:
       for j in Units:
          main_key = f"{Measurement(i).name}_{Units(j).name}"
-         # TODO: fix defaults for inches and quarters!
-         position_options[main_key] = {"dflt":unit_lengths[Measurement(i).value][Units(j).value], "min":0, "max":60, "step":1}
+         position_options[main_key] = {"dflt":unit_lengths[Measurement(i).value][Units(j).value], "step":1}
+         # customize min, max and row title
          if j == Units(0):
             if i == Measurement(0):
                position_options[main_key]["start_div"] = "A"
+               # the fence should be 21 ft from the baseline, but allowing smaller
+               if cam_side == cam_side_left_label:
+                  # A should be short; B should be long for on LEFT side
+                  position_options[main_key]["min"] = 17
+                  position_options[main_key]["max"] = 30
+               else:
+                  position_options[main_key]["min"] = 25
+                  position_options[main_key]["max"] = 70
             if i == Measurement(1):
                position_options[main_key]["start_div"] = "B"
+               if cam_side == cam_side_right_label:
+                  # A should be short; B should be long for on RIGHT side
+                  position_options[main_key]["min"] = 17
+                  position_options[main_key]["max"] = 30
+               else:
+                  position_options[main_key]["min"] = 25
+                  position_options[main_key]["max"] = 70
             if i == Measurement(2):
                position_options[main_key]["start_div"] = "Height"
+               position_options[main_key]["min"] = 7
+               position_options[main_key]["max"] = 16
+         if j == Units(1):
+               position_options[main_key]["min"] = 0
+               position_options[main_key]["max"] = 11
          if j == Units(2):
-               position_options[main_key]["end_div"] = "Y"
+            position_options[main_key]["min"] = 0
+            position_options[main_key]["max"] = 3
+            position_options[main_key]["end_div"] = "Y"
    # print(f"position_options={position_options}")
 
    return render_template(CAM_POSITION_TEMPLATE, \
