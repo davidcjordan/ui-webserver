@@ -92,7 +92,8 @@ CAM_CALIB_URL = '/cam_calib'
 CAM_POSITION_URL = '/cam_position'
 SETTINGS_URL = '/settings'
 FAULTS_URL = '/faults'
-THROWER_CALIB_URL = '/thrower_calibration'
+THROWER_CALIB_SELECTION_URL = '/thrower_calibration'
+BEEP_SELECTION_URL = '/beep_selection'
 
 # Flask looks for following in the 'templates' directory
 MAIN_TEMPLATE = 'index.html'
@@ -104,7 +105,6 @@ DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
 CAM_CALIBRATION_TEMPLATE = '/layouts' + CAM_CALIB_URL + '.html'
 CAM_POSITION_TEMPLATE = '/layouts' + CAM_POSITION_URL + '.html'
 FAULTS_TEMPLATE = '/layouts' + FAULTS_URL + '.html'
-THROWER_CALIB_TEMPLATE = '/layouts' + SELECT_URL + '.html'
 
 # base process status strings:
 STATUS_NOT_RUNNING = "Down"
@@ -406,6 +406,7 @@ def index():
    onclick_choice_list = [\
       {"value": "Game Mode", "onclick_url": GAME_OPTIONS_URL},\
       {"value": "Drills", "onclick_url": DRILL_SELECT_TYPE_URL},\
+      {"value": "Beep Drills", "onclick_url": BEEP_SELECTION_URL },\
       {"value": "Workouts", "onclick_url": SELECT_URL, \
          "param_name": ONCLICK_MODE_KEY, "param_value": ONCLICK_MODE_WORKOUT_VALUE}, \
       {"value": "Settings", "onclick_url": SETTINGS_URL}
@@ -437,7 +438,7 @@ def settings():
 
    # value is the label of the button
    onclick_choice_list = [\
-      {"value": "Thrower Calibration", "onclick_url": THROWER_CALIB_URL}
+      {"value": "Thrower Calibration", "onclick_url": THROWER_CALIB_SELECTION_URL}
    ]
    form_choice_list = [\
       {"value": "Left Cam Calib"},\
@@ -466,9 +467,8 @@ def settings():
       page_specific_js = page_js, \
       footer_center = "Mode: --")
 
-@app.route(THROWER_CALIB_URL, methods=DEFAULT_METHODS)
+@app.route(THROWER_CALIB_SELECTION_URL, methods=DEFAULT_METHODS)
 def thrower_calib():
-
    # value is the label of the button
    onclick_choice_list = [\
       {"value": "Calibrate All", "onclick_url": DRILL_URL, "param_name": WORKOUT_ID,"param_value": THROWER_CALIBRATION_WORKOUT_ID}
@@ -639,6 +639,11 @@ def drill():
    global back_url, previous_url
    back_url = previous_url
 
+   #There are multiple ways of getting to this page
+   # select_url: the post contains the drill ID (choice) or there is a workout param with ID
+   # thrower_calib: the post contains a workout/drill param and an drill/workout ID
+   # beep_select: the post contains radio buttons selections (stroke, difficulty) which are mapped to a drillID
+
    app.logger.info(f"DRILL_URL request_form: {request.form}")
    app.logger.info(f"DRILL_URL request_args: {request.args}")
    is_workout = request.args.get(ONCLICK_MODE_KEY)
@@ -654,6 +659,7 @@ def drill():
          id = int(request.form['choice_id'])
          mode = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: id}
          mode_string = f"'{id}' Drill"
+      # if request.method=='POST' and 'stroke_choices' in request.form:
 
    # app.logger.info(f"workout_id: {id}")
 
@@ -668,7 +674,8 @@ def drill():
          if not rc:
             app.logger.error("PUT START failed, code: {}".format(code))
 
-   if (id != ROTARY_CALIB_ID):
+   thrower_calib_drill_number_end = THROWER_CALIB_DRILL_NUMBER_START + thrower_calib_drill_dict.len() + 1
+   if id not in range(THROWER_CALIB_DRILL_NUMBER_START, thrower_calib_drill_number_end):
       # the defaults are set from what was last saved in the settings file
       drill_stepper_options = { \
          LEVEL_PARAM:{"legend":"Level", "dflt":settings_dict[LEVEL_PARAM]/LEVEL_UI_FACTOR, \
@@ -689,6 +696,57 @@ def drill():
       installation_icon = customization_dict['icon'], \
       stepper_options = drill_stepper_options, \
       footer_center = "Mode: " + mode_string)
+
+
+@app.route(BEEP_SELECTION_URL, methods=DEFAULT_METHODS)
+def beep_selection():
+
+   choices = {"Stroke":["Ground","Volley","Mini-Tennis"], \
+      "Ground Stroke Type": ["Flat","Chip","Topspin","Heavy Topspin","Random"], \
+      "Difficulty": ["Very Easy","Easy","Medium","Hard","Very Hard"]}
+
+   beep_radio_options = {}
+   # in the for loop - options is the list of radio buttons and choice is the legend
+   for choice, options in choices.items():
+      button_list = []
+      for i, option in enumerate(options):
+         button_list.append({"label":option, "value":option})
+         if i == 2:
+            button_list[i].update({"checked":1})
+      beep_radio_options.update({choice: {"legend":choice, "buttons": button_list}})
+      print(f"choice={choice}, buttons={button_list}, radio_opts={beep_radio_options}")
+
+   # app.logger.info(f"beep_radio_options: {beep_radio_options}")
+
+   # beep_radio_options = { \
+   #    "stroke_choices":{"legend":"Stroke", "buttons":[\
+   #       {"label":"Ground", "value":"Ground", "checked":1}, \
+   #       {"label":"Volley","value":"Volley"}, \
+   #       {"label":"Mini-Tennis","value":"Mini"} ]}, \
+   #    "groundstroke_choices":{"legend":"Ground Stroke Type", "buttons":[\
+   #       {"label":"Flat", "value":"FLAT"}, \
+   #       {"label":"Chip","value":"CHIP"}, \
+   #       {"label":"Topspin","value":"TOPSPIN", "checked":1}, \
+   #       {"label":"Heavy Topspin","value":"HEAVY"}, \
+   #       {"label":"Random","value":"RANDOM"} ]}, \
+   #    "difficulty_choices":{"legend":"Difficulty", "buttons":[\
+   #       {"label":"Very Easy", "value":"VeryEasy"}, \
+   #       {"label":"Easy","value":"Easy"}, \
+   #       {"label":"Medium","value":"Medium", "checked":1}, \
+   #       {"label":"Hard","value":"Hard"}, \
+   #       {"label":"Very Hard","value":"VeryHard"} ]} \
+   # }
+
+   # page_js = []
+   # page_js.append(Markup('<script src="/static/js/radio-button-emit.js"></script>'))
+
+   return render_template(GAME_OPTIONS_TEMPLATE, \
+      home_button = my_home_button, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
+      radio_options = beep_radio_options, \
+      url_for_post = DRILL_URL, \
+      footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
 
 @app.route(FAULTS_URL, methods=DEFAULT_METHODS)
