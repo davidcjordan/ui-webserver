@@ -29,6 +29,23 @@ import sys # for sys.path to search
 
 user_dir = '/home/pi'
 boomer_dir = 'boomer'
+@app.before_first_request
+def before_first_request():
+    log_level = logging.DEBUG
+
+    for handler in app.logger.handlers:
+        app.logger.removeHandler(handler)
+   # https://betterstack.com/community/guides/logging/how-to-start-logging-with-flask/
+   #  root = os.path.dirname(os.path.abspath(__file__))
+   #  logdir = os.path.join(root, 'logs')
+   #  if not os.path.exists(logdir):
+   #      os.mkdir(logdir)
+   #  log_file = os.path.join(logdir, 'app.log')
+    handler = logging.FileHandler('/run/shm/ui.log')
+    handler.setLevel(log_level)
+    app.logger.addHandler(handler)
+    app.logger.setLevel(log_level)
+
 site_data_dir = 'this_boomers_data'
 settings_dir = f'{user_dir}/{boomer_dir}/{site_data_dir}'
 settings_filename = "drill_game_settings.json"
@@ -265,8 +282,10 @@ def cam_calib():
       # example: 
       # POST to CALIB (location) request.form: ImmutableMultiDict([('x_feet', '6'), ('x_inch', '6'), ('x_quar', '2'), ('y_feet', '54'), ('y_inch', '6'), ('y_quar', '3'), ('z_feet', '13'), ('z_inch', '8'), ('z_quar', '3')])
       for i in Measurement:
+         new_cam_measurement_mm[Measurement(i).value] = 0
          for j in Units:
             key = f"{Measurement(i).name}_{Units(j).name}"
+            # app.logger.info(f"key={key} in_post={key in request.form}")
             if key in request.form:
                if j == Units['feet']:
                   new_cam_measurement_mm[Measurement(i).value] += int(request.form[key]) * 12 * INCHES_TO_MM
@@ -275,7 +294,7 @@ def cam_calib():
                if j == Units['quar']:
                   new_cam_measurement_mm[Measurement(i).value] += int(request.form[key]) * (INCHES_TO_MM/4)
             else:
-               app.logger.error("Missing key '{key}' in POST of camera location measurement")
+               app.logger.error("Unknown key '{key}' in POST of camera location measurement")
       # if ('cam_x_ft' in request.form) and ('cam_x_in' in request.form):
       #    cam_location_mm[Measurement.a.value] = int(((int(request.form['cam_a_ft']) * 12) + int(request.form['cam_a_ft'])) * INCHES_TO_MM)
       # if ('cam_y_ft' in request.form) and ('cam_y_in' in request.form):
@@ -302,7 +321,7 @@ def cam_calib():
          A = new_cam_measurement_mm[Measurement.a.value]
          B = new_cam_measurement_mm[Measurement.b.value]
          # pow(number, 2) is the same as squaring;  pow(number, 0.5) is squareroot
-         new_cam_location_mm[Axis.x.value] = int((pow(court_width_mm, 2) + pow(A, 2) - pow(B, 2)) / (court_width_mm/2))
+         new_cam_location_mm[Axis.x.value] = int((pow(court_width_mm, 2) + pow(A, 2) - pow(B, 2)) / (court_width_mm*2))
          X = new_cam_location_mm[Axis.x.value]
          if X < 0:
             app.logger.error(f"X distance calculation error; x={X}")
@@ -312,9 +331,6 @@ def cam_calib():
             app.logger.error(f"Y distance calculation error; y={Y}")
             Y = 0
          new_cam_location_mm[Axis.y.value] = int(Y)
-         # adjust from doubles sideline to singles sideline ?
-         new_cam_location_mm[Axis.x.value] -= int(4.5 * 12 * INCHES_TO_MM)
-         new_cam_location_mm[Axis.y.value] += int(court_width_mm)
          new_cam_location_mm[Axis.z.value] = new_cam_measurement_mm[Measurement.z.value]
          with open(f"{settings_dir}/{cam_side.lower()}_cam_location.json", "w") as outfile:
             json.dump(new_cam_location_mm, outfile)
@@ -797,9 +813,9 @@ def handle_fault_request():
    # emit('faults_update', json.dumps(textified_faults_table))
    emit('faults_update', json.dumps(textify_faults_table()))
  
-@socketio.on('client_connected')
-def handle_client_connected(data):
-   app.logger.info(f"received client_connected: {data}")
+# @socketio.on('client_connected')
+# def handle_client_connected(data):
+   # app.logger.info(f"received client_connected: {data}")
 
 @socketio.on('change_params')     # Decorator to catch an event named change_params
 def handle_change_params(data):          # change_params() is the event callback function.
