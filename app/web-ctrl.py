@@ -222,7 +222,8 @@ def cam_position():
 
    unit_lengths = [[0 for i in range(len(Measurement))] for j in range(len(Units))]
    for measurement, value in enumerate(previous_cam_measurement_mm):
-      inches = 0.039370 * value
+      # need the following 8-digit precision in order to maintain the measurements
+      inches = 0.03937008 * value
       unit_lengths[measurement][0] = int(inches / 12)
       unit_lengths[measurement][1] = int(inches % 12)
       unit_lengths[measurement][2] = int((inches % 12 % 1)/.25)
@@ -304,13 +305,17 @@ def cam_calib():
       if len(new_cam_measurement_mm) == 3:
          # convert from floating point to integer:
          for i in Measurement:
-            new_cam_measurement_mm[Measurement(i).value] = int(new_cam_measurement_mm[Measurement(i).value])
+            new_cam_measurement_mm[Measurement(i).value] = new_cam_measurement_mm[Measurement(i).value]
          #persist values for next calibration, so they don't have to be re-entered
          with open(f"{settings_dir}/{cam_side.lower()}_cam_measurements.json", "w") as outfile:
             json.dump(new_cam_measurement_mm, outfile)
          # convert measurements (A & B) to camera_location X and Y and save in file
          new_cam_location_mm = [0]*3
-         court_width_mm = 39 * 12 * INCHES_TO_MM
+         court_width_mm = 36 * 12 * INCHES_TO_MM
+         doubles_width_mm = 4.5 * 12 * INCHES_TO_MM
+         court_depth_mm = 78/2 * 12 * INCHES_TO_MM
+         
+         # Dave's code: (in C)
          # 		x1 = (1296 + A*A - B*B)/72;
 			# 		y1 = sqrt(A*A - x1*x1);
 			# 		Xworld = x1 - 4.5;	// in feet
@@ -321,12 +326,12 @@ def cam_calib():
          A = new_cam_measurement_mm[Measurement.a.value]
          B = new_cam_measurement_mm[Measurement.b.value]
          # pow(number, 2) is the same as squaring;  pow(number, 0.5) is squareroot
-         new_cam_location_mm[Axis.x.value] = int((pow(court_width_mm, 2) + pow(A, 2) - pow(B, 2)) / (court_width_mm*2))
-         X = new_cam_location_mm[Axis.x.value]
-         if X < 0:
-            app.logger.error(f"X distance calculation error; x={X}")
-            X = 0
-         Y = pow((pow(A, 2) - pow(X, 2)), 0.5)
+         x1 = (pow(court_width_mm, 2) + pow(A, 2) - pow(B, 2)) / (court_width_mm*2)
+         new_cam_location_mm[Axis.x.value] = int(x1 - doubles_width_mm)
+         if new_cam_location_mm[Axis.x.value] < 0:
+            app.logger.error(f"x1 distance calculation error; x={X}")
+            x1 = 0
+         Y = pow((pow(A, 2) - pow(x1, 2)), 0.5) + court_depth_mm
          if not isinstance(Y,float):
             app.logger.error(f"Y distance calculation error; y={Y}")
             Y = 0
