@@ -212,6 +212,18 @@ body {
 }
 */
 
+.submit-button {
+  margin: 8px;
+  padding: 2px;
+  border: 4px solid #494949;
+  /* height: 48px; */
+  /* width: 192px; */
+  font-size: 48px;
+  background-color: #555555;
+  color: white;
+  border-radius: 8px;
+}
+
 @media screen and (max-width: 600px) {
     .block_b {
         width: 80vw;
