@@ -9,8 +9,8 @@ except:
    exit()
 
 import logging
-logging.basicConfig(level=logging.INFO)
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.DEBUG, format='%(levelname)s %(asctime)s %(message)s')
 
 app = Flask(__name__)
 from waitress import serve
@@ -34,17 +34,19 @@ def before_first_request():
     log_level = logging.DEBUG
 
     for handler in app.logger.handlers:
-        app.logger.removeHandler(handler)
-   # https://betterstack.com/community/guides/logging/how-to-start-logging-with-flask/
-   #  root = os.path.dirname(os.path.abspath(__file__))
-   #  logdir = os.path.join(root, 'logs')
-   #  if not os.path.exists(logdir):
-   #      os.mkdir(logdir)
-   #  log_file = os.path.join(logdir, 'app.log')
-    handler = logging.FileHandler('/run/shm/ui.log')
-    handler.setLevel(log_level)
-    app.logger.addHandler(handler)
-    app.logger.setLevel(log_level)
+      app.logger.removeHandler(handler)
+      # https://betterstack.com/community/guides/logging/how-to-start-logging-with-flask/
+      #  root = os.path.dirname(os.path.abspath(__file__))
+      #  logdir = os.path.join(root, 'logs')
+      #  if not os.path.exists(logdir):
+      #      os.mkdir(logdir)
+      #  log_file = os.path.join(logdir, 'app.log')
+      defaultFormatter = logging.Formatter('[%(asctime)s]%(levelname)s: %(message)s')
+      handler.setFormatter(defaultFormatter)
+      handler = logging.FileHandler('/run/shm/ui.log')
+      handler.setLevel(log_level)
+      app.logger.addHandler(handler)
+      app.logger.setLevel(log_level)
 
 site_data_dir = 'this_boomers_data'
 settings_dir = f'{user_dir}/{boomer_dir}/{site_data_dir}'
@@ -107,9 +109,11 @@ SELECT_URL = '/select'
 DRILL_URL = '/drill'
 CAM_CALIB_URL = '/cam_calib'
 CAM_POSITION_URL = '/cam_position'
+CAM_CALIB_DONE_URL = '/cam_calib_done'
 SETTINGS_URL = '/settings'
 FAULTS_URL = '/faults'
 THROWER_CALIB_SELECTION_URL = '/thrower_calibration'
+CREEP_CALIB_URL = '/creep_calib'
 BEEP_SELECTION_URL = '/beep_selection'
 
 # Flask looks for following in the 'templates' directory
@@ -139,6 +143,7 @@ DRILL_SELECT_TYPE_TEST ='Test'
 
 WORKOUT_ID = 'workout_id'
 DRILL_ID = 'drill_id'
+CREEP_ID = "creep_type"
 ONCLICK_MODE_KEY = 'mode'
 ONCLICK_MODE_WORKOUT_VALUE = 'workouts'
 
@@ -274,6 +279,7 @@ def cam_position():
       options = position_options, \
       footer_center = f"Mode: Get {cam_side} Cam Position")
 
+
 @app.route(CAM_CALIB_URL, methods=DEFAULT_METHODS)
 def cam_calib():
    global cam_side, Units, new_cam_measurement_mm
@@ -363,7 +369,7 @@ def cam_calib():
       footer_center = "Mode: " + mode_str)
 
 
-@app.route('/cam_calib_done', methods=DEFAULT_METHODS)
+@app.route(CAM_CALIB_DONE_URL, methods=DEFAULT_METHODS)
 def cam_calib_done():
    global cam_side, new_cam_measurement_mm
 
@@ -488,11 +494,14 @@ def settings():
       page_specific_js = page_js, \
       footer_center = "Mode: --")
 
+
 @app.route(THROWER_CALIB_SELECTION_URL, methods=DEFAULT_METHODS)
 def thrower_calib():
    # value is the label of the button
    onclick_choice_list = [\
-      {"value": "Calibrate All", "onclick_url": DRILL_URL, "param_name": WORKOUT_ID,"param_value": THROWER_CALIBRATION_WORKOUT_ID}
+      {"value": "Calibrate All", "onclick_url": DRILL_URL, "param_name": WORKOUT_ID,"param_value": THROWER_CALIBRATION_WORKOUT_ID},
+      {"value": "Rotary Creep", "onclick_url": CREEP_CALIB_URL, "param_name": CREEP_ID,"param_value": ROTARY_CALIB_NAME},
+      {"value": "Elevator Creep", "onclick_url": CREEP_CALIB_URL, "param_name": CREEP_ID,"param_value": ELEVATOR_CALIB_NAME}
    ]
    for parameter, drill_num in thrower_calib_drill_dict.items():
       button_label = f"Calibrate {parameter.title()}"
@@ -504,6 +513,31 @@ def thrower_calib():
       installation_icon = customization_dict['icon'], \
       onclick_choices = onclick_choice_list, \
       footer_center = "Mode: --")
+
+
+@app.route(CREEP_CALIB_URL, methods=DEFAULT_METHODS)
+def creep_calib():
+   # enter page from thrower calibration page
+   # extract which button was pushed (rotary or elevator and issue command)
+
+   # app.logger.debug(f"select request: {request}")
+   creep_type = request.args.get(CREEP_ID)
+   app.logger.debug(f"request for creep; type: {creep_type}")
+
+   if creep_type is None:
+      app.logger.error(f"request for creep; type is None")
+   else:
+      rc, code = send_msg(PUT_METHOD, FUNC_RSRC, {FUNC_CREEP: creep_type})
+      if not rc:
+         app.logger.error("PUT Function Creep failed, code: {}".format(code))
+
+   button_label = creep_type.title() + " Creep Calib Done"
+   return render_template(CHOICE_INPUTS_TEMPLATE, \
+      home_button = my_home_button, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
+      onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL}], \
+      footer_center = "Mode: " + button_label)
 
 
 @app.route(GAME_OPTIONS_URL, methods=DEFAULT_METHODS)
@@ -904,8 +938,11 @@ def check_base(process_name):
                   msg_ok, faults_table = send_msg(GET_METHOD, FLTS_RSRC)
                   if not msg_ok:
                      app.logger.info("Error getting fault table")
-
                # app.logger.info(f"faults: {faults_table[0]}")
+            else:
+               app.logger.error("received None as status message")
+               base_state = "Error"
+
       else:
          base_state = STATUS_NOT_RUNNING
 
