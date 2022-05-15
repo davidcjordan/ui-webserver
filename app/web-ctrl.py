@@ -41,9 +41,9 @@ def before_first_request():
       #  if not os.path.exists(logdir):
       #      os.mkdir(logdir)
       #  log_file = os.path.join(logdir, 'app.log')
+      handler = logging.FileHandler('/run/shm/ui.log')
       defaultFormatter = logging.Formatter('[%(asctime)s]%(levelname)s: %(message)s')
       handler.setFormatter(defaultFormatter)
-      handler = logging.FileHandler('/run/shm/ui.log')
       handler.setLevel(log_level)
       app.logger.addHandler(handler)
       app.logger.setLevel(log_level)
@@ -531,13 +531,15 @@ def creep_calib():
       if not rc:
          app.logger.error("PUT Function Creep failed, code: {}".format(code))
 
-   button_label = creep_type.title() + " Creep Calib Done"
+   button_label = "OK"
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
+      # example of setting button disabled and a button ID
+      # onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL, "disabled": 1, "id": "Done"}], \
       onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL}], \
-      footer_center = "Mode: " + button_label)
+      footer_center = "Mode: Creep Calibration")
 
 
 @app.route(GAME_OPTIONS_URL, methods=DEFAULT_METHODS)
@@ -996,5 +998,6 @@ if __name__ == '__main__':
    # app.run(host="0.0.0.0", port=IP_PORT, debug = True)
    socketio.run(app, host="0.0.0.0", port=IP_PORT, debug = True)
    serve(app, host="0.0.0.0", port=IP_PORT)
+   app.logger.info("started server")
 
    check_base_thread.join()

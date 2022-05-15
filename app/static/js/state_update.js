@@ -15,6 +15,9 @@ socket.on('state_update', function(data) {
         } else if ((data[key] !== 'Faulted') && window.location.href.includes("faults")) {
           console.log("NON-Faulted status detected; switching to /")
           location.href = '/';
+        } else if (window.location.href.includes("creep") && (data[key] !== 'Active')) {
+          console.log("creep calibration done; switching to /")
+          location.href = '/';
         } else {
           IdToUpdate.innerHTML = "Status: " + data[key];
           // set pause/resume icon on game/drill/workout active pages
