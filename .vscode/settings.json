@@ -1,6 +1,7 @@
 {
     "python.pythonPath": "/usr/bin/python3.7",
+    "python.analysis.extraPaths": ["app", "/home/pi/repos/control_ipc_utils", "app", "/home/pi/boomer/drills"],
     "terminal.integrated.env.osx": {
-        "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}:/Users/tom/Documents/Projects/Boomer/control_ipc_utils"
+        "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}:/home/pi/repos/control_ipc_utils"
     }
 }

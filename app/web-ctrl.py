@@ -76,7 +76,7 @@ previous_base_state = None
 client_state = False
 
 try:
-   with open(f'{settings_dir}/{ui_customization.json}') as f:
+   with open(f'{settings_dir}/ui_customization.json') as f:
       customization_dict = json.load(f)
 except:
    customization_dict = {"title": "Welcome to Boomer", "icon": "/static/favicon.ico"}
@@ -335,7 +335,7 @@ def cam_calib():
          x1 = (pow(court_width_mm, 2) + pow(A, 2) - pow(B, 2)) / (court_width_mm*2)
          new_cam_location_mm[Axis.x.value] = int(x1 - doubles_width_mm)
          if new_cam_location_mm[Axis.x.value] < 0:
-            app.logger.error(f"x1 distance calculation error; x={X}")
+            app.logger.error(f"x1 distance calculation error; x={x1}")
             x1 = 0
          Y = pow((pow(A, 2) - pow(x1, 2)), 0.5) + court_depth_mm
          if not isinstance(Y,float):
@@ -371,7 +371,7 @@ def cam_calib():
 
 @app.route(CAM_CALIB_DONE_URL, methods=DEFAULT_METHODS)
 def cam_calib_done():
-   global cam_side, new_cam_measurement_mm
+   global cam_side, new_cam_location_mm
 
    if request.method=='POST':
       if (request.content_type.startswith('application/json')):
