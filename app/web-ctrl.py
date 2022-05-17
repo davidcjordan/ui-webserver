@@ -178,6 +178,10 @@ COURT_POINT_KEYS = ['fblx','fbly','fbrx','fbry', \
 court_points_dict = {}
 new_cam_measurement_mm = [0]*3
 
+beep_mode_choices = {"Stroke":["Ground","Volley","Mini-Tennis"], \
+   "Ground Stroke Type": ["Flat","Chip","Topspin","Heavy Topspin","Random"], \
+   "Difficulty": ["Very Easy","Easy","Medium","Hard","Very Hard"]}
+
 faults_table = {}
 #TODO: generate the dict by parsing the name in the drill description in the file
 thrower_calib_drill_dict = {"ROTARY":(THROWER_CALIB_DRILL_NUMBER_START), "ELEVATOR": (THROWER_CALIB_DRILL_NUMBER_START+1)}
@@ -693,14 +697,19 @@ def select():
  
 @app.route(DRILL_URL, methods=DEFAULT_METHODS)
 def drill():
+   global beep_mode_choices
    global back_url, previous_url
    back_url = previous_url
 
-   #There are multiple ways of getting to this page
-   # select_url: the post contains the drill ID (choice) or there is a workout param with ID
-   # thrower_calib: the post contains a workout/drill param and an drill/workout ID
-   # beep_select: the post contains radio buttons selections (stroke, difficulty) which are mapped to a drillID
-
+   '''
+   There are multiple ways of getting to this page
+      - select_url: the post contains the drill ID (choice) or there is a workout param with ID
+      = thrower_calib: the post contains a workout/drill param and an drill/workout ID
+      - beep_select: the post contains radio buttons selections (stroke, difficulty) which are mapped to a drillID
+   example from beep test:
+      DRILL_URL request_form: ImmutableMultiDict([('Stroke', 'Mini-Tennis'), ('Ground Stroke Type', 'Topspin'), ('Difficulty', 'Medium')])
+      DRILL_URL request_args: ImmutableMultiDict([])
+   '''
    app.logger.info(f"DRILL_URL request_form: {request.form}")
    app.logger.info(f"DRILL_URL request_args: {request.args}")
    is_workout = request.args.get(ONCLICK_MODE_KEY)
@@ -708,17 +717,29 @@ def drill():
    id = request.args.get(WORKOUT_ID)
    app.logger.info(f"WORKOUT_ID in request_args: {id}")
    if id is not None:
+      # workout mode
       id = int(id)
       mode = {MODE_PARAM: base_mode_e.WORKOUT.value, ID_PARAM: id}
       mode_string = f"'{id}' Workout"
-   else:
-      if request.method=='POST' and 'choice_id' in request.form:
+   elif request.method=='POST':
+      # drill or beep mode
+      if 'choice_id' in request.form:
+         # drill mode
          id = int(request.form['choice_id'])
-         mode = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: id}
-         mode_string = f"'{id}' Drill"
-      # if request.method=='POST' and 'stroke_choices' in request.form:
-
-   # app.logger.info(f"workout_id: {id}")
+      elif 'Stroke' in request.form:
+         # beep drill mode
+         for key in beep_mode_choices:
+            if key in request.form:
+               print(f"Beep choice {key} is {request.form[key]}")
+         id = BEEP_DRILL_NUMBER_START
+         #BEEP_DRILL_NUMBER_END = 949
+      else:
+         app.logger.error("DRILL_URL - no drill ID or beep Stroke in POST form")
+         id = 1
+      mode = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: id}
+      mode_string = f"'{id}' Drill"
+   else:
+      app.logger.error("DRILL_URL - no form (didn't get POST) or args (workout ID")
 
    if id is None:
       app.logger.error("DRILL_URL - no drill or workout id!")
@@ -757,21 +778,18 @@ def drill():
 
 @app.route(BEEP_SELECTION_URL, methods=DEFAULT_METHODS)
 def beep_selection():
-
-   choices = {"Stroke":["Ground","Volley","Mini-Tennis"], \
-      "Ground Stroke Type": ["Flat","Chip","Topspin","Heavy Topspin","Random"], \
-      "Difficulty": ["Very Easy","Easy","Medium","Hard","Very Hard"]}
+   global beep_mode_choices
 
    beep_radio_options = {}
    # in the for loop - options is the list of radio buttons and choice is the legend
-   for choice, options in choices.items():
+   for choice, options in beep_mode_choices.items():
       button_list = []
       for i, option in enumerate(options):
          button_list.append({"label":option, "value":option})
          if i == 2:
             button_list[i].update({"checked":1})
       beep_radio_options.update({choice: {"legend":choice, "buttons": button_list}})
-      print(f"choice={choice}, buttons={button_list}, radio_opts={beep_radio_options}")
+      # print(f"choice={choice}, buttons={button_list}, radio_opts={beep_radio_options}")
 
    # app.logger.info(f"beep_radio_options: {beep_radio_options}")
 
