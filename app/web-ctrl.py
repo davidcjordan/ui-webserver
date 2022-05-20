@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 #from flask import ? session, abort
+from operator import contains
 from flask import Flask, render_template, Response, request, redirect, url_for, Markup, send_from_directory
 try:
    from flask_socketio import SocketIO, emit
@@ -178,9 +179,35 @@ COURT_POINT_KEYS = ['fblx','fbly','fbrx','fbry', \
 court_points_dict = {}
 new_cam_measurement_mm = [0]*3
 
-beep_mode_choices = {"Stroke":["Ground","Volley","Mini-Tennis"], \
-   "Ground Stroke Type": ["Flat","Chip","Topspin","Heavy Topspin","Random"], \
-   "Difficulty": ["Very Easy","Easy","Medium","Hard","Very Hard"]}
+class beep_options(enum.Enum):
+   Type = 0
+   Stroke = 1
+   Difficulty = 2
+class beep_type(enum.Enum):
+   Ground = 0
+   Volley = 1
+   Mini_Tennis = 2
+
+class beep_stroke(enum.Enum):
+   Topspin = 0
+   Flat = 1
+   Chip = 2
+   Loop = 3
+   Random = 4
+class beep_difficulty(enum.Enum):
+   Very_Easy = 0
+   Easy = 1
+   Medium = 2
+   Hard = 3
+   Very_Hard = 4
+
+beep_mode_choices = {\
+   beep_options.Type:[beep_type.Ground, beep_type.Volley, beep_type.Mini_Tennis,], \
+   beep_options.Stroke: [beep_stroke.Topspin, beep_stroke.Flat, beep_stroke.Chip, \
+      beep_stroke.Loop, beep_stroke.Random], \
+   beep_options.Difficulty: [beep_difficulty.Very_Easy, beep_difficulty.Easy, \
+      beep_difficulty.Medium, beep_difficulty.Hard, beep_difficulty.Very_Hard] \
+}
 
 faults_table = {}
 #TODO: generate the dict by parsing the name in the drill description in the file
@@ -723,16 +750,36 @@ def drill():
       mode_string = f"'{id}' Workout"
    elif request.method=='POST':
       # drill or beep mode
+      # app.logger.info(f"request.form is of type: {type(request.form)}")
+      # for key, value in request.form.items():
+      #    print(key, '->', value)
       if 'choice_id' in request.form:
          # drill mode
+         #INFO:flask.app:DRILL_URL request_form: ImmutableMultiDict([('choice_id', '100')])
          id = int(request.form['choice_id'])
-      elif 'Stroke' in request.form:
+         app.logger.info(f"Setting drill_id= {id}")
+      elif 'beep_options.Type' in request.form:
+         beep_type_value = int(request.form['beep_options.Type'])
          # beep drill mode
-         for key in beep_mode_choices:
-            if key in request.form:
-               print(f"Beep choice {key} is {request.form[key]}")
+         #request_form: ImmutableMultiDict([('beep_options.Type', '2'), ('beep_options.Stroke', '5'), ('beep_options.Difficulty', '2')])
+         # for key in request.form:
+         #    app.logger.info(f"Beep choice {key} = {request.form[key]}")
          id = BEEP_DRILL_NUMBER_START
          #BEEP_DRILL_NUMBER_END = 949
+         #mini-tennis: 900-904; volley: 905-909; 910-914 flat, 915-919 loop, 920-924 chip, 925-929 topspin, 930-934 random
+         if 'beep_options.Difficulty' in request.form:
+            difficulty_offset = int(request.form['beep_options.Difficulty'])
+            app.logger.info(f"beep_type={beep_options(beep_type_value).name}; Increasing id by {difficulty_offset}, e.g. {beep_difficulty(difficulty_offset).name}")
+            id += difficulty_offset
+         else:
+            app.logger.warning(f"beep_options.Difficulty not in request.form")
+         if beep_type_value is beep_type.Volley.value:
+            app.logger.info(f"Increasing id by 5, since Volley beep_type")
+            id += 5
+         if beep_type_value is beep_type.Ground.value:
+            stroke_type_offset = int(request.form['beep_options.Stroke'])
+            id = BEEP_DRILL_NUMBER_START + 10 + (stroke_type_offset * 5)
+            app.logger.info(f"drill_id={id} using stroke_type={beep_stroke(stroke_type_offset).name}, offset=({stroke_type_offset} * 5) + 10")
       else:
          app.logger.error("DRILL_URL - no drill ID or beep Stroke in POST form")
          id = 1
@@ -752,7 +799,7 @@ def drill():
          if not rc:
             app.logger.error("PUT START failed, code: {}".format(code))
 
-   thrower_calib_drill_number_end = THROWER_CALIB_DRILL_NUMBER_START + thrower_calib_drill_dict.len() + 1
+   thrower_calib_drill_number_end = THROWER_CALIB_DRILL_NUMBER_START + len(thrower_calib_drill_dict) + 1
    if id not in range(THROWER_CALIB_DRILL_NUMBER_START, thrower_calib_drill_number_end):
       # the defaults are set from what was last saved in the settings file
       drill_stepper_options = { \
@@ -785,32 +832,12 @@ def beep_selection():
    for choice, options in beep_mode_choices.items():
       button_list = []
       for i, option in enumerate(options):
-         button_list.append({"label":option, "value":option})
+         button_list.append({"label":option.name.replace("_","-"), "value":option.value})
          if i == 2:
             button_list[i].update({"checked":1})
-      beep_radio_options.update({choice: {"legend":choice, "buttons": button_list}})
-      # print(f"choice={choice}, buttons={button_list}, radio_opts={beep_radio_options}")
+      beep_radio_options.update({choice: {"legend":choice.name, "buttons": button_list}})
 
    # app.logger.info(f"beep_radio_options: {beep_radio_options}")
-
-   # beep_radio_options = { \
-   #    "stroke_choices":{"legend":"Stroke", "buttons":[\
-   #       {"label":"Ground", "value":"Ground", "checked":1}, \
-   #       {"label":"Volley","value":"Volley"}, \
-   #       {"label":"Mini-Tennis","value":"Mini"} ]}, \
-   #    "groundstroke_choices":{"legend":"Ground Stroke Type", "buttons":[\
-   #       {"label":"Flat", "value":"FLAT"}, \
-   #       {"label":"Chip","value":"CHIP"}, \
-   #       {"label":"Topspin","value":"TOPSPIN", "checked":1}, \
-   #       {"label":"Heavy Topspin","value":"HEAVY"}, \
-   #       {"label":"Random","value":"RANDOM"} ]}, \
-   #    "difficulty_choices":{"legend":"Difficulty", "buttons":[\
-   #       {"label":"Very Easy", "value":"VeryEasy"}, \
-   #       {"label":"Easy","value":"Easy"}, \
-   #       {"label":"Medium","value":"Medium", "checked":1}, \
-   #       {"label":"Hard","value":"Hard"}, \
-   #       {"label":"Very Hard","value":"VeryHard"} ]} \
-   # }
 
    # page_js = []
    # page_js.append(Markup('<script src="/static/js/radio-button-emit.js"></script>'))
