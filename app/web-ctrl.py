@@ -75,6 +75,7 @@ except:
 base_state = None
 previous_base_state = None
 client_state = False
+printout_counter = 0
 
 try:
    with open(f'{settings_dir}/ui_customization.json') as f:
@@ -132,10 +133,11 @@ FAULTS_TEMPLATE = '/layouts' + FAULTS_URL + '.html'
 STATUS_NOT_RUNNING = "Down"
 STATUS_NOT_RESPONDING = "Error"
 MODE_NONE = " --"
-MODE_GAME = "Game --"
-MODE_DRILL_NOT_SELECTED = "Drills --"
-MODE_WORKOUT_NOT_SELECTED = "Workout --"
-MODE_WORKOUT_SELECTED = "Workout: "
+MODE_GAME = "Game"
+MODE_DRILL_NOT_SELECTED = "Drill Selection"
+MODE_DRILL_SELECTED = "Drill #"
+MODE_WORKOUT_NOT_SELECTED = "Workout Selection"
+MODE_WORKOUT_SELECTED = "Workout #"
 MODE_SETTINGS = "Boomer Options"
 
 DRILL_SELECT_TYPE_PLAYER = 'Player(s)'
@@ -461,6 +463,11 @@ def index():
    global back_url, previous_url
    back_url = previous_url = "/"
 
+   # clicking stop on the drill_url goes to main/home/index, so issue stop.
+   rc, code = send_msg(PUT_METHOD, STOP_RSRC)
+   if not rc:
+      app.logger.error("PUT STOP failed, code: {}".format(code))
+
    onclick_choice_list = [\
       {"value": "Game Mode", "onclick_url": GAME_OPTIONS_URL},\
       {"value": "Drills", "onclick_url": DRILL_SELECT_TYPE_URL},\
@@ -747,7 +754,7 @@ def drill():
       # workout mode
       id = int(id)
       mode = {MODE_PARAM: base_mode_e.WORKOUT.value, ID_PARAM: id}
-      mode_string = f"'{id}' Workout"
+      mode_string = f"{MODE_WORKOUT_SELECTED}{id}"
    elif request.method=='POST':
       # drill or beep mode
       # app.logger.info(f"request.form is of type: {type(request.form)}")
@@ -769,7 +776,7 @@ def drill():
          #mini-tennis: 900-904; volley: 905-909; 910-914 flat, 915-919 loop, 920-924 chip, 925-929 topspin, 930-934 random
          if 'beep_options.Difficulty' in request.form:
             difficulty_offset = int(request.form['beep_options.Difficulty'])
-            app.logger.info(f"beep_type={beep_options(beep_type_value).name}; Increasing id by {difficulty_offset}, e.g. {beep_difficulty(difficulty_offset).name}")
+            app.logger.info(f"beep_type={beep_type(beep_type_value).name}; Increasing id by {difficulty_offset}, e.g. {beep_difficulty(difficulty_offset).name}")
             id += difficulty_offset
          else:
             app.logger.warning(f"beep_options.Difficulty not in request.form")
@@ -784,7 +791,7 @@ def drill():
          app.logger.error("DRILL_URL - no drill ID or beep Stroke in POST form")
          id = 1
       mode = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: id}
-      mode_string = f"'{id}' Drill"
+      mode_string = f"{MODE_DRILL_SELECTED}{id}"
    else:
       app.logger.error("DRILL_URL - no form (didn't get POST) or args (workout ID")
 
@@ -899,9 +906,11 @@ def handle_fault_request():
    # emit('faults_update', json.dumps(textified_faults_table))
    emit('faults_update', json.dumps(textify_faults_table()))
  
-# @socketio.on('client_connected')
-# def handle_client_connected(data):
-   # app.logger.info(f"received client_connected: {data}")
+@socketio.on('client_connected')
+def handle_client_connected(data):
+   app.logger.info(f"received client_connected: {data}")
+   global client_state
+   client_state = True
 
 @socketio.on('change_params')     # Decorator to catch an event named change_params
 def handle_change_params(data):          # change_params() is the event callback function.
@@ -960,13 +969,19 @@ def handle_get_updates(data):
       #    #TODO: if (len(faults_table) != len(previous_faults_table)):
       #    emit('faults_update', json.dumps(textified_faults_table()))
 
+   check_base()
    emit('state_update', {"base_state": base_state})
 
 
-def check_base(process_name):
-   global base_state, previous_base_state, client_state, socketio
+def check_base():
+   threaded = False
+   process_name = 'bbase'
+   global base_state, previous_base_state
+   global client_state, socketio
+   global printout_counter
    global faults_table, previous_fault_table
-   while True:
+   done = False
+   while not done:
       base_pid = os.popen(f"pgrep {process_name}").read()
       #base_pid is empty if base is not running
       if base_pid:
@@ -1013,13 +1028,24 @@ def check_base(process_name):
             {SERVE_MODE_PARAM: settings_dict[SERVE_MODE_PARAM], \
                TIEBREAKER_PARAM: settings_dict[TIEBREAKER_PARAM]})
                # POINTS_DELAY_PARAM: settings_dict[POINTS_DELAY_PARAM]})
- 
-      # the following didn't work: the emit didn't get to the client
-      # if client_state:
-      #    print(f"emitting: {{'base_state_update', {{\"base_state\": \"{base_state}\"}}}}")
-      #    socketio.emit('base_state_update', {"base_state": base_state})
+             
+      if threaded:
+         # the following didn't work when in a seperate thread: the emit didn't get to the client
+         printout_counter += 1
+         if printout_counter > 35:
+            printout_counter = 0
+            if client_state:
+               socketio.emit('base_state_update', {"base_state": base_state})
+               app.logger.debug(f"emitting: {{'base_state_update', {{\"base_state\": \"{base_state}\"}}}}")
+               # print(f"emitting: {{'base_state_update', {{\"base_state\": \"{base_state}\"}}}}")
+            else:
+               app.logger.debug(f"client_state is false")
+               # print(f"client_state is false")
+         time.sleep(0.3)
+      else:
+         done = True
       previous_base_state = base_state
-      time.sleep(2.0)
+   # end while loop
 
 def print_base_status(iterations = 20):
    global base_state
@@ -1031,9 +1057,14 @@ def print_base_status(iterations = 20):
 if __name__ == '__main__':
    global customized_header, original_footer
 
-   check_base_thread = Thread(target = check_base, args =("bbase", ))
-   check_base_thread.daemon = True
-   check_base_thread.start()
+   do_threaded_base_checks = False
+   if do_threaded_base_checks:
+      check_base_thread = Thread(target = check_base, args =("bbase", ))
+      check_base_thread.daemon = True
+      check_base_thread.start()
+      # refer to: https://newbedev.com/python-flask-socketio-send-message-from-thread-not-always-working
+      socketio.start_background_task(target = check_base)
+   
    do_status_printout = False
    if do_status_printout:
       print_base_thread = Thread(target = print_base_status, args =(20, ))
@@ -1045,4 +1076,4 @@ if __name__ == '__main__':
    serve(app, host="0.0.0.0", port=IP_PORT)
    app.logger.info("started server")
 
-   check_base_thread.join()
+   # check_base_thread.join()
