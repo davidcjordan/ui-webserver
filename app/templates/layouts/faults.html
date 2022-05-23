@@ -1,12 +1,13 @@
 {% extends "layouts/base.html" %}
 
 {% block selections %} 
+<!-- The following is not necessary: state_updates send fault table
 <script type="text/javascript" charset="utf-8">
    document.addEventListener('DOMContentLoaded',() => {
       // console.log("faults onload")
       socket.emit("fault_request");
 });
-</script>
+</script> -->
 
 <table style="font-size:0.8em" id="fault_table" class="Table">
    <caption class="Title">Boomer Problems</caption>

@@ -582,14 +582,16 @@ def creep_calib():
 
 @app.route(GAME_OPTIONS_URL, methods=DEFAULT_METHODS)
 def game_options():
+   global back_url, previous_url
+   back_url = '/'
+   previous_url = "/" + inspect.currentframe().f_code.co_name
+
    # clicking stop when the game is active goes to this page, so stop the game
    rc, code = send_msg(PUT_METHOD, STOP_RSRC)
    if not rc:
       app.logger.error("PUT STOP failed, code: {}".format(code))
 
-   global back_url, previous_url
-   back_url = '/'
-   previous_url = "/" + inspect.currentframe().f_code.co_name
+   restore_settings() #restore level, delay, speed, etc
 
    game_radio_options = { \
       SERVE_MODE_PARAM:{"legend":"Serves", "buttons":[{"label":"Alternate", "value":0},\
@@ -630,7 +632,6 @@ def game():
       rc, code = send_msg(PUT_METHOD, STRT_RSRC)
       if not rc:
          app.logger.error("PUT START failed, code: {}".format(code))
-
 
    # print("{} on {}, data: {}".format(request.method, inspect.currentframe().f_code.co_name, request.data))
    # Using emit on radio buttons instead of taking the post data
@@ -687,6 +688,8 @@ def select():
    previous_url = "/" + inspect.currentframe().f_code.co_name
 
    app.logger.debug(f"select request: {request}")
+
+   restore_settings() #restore level, delay, speed, etc
 
    #enter this page from drill categories (player, instructor), or from Main (workflows)
    # a parameter (mode) indicates the if workflow or drills should be selected
@@ -834,6 +837,8 @@ def drill():
 def beep_selection():
    global beep_mode_choices
 
+   restore_settings() #restore level, delay, speed, etc
+
    beep_radio_options = {}
    # in the for loop - options is the list of radio buttons and choice is the legend
    for choice, options in beep_mode_choices.items():
@@ -899,12 +904,12 @@ def textify_faults_table():
       app.logger.error(f"bogus fault table in fault_request: {faults_table}")
    return textified_faults_table
 
-@socketio.on('fault_request')
-def handle_fault_request():
-   global faults_table
-   app.logger.info('received fault_request')
-   # emit('faults_update', json.dumps(textified_faults_table))
-   emit('faults_update', json.dumps(textify_faults_table()))
+# the following is not necessary: state_update sends fault info.
+# @socketio.on('fault_request')
+# def handle_fault_request():
+#    global faults_table
+#    app.logger.info('received fault_request')
+#    emit('faults_update', json.dumps(textify_faults_table()))
  
 @socketio.on('client_connected')
 def handle_client_connected(data):
@@ -965,9 +970,10 @@ def handle_get_updates(data):
       if (json_data["page"] == "game"):
          emit('state_update', {"base_state": base_state, "pp": randint(0,3), \
             "bp": 1, "pg": 3, "bg": 2, "ps": 5, "bs": 4, "pt": 6, "bt": 7, "server": "b"})
-      # if (json_data["page"] == "faults"):
-      #    #TODO: if (len(faults_table) != len(previous_faults_table)):
-      #    emit('faults_update', json.dumps(textified_faults_table()))
+
+      if (json_data["page"] == "faults"):
+         #TODO: if (len(faults_table) != len(previous_faults_table)):
+         emit('faults_update', json.dumps(textify_faults_table()))
 
    check_base()
    emit('state_update', {"base_state": base_state})
@@ -1010,24 +1016,6 @@ def check_base():
 
       if base_state != previous_base_state:
          app.logger.info(f"Base state change: {previous_base_state} -> {base_state}")
-
-      if (0 and base_state != previous_base_state and not \
-            (base_state == STATUS_NOT_RUNNING or base_state == STATUS_NOT_RESPONDING)):
-         app.logger.info("Base (or UI) started - configuring settings")
-         rc, code = send_msg(PUT_METHOD, BCFG_RSRC, \
-            {LEVEL_PARAM: settings_dict[LEVEL_PARAM], \
-               GRUNTS_PARAM: settings_dict[GRUNTS_PARAM], \
-               TRASHT_PARAM: settings_dict[TRASHT_PARAM]})
-
-         rc, code = send_msg(PUT_METHOD, DCFG_RSRC, \
-            {SPEED_MOD_PARAM: settings_dict[SPEED_MOD_PARAM], \
-               DELAY_MOD_PARAM: settings_dict[DELAY_MOD_PARAM], \
-               ELEVATION_MOD_PARAM: settings_dict[ELEVATION_MOD_PARAM]})
- 
-         rc, code = send_msg(PUT_METHOD, GCFG_RSRC, \
-            {SERVE_MODE_PARAM: settings_dict[SERVE_MODE_PARAM], \
-               TIEBREAKER_PARAM: settings_dict[TIEBREAKER_PARAM]})
-               # POINTS_DELAY_PARAM: settings_dict[POINTS_DELAY_PARAM]})
              
       if threaded:
          # the following didn't work when in a seperate thread: the emit didn't get to the client
@@ -1046,6 +1034,23 @@ def check_base():
          done = True
       previous_base_state = base_state
    # end while loop
+
+def restore_settings():
+   rc, code = send_msg(PUT_METHOD, BCFG_RSRC, \
+      {LEVEL_PARAM: settings_dict[LEVEL_PARAM], \
+         GRUNTS_PARAM: settings_dict[GRUNTS_PARAM], \
+         TRASHT_PARAM: settings_dict[TRASHT_PARAM]})
+
+   rc, code = send_msg(PUT_METHOD, DCFG_RSRC, \
+      {SPEED_MOD_PARAM: settings_dict[SPEED_MOD_PARAM], \
+         DELAY_MOD_PARAM: settings_dict[DELAY_MOD_PARAM], \
+         ELEVATION_MOD_PARAM: settings_dict[ELEVATION_MOD_PARAM]})
+
+   rc, code = send_msg(PUT_METHOD, GCFG_RSRC, \
+      {SERVE_MODE_PARAM: settings_dict[SERVE_MODE_PARAM], \
+         TIEBREAKER_PARAM: settings_dict[TIEBREAKER_PARAM]})
+         # POINTS_DELAY_PARAM: settings_dict[POINTS_DELAY_PARAM]})
+
 
 def print_base_status(iterations = 20):
    global base_state
