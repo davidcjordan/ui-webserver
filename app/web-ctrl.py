@@ -468,6 +468,10 @@ def index():
    if not rc:
       app.logger.error("PUT STOP failed, code: {}".format(code))
 
+   # example of setting button disabled and a button ID
+   # TODO: disable when bbase is down; fix disable CSS
+   # onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL, "disabled": 1, "id": "Done"}], \
+
    onclick_choice_list = [\
       {"value": "Game Mode", "onclick_url": GAME_OPTIONS_URL},\
       {"value": "Drills", "onclick_url": DRILL_SELECT_TYPE_URL},\
@@ -569,14 +573,11 @@ def creep_calib():
       if not rc:
          app.logger.error("PUT Function Creep failed, code: {}".format(code))
 
-   button_label = "OK"
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
-      # example of setting button disabled and a button ID
-      # onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL, "disabled": 1, "id": "Done"}], \
-      onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL}], \
+      message = f"{creep_type.title()} creep calibration in progress.", \
       footer_center = "Mode: Creep Calibration")
 
 
