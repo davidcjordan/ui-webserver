@@ -75,6 +75,7 @@ except:
 base_state = None
 previous_base_state = None
 client_state = False
+bbase_down_timestamp = None
 printout_counter = 0
 
 try:
@@ -130,8 +131,6 @@ CAM_POSITION_TEMPLATE = '/layouts' + CAM_POSITION_URL + '.html'
 FAULTS_TEMPLATE = '/layouts' + FAULTS_URL + '.html'
 
 # base process status strings:
-STATUS_NOT_RUNNING = "Down"
-STATUS_NOT_RESPONDING = "Error"
 MODE_NONE = " --"
 MODE_GAME = "Game"
 MODE_DRILL_NOT_SELECTED = "Drill Selection"
@@ -469,7 +468,7 @@ def index():
       app.logger.error("PUT STOP failed, code: {}".format(code))
 
    # example of setting button disabled and a button ID
-   # TODO: disable when bbase is down; fix disable CSS
+   # TODO: fix disable CSS
    # onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL, "disabled": 1, "id": "Done"}], \
 
    onclick_choice_list = [\
@@ -980,6 +979,17 @@ def handle_get_updates(data):
    emit('state_update', {"base_state": base_state})
 
 
+def set_base_state_on_failure(fault_code = fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED):
+   global base_state
+   global faults_table
+   global bbase_down_timestamp
+
+   base_state = base_state_e.FAULTED.name.title()
+   if bbase_down_timestamp is None:
+      bbase_down_timestamp = time.time()
+   faults_table = [{FLT_CODE_PARAM: fault_code, FLT_LOCATION_PARAM: net_device_e.BASE, FLT_TIMESTAMP_PARAM: bbase_down_timestamp}]
+
+
 def check_base():
    threaded = False
    process_name = 'bbase'
@@ -987,6 +997,7 @@ def check_base():
    global client_state, socketio
    global printout_counter
    global faults_table, previous_fault_table
+   global bbase_down_timestamp
    done = False
    while not done:
       base_pid = os.popen(f"pgrep {process_name}").read()
@@ -996,24 +1007,27 @@ def check_base():
          # app.logger.info("Getting status message")
          msg_ok, status_msg = send_msg()
          if not msg_ok:
-            base_state = STATUS_NOT_RESPONDING
+            set_base_state_on_failure(fault_e.CONTROL_PROGRAM_FAILED)
          else:
             if (status_msg is not None):
                if (STATUS_PARAM in status_msg):
+                  bbase_down_timestamp = None
                   base_state = base_state_e(status_msg[STATUS_PARAM]).name.title()
+               else:
+                  set_base_state_on_failure(fault_e.CONTROL_PROGRAM_FAILED)
                if (HARD_FAULT_PARAM in status_msg and status_msg[HARD_FAULT_PARAM] > 0):
                   previous_fault_table = copy.deepcopy(faults_table)
                   # app.logger.info("Getting fault table")
                   msg_ok, faults_table = send_msg(GET_METHOD, FLTS_RSRC)
                   if not msg_ok:
-                     app.logger.info("Error getting fault table")
+                     app.logger.error("msg status not OK when getting fault table")
+                     set_base_state_on_failure(fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED)
                # app.logger.info(f"faults: {faults_table[0]}")
             else:
                app.logger.error("received None as status message")
-               base_state = "Error"
-
+               set_base_state_on_failure(fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED)
       else:
-         base_state = STATUS_NOT_RUNNING
+         set_base_state_on_failure(fault_e.CONTROL_PROGRAM_NOT_RUNNING)
 
       if base_state != previous_base_state:
          app.logger.info(f"Base state change: {previous_base_state} -> {base_state}")
