@@ -179,6 +179,7 @@ COURT_POINT_KEYS = ['fblx','fbly','fbrx','fbry', \
    'nslx', 'nsly', 'nscx', 'nscy', 'nsrx', 'nsry', 'nblx', 'nbly', 'nbrx', 'nbry']
 court_points_dict = {}
 new_cam_measurement_mm = [0]*3
+new_cam_location_mm = [0]*3
 
 class beep_options(enum.Enum):
    Type = 0
@@ -315,6 +316,7 @@ def cam_position():
 @app.route(CAM_CALIB_URL, methods=DEFAULT_METHODS)
 def cam_calib():
    global cam_side, Units, new_cam_measurement_mm
+   global new_cam_location_mm
 
    if request.method=='POST':
       app.logger.info(f"POST to CALIB (location) request.form: {request.form}")
@@ -343,12 +345,11 @@ def cam_calib():
       if len(new_cam_measurement_mm) == 3:
          # convert from floating point to integer:
          for i in Measurement:
-            new_cam_measurement_mm[Measurement(i).value] = new_cam_measurement_mm[Measurement(i).value]
+            new_cam_measurement_mm[Measurement(i).value] = int(new_cam_measurement_mm[Measurement(i).value])
          #persist values for next calibration, so they don't have to be re-entered
          with open(f"{settings_dir}/{cam_side.lower()}_cam_measurements.json", "w") as outfile:
             json.dump(new_cam_measurement_mm, outfile)
          # convert measurements (A & B) to camera_location X and Y and save in file
-         new_cam_location_mm = [0]*3
          court_width_mm = 36 * 12 * INCHES_TO_MM
          doubles_width_mm = 4.5 * 12 * INCHES_TO_MM
          court_depth_mm = 78/2 * 12 * INCHES_TO_MM
@@ -361,15 +362,16 @@ def cam_calib():
          # A=20.00 B=20.00 x1=18.00 y1=8.72 Xworld=4114.8 Yworld=14544.4
          # A=25.45 B=25.45 x1=18.00 y1=17.99 Xworld=4114.8 Yworld=17371.1
 
-         A = new_cam_measurement_mm[Measurement.a.value]
-         B = new_cam_measurement_mm[Measurement.b.value]
+         cam_to_left_doubles = new_cam_measurement_mm[Measurement.a.value]
+         cam_to_right_doubles = new_cam_measurement_mm[Measurement.b.value]
+
          # pow(number, 2) is the same as squaring;  pow(number, 0.5) is squareroot
-         x1 = (pow(court_width_mm, 2) + pow(A, 2) - pow(B, 2)) / (court_width_mm*2)
+         x1 = (pow(court_width_mm, 2) + pow(cam_to_left_doubles, 2) - pow(cam_to_right_doubles, 2)) / (court_width_mm*2)
          new_cam_location_mm[Axis.x.value] = int(x1 - doubles_width_mm)
          if new_cam_location_mm[Axis.x.value] < 0:
             app.logger.error(f"x1 distance calculation error; x={x1}")
             x1 = 0
-         Y = pow((pow(A, 2) - pow(x1, 2)), 0.5) + court_depth_mm
+         Y = pow((pow(cam_to_left_doubles, 2) - pow(x1, 2)), 0.5) + court_depth_mm
          if not isinstance(Y,float):
             app.logger.error(f"Y distance calculation error; y={Y}")
             Y = 0
@@ -447,13 +449,18 @@ def cam_calib_done():
             if p.returncode != 0:
                app.logger.error(f"gen_cam_params failed: {p.returncode}")
             # NOTE:  process_staged_files.sh incron script copies cam_parameters.new files to the appropriate places
+
+   page_js = []
+   page_js.append(Markup('<script src="/static/js/timed-redirect.js"></script>'))
  
-   button_label = cam_side + " Cam Calib Done"
+   button_label = "Camera Calibration"
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
-      onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL}], \
+      message = f"{cam_side} camera calibration finished.", \
+      page_specific_js = page_js, \
+      # onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL}], \
       footer_center = "Mode: " + button_label)
 
  
