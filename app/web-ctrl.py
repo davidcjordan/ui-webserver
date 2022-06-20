@@ -175,9 +175,12 @@ class Metric_units(enum.Enum):
 Units = English_units
 INCHES_TO_MM = 25.4
 
-COURT_POINT_KEYS = ['fblx','fbly','fbrx','fbry', \
-   'nslx', 'nsly', 'nscx', 'nscy', 'nsrx', 'nsry', 'nblx', 'nbly', 'nbrx', 'nbry']
+# COURT_POINT_KEYS = ['fblx','fbly','fbrx','fbry', \
+#    'nslx', 'nsly', 'nscx', 'nscy', 'nsrx', 'nsry', 'nblx', 'nbly', 'nbrx', 'nbry']
+COURT_POINT_KEYS = ['FBL','FBR', 'NSL', 'NSC', 'NSR', 'NBL', 'NBR']
 court_points_dict = {}
+for key in COURT_POINT_KEYS:
+   court_points_dict[key] = [0,0]
 new_cam_measurement_mm = [0]*3
 new_cam_location_mm = [0]*3
 
@@ -278,24 +281,24 @@ def cam_position():
                # the fence should be 21 ft from the baseline, but allowing smaller
                if cam_side == cam_side_left_label:
                   # A should be short; B should be long for on LEFT side
-                  position_options[main_key]["min"] = 17
+                  position_options[main_key]["min"] = 10
                   position_options[main_key]["max"] = 30
                else:
-                  position_options[main_key]["min"] = 25
+                  position_options[main_key]["min"] = 20
                   position_options[main_key]["max"] = 70
             if i == Measurement(1):
                position_options[main_key]["start_div"] = "B"
                if cam_side == cam_side_right_label:
                   # A should be short; B should be long for on RIGHT side
-                  position_options[main_key]["min"] = 17
+                  position_options[main_key]["min"] = 10
                   position_options[main_key]["max"] = 30
                else:
-                  position_options[main_key]["min"] = 25
+                  position_options[main_key]["min"] = 20
                   position_options[main_key]["max"] = 70
             if i == Measurement(2):
                position_options[main_key]["start_div"] = "Height"
                position_options[main_key]["min"] = 7
-               position_options[main_key]["max"] = 16
+               position_options[main_key]["max"] = 20
          if j == Units(1):
                position_options[main_key]["min"] = 0
                position_options[main_key]["max"] = 11
@@ -424,13 +427,18 @@ def cam_calib_done():
          app.logger.info(f"POST to CALIB_DONE request.form: {request.form}")
          # example: ImmutableMultiDict
          coord_args = ""
-         for key in COURT_POINT_KEYS:
-            if key in request.form:
-               court_points_dict[key] = int(request.form[key])
-               coord_args = coord_args + f"--{key} {court_points_dict[key]} "
-            else:
-               app.logger.error(f"Missing key in cam_calib_done post: {key}")
-         coord_args = coord_args + \
+         for court_point_id in COURT_POINT_KEYS:
+            for axis in Axis:
+               if (axis.name == 'z'):
+                  continue
+               else:
+                  form_key = f"{court_point_id}{axis.name}".lower()
+                  if form_key in request.form:
+                     court_points_dict[court_point_id][axis.value] = int(request.form[form_key])
+                     coord_args = coord_args + f"--{form_key} {court_points_dict[court_point_id][axis.value]} "
+                  else:
+                     app.logger.error(f"Missing key in cam_calib_done post: {form_key}")
+            coord_args = coord_args + \
             f" --camx {new_cam_location_mm[Axis.x.value]} --camy {new_cam_location_mm[Axis.y.value]} --camz {new_cam_location_mm[Axis.z.value]}"
 
          if cam_side == None:
