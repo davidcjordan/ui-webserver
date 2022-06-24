@@ -4,11 +4,12 @@
 // var socket = io();
 socket.on('state_update', function(data) {
   // console.log("Data:" + JSON.stringify(data, null, 1))
+  var game_state = {};
   Object.keys(data).forEach(function(key) {
     // console.log('Key : ' + key + ', Value : ' + data[key])
-    var IdToUpdate = document.getElementById(key);
-    if (IdToUpdate) {
-      if (key === 'base_state') {
+    if (key === 'base_state') {
+      var IdToUpdate = document.getElementById(key);
+      if (IdToUpdate) {
         if ((data[key] === 'Faulted') && !window.location.href.includes("faults")) {
           console.log("Faulted status detected; switching to /faults")
           location.href = '/faults';
@@ -37,17 +38,30 @@ socket.on('state_update', function(data) {
                 IdPauseResume.classList.toggle("pause")
               }
             }
+          } //IdPauseResume not null
+        }
+      } //IdToUpdaet
+    } else if (key === 'game_state') {
+      game_state = data[key];
+      // console.log('game_state: ' + JSON.stringify(game_state))
+      Object.keys(game_state).forEach(function(game_key) {
+        var IdToUpdate = document.getElementById(game_key);
+        if (IdToUpdate) {
+          if (game_key === 'server') {
+            if (game_state[game_key] == 'b') {
+              IdToUpdate.innerHTML = "Boomer's serve"
+            } else {
+              IdToUpdate.innerHTML = "Player's serve"
+            }
+          } else {
+            IdToUpdate.innerHTML = game_state[game_key];
+          }
+        } else {
+          if (game_key !== 'time') {
+            console.log("No element with ID: " + game_key)
           }
         }
-      } else if (key === 'server') {
-        if (data[key] == 'b') {
-          IdToUpdate.innerHTML = "Boomer's serve"
-        } else {
-          IdToUpdate.innerHTML = "Player's serve"
-        }
-      } else {
-        IdToUpdate.innerHTML = data[key];
-      }
+      })
     } else {
       console.log("No element with ID: " + key)
     }

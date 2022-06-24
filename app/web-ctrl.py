@@ -449,14 +449,16 @@ def cam_calib_done():
          app.logger.info(f"gen_cam_cmd: {cmd}")
          process_data = True
          if (process_data):
-            #persist values for next calibration, so they don't necessarily have to be re-entered
+            #persist values for base to use to generate correction vectors
             with open(f"{settings_dir}/{cam_side.lower()}_court_points.json", "w") as outfile:
                json.dump(court_points_dict, outfile)
-            p = Popen(cmd, shell=True)
-            stdoutdata, stderrdata = p.communicate()
-            if p.returncode != 0:
-               app.logger.error(f"gen_cam_params failed: {p.returncode}")
-            # NOTE:  process_staged_files.sh incron script copies cam_parameters.new files to the appropriate places
+
+            # TODO: send a message to bbase to regenerate correction vectors
+            # the following was when gen_cam_parameters was used - can now be deleted...
+            # p = Popen(cmd, shell=True)
+            # stdoutdata, stderrdata = p.communicate()
+            # if p.returncode != 0:
+            #    app.logger.error(f"gen_cam_params failed: {p.returncode}")
 
    page_js = []
    page_js.append(Markup('<script src="/static/js/timed-redirect.js"></script>'))
@@ -980,11 +982,16 @@ def handle_pause_resume():
 def handle_get_updates(data):
    global base_state
    json_data = json.loads(data)
-   # print(f"json_data: {json_data}")
+   # app.logger.info(f"json_data: {json_data}")
    if ("page" in json_data):
       if (json_data["page"] == "game"):
-         emit('state_update', {"base_state": base_state, "pp": randint(0,3), \
-            "bp": 1, "pg": 3, "bg": 2, "ps": 5, "bs": 4, "pt": 6, "bt": 7, "server": "b"})
+         msg_ok, game_state = send_msg(GET_METHOD, SCOR_RSRC)
+         if not msg_ok:
+            app.logger.error("GET GAME SCORE failed, score= {}".format(game_state))
+         else:
+            app.logger.info(f"score= {game_state}")
+            # score= {'time': 36611, 'server': 'b', 'b_sets': 0, 'p_sets': 0, 'b_games': 0, 'p_games': 0, 'b_pts': 0, 'p_pts': 0, 'b_t_pts': 0, 'p_t_pts': 0}
+            emit('state_update', {"base_state": base_state, "game_state": game_state})
 
       if (json_data["page"] == "faults"):
          #TODO: if (len(faults_table) != len(previous_faults_table)):
