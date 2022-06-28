@@ -380,8 +380,18 @@ def cam_calib():
             Y = 0
          new_cam_location_mm[Axis.y.value] = int(Y)
          new_cam_location_mm[Axis.z.value] = new_cam_measurement_mm[Measurement.z.value]
-         with open(f"{settings_dir}/{cam_side.lower()}_cam_location.json", "w") as outfile:
-            json.dump(new_cam_location_mm, outfile)
+         #persist values for base to use to generate correction vectors
+         dt = datetime.datetime.now()
+         dt_str = dt.strftime("%Y-%m-%d_%H-%M")
+         output_line = json.dumps(new_cam_location_mm) + " " +  dt_str + "\n"
+         with open(f'{settings_dir}/{cam_side.lower()}_cam_location.json', 'r+') as outfile:
+            lines = outfile.readlines() # read old content
+            outfile.seek(0) # go back to the beginning of the file
+            outfile.write(output_line) # write new content at the beginning
+            for line in lines: # write old content after new
+               outfile.write(line)
+         # with open(f"{settings_dir}/{cam_side.lower()}_cam_location.json", "w") as outfile:
+         #    json.dump(new_cam_location_mm, outfile)
       else:
          app.logger.error("Missing or extra measurement in cam_measurements: {new_cam_measurement_mm}")
 
@@ -445,20 +455,21 @@ def cam_calib_done():
             # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
             cam_side == "Left"
             app.logger.warning("cam_side was None in cam_calib_done")
-         cmd = f"{execs_dir}/gen_cam_params.out --{cam_side.lower()} {coord_args}"
-         app.logger.info(f"gen_cam_cmd: {cmd}")
-         process_data = True
-         if (process_data):
-            #persist values for base to use to generate correction vectors
-            with open(f"{settings_dir}/{cam_side.lower()}_court_points.json", "w") as outfile:
-               json.dump(court_points_dict, outfile)
+         #persist values for base to use to generate correction vectors
+         dt = datetime.datetime.now()
+         dt_str = dt.strftime("%Y-%m-%d_%H-%M")
+         output_line = json.dumps(court_points_dict) + " " +  dt_str + "\n"
+         with open(f'{settings_dir}/{cam_side.lower()}_court_points.json', 'r+') as outfile:
+            lines = outfile.readlines() # read old content
+            outfile.seek(0) # go back to the beginning of the file
+            outfile.write(output_line) # write new content at the beginning
+            for line in lines: # write old content after new
+               outfile.write(line)
 
-            # TODO: send a message to bbase to regenerate correction vectors
-            # the following was when gen_cam_parameters was used - can now be deleted...
-            # p = Popen(cmd, shell=True)
-            # stdoutdata, stderrdata = p.communicate()
-            # if p.returncode != 0:
-            #    app.logger.error(f"gen_cam_params failed: {p.returncode}")
+         # with open(f"{settings_dir}/{cam_side.lower()}_court_points.json", "w") as outfile:
+         #    json.dump(court_points_dict, outfile)
+
+         # TODO: send a message to bbase to regenerate correction vectors
 
    page_js = []
    page_js.append(Markup('<script src="/static/js/timed-redirect.js"></script>'))
@@ -489,7 +500,7 @@ def index():
    # onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL, "disabled": 1, "id": "Done"}], \
 
    onclick_choice_list = [\
-      {"value": "Game Mode", "onclick_url": GAME_OPTIONS_URL},\
+      {"value": "Game Mode", "onclick_url": GAME_URL},\
       {"value": "Drills", "onclick_url": DRILL_SELECT_TYPE_URL},\
       {"value": "Beep Drills", "onclick_url": BEEP_SELECTION_URL },\
       {"value": "Workouts", "onclick_url": SELECT_URL, \
@@ -1115,7 +1126,11 @@ if __name__ == '__main__':
 
    # app.run(host="0.0.0.0", port=IP_PORT, debug = True)
    socketio.run(app, host="0.0.0.0", port=IP_PORT, debug = True)
-   serve(app, host="0.0.0.0", port=IP_PORT)
-   app.logger.info("started server")
-
+   try:
+      serve(app, host="0.0.0.0", port=IP_PORT)
+      app.logger.info("started server")
+   except Exception as e:
+      print(e)
+      sys.exit(1)
+   
    # check_base_thread.join()
