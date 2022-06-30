@@ -1000,7 +1000,7 @@ def handle_get_updates(data):
          if not msg_ok:
             app.logger.error("GET GAME SCORE failed, score= {}".format(game_state))
          else:
-            app.logger.info(f"score= {game_state}")
+            # app.logger.info(f"score= {game_state}")
             # score= {'time': 36611, 'server': 'b', 'b_sets': 0, 'p_sets': 0, 'b_games': 0, 'p_games': 0, 'b_pts': 0, 'p_pts': 0, 'b_t_pts': 0, 'p_t_pts': 0}
             emit('state_update', {"base_state": base_state, "game_state": game_state})
 
