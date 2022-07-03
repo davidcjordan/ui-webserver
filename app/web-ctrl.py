@@ -466,10 +466,10 @@ def cam_calib_done():
             for line in lines: # write old content after new
                outfile.write(line)
 
-         # with open(f"{settings_dir}/{cam_side.lower()}_court_points.json", "w") as outfile:
-         #    json.dump(court_points_dict, outfile)
-
-         # TODO: send a message to bbase to regenerate correction vectors
+         # tell the bbase to regenerate correction vectors; the '1' in the value is not used and is there for completeness
+         rc, code = send_msg(PUT_METHOD, FUNC_RSRC, {FUNC_GEN_CORRECTION_VECTORS: 1} )
+         if not rc:
+            app.logger.error("PUT FUNC_GEN_CORRECTION_VECTORS failed, code: {}".format(code))
 
    page_js = []
    page_js.append(Markup('<script src="/static/js/timed-redirect.js"></script>'))
