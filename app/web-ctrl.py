@@ -181,8 +181,8 @@ COURT_POINT_KEYS = ['FBL','FBR', 'NSL', 'NSC', 'NSR', 'NBL', 'NBR']
 court_points_dict = {}
 for key in COURT_POINT_KEYS:
    court_points_dict[key] = [0,0]
-new_cam_measurement_mm = [0]*3
-new_cam_location_mm = [0]*3
+# unit_lengths are the measurements (A,B,Z) converted to feet, inches and quarter inches
+unit_lengths = [[0 for _ in range(len(Measurement))] for _ in range(len(Units))]
 
 class beep_options(enum.Enum):
    Type = 0
@@ -240,7 +240,7 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 @app.route(CAM_POSITION_URL, methods=DEFAULT_METHODS)
 def cam_position():
-   global cam_side, Units
+   global cam_side, Units, unit_lengths
    if request.method=='POST':
       # print(f"POST to CAM_POSITION request.form: {request.form}")
       # POST to CAM_POSITION request.form: ImmutableMultiDict([('choice', 'Left Cam Calib')])
@@ -249,25 +249,43 @@ def cam_position():
       else:
          cam_side = cam_side_left_label
 
-   cam_loc_filepath = f'{settings_dir}/{cam_side.lower()}_cam_measurements.json'
+   # restore measurements, which are A (camera to left doubles), B (cam to right doubles), and Z (cam height)
+   cam_measurements_filepath = f'{settings_dir}/{cam_side.lower()}_cam_measurements.json'
    try:
-      with open(cam_loc_filepath) as infile:
-         previous_cam_measurement_mm = json.load(infile)
+      with open(cam_measurements_filepath) as infile:
+         full_line = infile.readline()
+         bracket_index = full_line.find(']')
+         previous_cam_measurement_mm = json.loads(full_line[0:bracket_index+1])
+         # previous_cam_measurement_mm = json.load(infile)
    except:
-      app.logger.info(f"using default values for cam_location; couldn't read {cam_loc_filepath}")
+      app.logger.info(f"using default values for cam_location; couldn't read {cam_measurements_filepath}")
       if cam_side == cam_side_left_label:
          previous_cam_measurement_mm = [6402, 12700, 2440]
       else:
          previous_cam_measurement_mm = [12700, 6402, 2440]
 
-
-   unit_lengths = [[0 for i in range(len(Measurement))] for j in range(len(Units))]
    for measurement, value in enumerate(previous_cam_measurement_mm):
       # need the following 8-digit precision in order to maintain the measurements
       inches = 0.03937008 * value
-      unit_lengths[measurement][0] = int(inches / 12)
-      unit_lengths[measurement][1] = int(inches % 12)
-      unit_lengths[measurement][2] = int((inches % 12 % 1)/.25)
+      unit_lengths[measurement][Units.quar.value] = 0
+      unit_lengths[measurement][Units.feet.value] = int(inches / 12)
+      unit_lengths[measurement][Units.inch.value] = int(inches % 12)
+      if ((inches % 12) > (11+ 7/8)):
+         unit_lengths[measurement][Units.inch.value] = 0
+         unit_lengths[measurement][Units.feet.value] += 1
+      else:
+         remaining_inches_remainder = inches % 12 % 1
+         unit_lengths[measurement][Units.quar.value] = 0
+         if (remaining_inches_remainder < 1/8):
+            continue
+         if (remaining_inches_remainder < 3/8):
+            unit_lengths[measurement][Units.quar.value] = 1
+         elif (remaining_inches_remainder < 5/8):
+            unit_lengths[measurement][Units.quar.value] = 2
+         elif (remaining_inches_remainder < 7/8):
+            unit_lengths[measurement][Units.quar.value] = 3
+         else:
+            unit_lengths[measurement][Units.inch.value] += 1
   
    position_options = {}
    for i in Measurement:
@@ -318,40 +336,55 @@ def cam_position():
 
 @app.route(CAM_CALIB_URL, methods=DEFAULT_METHODS)
 def cam_calib():
-   global cam_side, Units, new_cam_measurement_mm
-   global new_cam_location_mm
+   global cam_side, Units, unit_lengths
+
+   new_cam_measurement_mm = [0]*3
+   new_cam_location_mm = [0]*3
+
+   change_from_persisted_measurement = False
 
    if request.method=='POST':
       app.logger.info(f"POST to CALIB (location) request.form: {request.form}")
       # example: 
       # POST to CALIB (location) request.form: ImmutableMultiDict([('x_feet', '6'), ('x_inch', '6'), ('x_quar', '2'), ('y_feet', '54'), ('y_inch', '6'), ('y_quar', '3'), ('z_feet', '13'), ('z_inch', '8'), ('z_quar', '3')])
       for i in Measurement:
-         new_cam_measurement_mm[Measurement(i).value] = 0
          for j in Units:
             key = f"{Measurement(i).name}_{Units(j).name}"
-            # app.logger.info(f"key={key} in_post={key in request.form}")
             if key in request.form:
+               # if the measurement differs, set that there was a change
+               new_value = int(request.form[key])
+               if ((new_value != unit_lengths[Measurement(i).value][Units(j).value]) and not change_from_persisted_measurement):
+                  change_from_persisted_measurement = True
+               app.logger.info(f"key={key} prev={unit_lengths[Measurement(i).value][Units(j).value]} new={new_value} change={change_from_persisted_measurement}")
                if j == Units['feet']:
-                  new_cam_measurement_mm[Measurement(i).value] += int(request.form[key]) * 12 * INCHES_TO_MM
+                  new_cam_measurement_mm[Measurement(i).value] += new_value * 12 * INCHES_TO_MM
                if j == Units['inch']:
-                  new_cam_measurement_mm[Measurement(i).value] += int(request.form[key]) * INCHES_TO_MM
+                  new_cam_measurement_mm[Measurement(i).value] += new_value * INCHES_TO_MM
                if j == Units['quar']:
-                  new_cam_measurement_mm[Measurement(i).value] += int(request.form[key]) * (INCHES_TO_MM/4)
+                  new_cam_measurement_mm[Measurement(i).value] += new_value * (INCHES_TO_MM/4)
             else:
                app.logger.error("Unknown key '{key}' in POST of camera location measurement")
-      # if ('cam_x_ft' in request.form) and ('cam_x_in' in request.form):
-      #    cam_location_mm[Measurement.a.value] = int(((int(request.form['cam_a_ft']) * 12) + int(request.form['cam_a_ft'])) * INCHES_TO_MM)
-      # if ('cam_y_ft' in request.form) and ('cam_y_in' in request.form):
-      #    cam_location_mm[Measurement.b.value] = int(((int(request.form['cam_b_ft']) * 12) + int(request.form['cam_b_ft'])) * INCHES_TO_MM)
-      # if ('cam_z_ft' in request.form) and ('cam_z_in' in request.form):
-      #    cam_location_mm[Measurement.z.value] = int(((int(request.form['cam_z_ft']) * 12) + int(request.form['cam_z_ft'])) * INCHES_TO_MM)
-      if len(new_cam_measurement_mm) == 3:
+
+      if change_from_persisted_measurement:
+         app.logger.info(f"Updating {cam_side} cam_measurements and cam_location")
+         #persist new A,B, Z measurements and cam_location for base to use to generate correction vectors
+         dt = datetime.datetime.now()
+         dt_str = dt.strftime("%Y-%m-%d_%H-%M")
+
          # convert from floating point to integer:
          for i in Measurement:
             new_cam_measurement_mm[Measurement(i).value] = int(new_cam_measurement_mm[Measurement(i).value])
-         #persist values for next calibration, so they don't have to be re-entered
-         with open(f"{settings_dir}/{cam_side.lower()}_cam_measurements.json", "w") as outfile:
-            json.dump(new_cam_measurement_mm, outfile)
+
+         output_line = json.dumps(new_cam_measurement_mm) + " " +  dt_str + "\n"
+         with open(f'{settings_dir}/{cam_side.lower()}_cam_measurements.json', 'r+') as outfile:
+            lines = outfile.readlines() # read old content
+            outfile.seek(0) # go back to the beginning of the file
+            outfile.write(output_line) # write new content at the beginning
+            for line in lines: # write old content after new
+               outfile.write(line)
+         # with open(f"{settings_dir}/{cam_side.lower()}_cam_measurements.json", "w") as outfile:
+         #    json.dump(new_cam_measurement_mm, outfile)
+
          # convert measurements (A & B) to camera_location X and Y and save in file
          court_width_mm = 36 * 12 * INCHES_TO_MM
          doubles_width_mm = 4.5 * 12 * INCHES_TO_MM
@@ -380,9 +413,7 @@ def cam_calib():
             Y = 0
          new_cam_location_mm[Axis.y.value] = int(Y)
          new_cam_location_mm[Axis.z.value] = new_cam_measurement_mm[Measurement.z.value]
-         #persist values for base to use to generate correction vectors
-         dt = datetime.datetime.now()
-         dt_str = dt.strftime("%Y-%m-%d_%H-%M")
+
          output_line = json.dumps(new_cam_location_mm) + " " +  dt_str + "\n"
          with open(f'{settings_dir}/{cam_side.lower()}_cam_location.json', 'r+') as outfile:
             lines = outfile.readlines() # read old content
@@ -393,7 +424,7 @@ def cam_calib():
          # with open(f"{settings_dir}/{cam_side.lower()}_cam_location.json", "w") as outfile:
          #    json.dump(new_cam_location_mm, outfile)
       else:
-         app.logger.error("Missing or extra measurement in cam_measurements: {new_cam_measurement_mm}")
+         app.logger.info(f"No change in {cam_side} cam measurements, not updating cam_measurements or cam_location")
 
    mode_str = f"{cam_side} Court Coord"
    cam_lower = cam_side.lower()
@@ -436,7 +467,7 @@ def cam_calib_done():
       else:
          app.logger.info(f"POST to CALIB_DONE request.form: {request.form}")
          # example: ImmutableMultiDict
-         coord_args = ""
+         # coord_args = ""
          for court_point_id in COURT_POINT_KEYS:
             for axis in Axis:
                if (axis.name == 'z'):
@@ -445,11 +476,11 @@ def cam_calib_done():
                   form_key = f"{court_point_id}{axis.name}".lower()
                   if form_key in request.form:
                      court_points_dict[court_point_id][axis.value] = int(request.form[form_key])
-                     coord_args = coord_args + f"--{form_key} {court_points_dict[court_point_id][axis.value]} "
+                     # coord_args = coord_args + f"--{form_key} {court_points_dict[court_point_id][axis.value]} "
                   else:
                      app.logger.error(f"Missing key in cam_calib_done post: {form_key}")
-            coord_args = coord_args + \
-            f" --camx {new_cam_location_mm[Axis.x.value]} --camy {new_cam_location_mm[Axis.y.value]} --camz {new_cam_location_mm[Axis.z.value]}"
+            # coord_args = coord_args + \
+            # f" --camx {new_cam_location_mm[Axis.x.value]} --camy {new_cam_location_mm[Axis.y.value]} --camz {new_cam_location_mm[Axis.z.value]}"
 
          if cam_side == None:
             # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
