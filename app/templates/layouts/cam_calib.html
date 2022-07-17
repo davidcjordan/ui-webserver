@@ -16,8 +16,8 @@
         <br>
         <input type="button" value="&#x21A4" onclick="move_left()">
         <input type="button" value="&#x21A6" onclick="move_right()">
-        <br>
         <input type="button" value="Set Intersection" onclick="set_point()">
+        <br>
         <input type="submit" value="Fini" class="submit-button">
         <input type="hidden" id="fblx" name="fblx" value=0>
         <input type="hidden" id="fbly" name="fbly" value=0>
@@ -36,8 +36,22 @@
         <p id="current_x_y">Current X: ___ Y: ___</p>
       </div>
     </form>
-    <hr>
+    <hr style="height:2px;margin-top:2px;margin-bottom:2px">
     <div>
+      <p id="fbl_x_y">FBL X: ___ Y: ___</p>
+      <p id="fbr_x_y">FBR X: ___ Y: ___</p>
+      <p id="nsl_x_y">NSL X: ___ Y: ___</p>
+      <p id="nsc_x_y">NSC X: ___ Y: ___</p>
+      <p id="nsr_x_y">NSR X: ___ Y: ___</p>
+      <p id="nbl_x_y">NBL X: ___ Y: ___</p>
+      <p id="nbr_x_y">NBR X: ___ Y: ___</p>
+      <hr style="height:2px;margin-block-start:0.1em;margin-block-end:0.1em">
+      <p>Key: </p>
+      <p>F=Far; N=Near</p>
+      <p>B=Base Line; S=Service</p>
+      <p>L=Left;R=Right;C=Center</p>
+    </div>
+    <!-- <div>
       <p id="fbl_x_y">Far Baseline Left   X: ___ Y: ___</p>
       <p id="fbr_x_y">Far Baseline Right  X: ___ Y: ___</p>
       <p id="nsl_x_y">Near Service Left   X: ___ Y: ___</p>
@@ -45,7 +59,7 @@
       <p id="nsr_x_y">Near Service Right  X: ___ Y: ___</p>
       <p id="nbl_x_y">Near Baseline Left  X: ___ Y: ___</p>
       <p id="nbr_x_y">Near Baseline Right X: ___ Y: ___</p>
-    </div>
+    </div> -->
   </div>
 </div>
 

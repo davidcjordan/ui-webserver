@@ -3,7 +3,7 @@
 <!--  the minus sigh after the <% below keeps ninja2 from emitting a newline   -->
 {% block selections %}
 <form method="post" action="{{url_for_post}}"{%- if post_param|length > 0 %}?{{post_param['name']}}={{post_param['value']}}{%- endif %}>
-  <div class="selections-class">
+  <div class="selections_90percent">
     <div id="placeHolder"> </div>
     <fieldset id="container" class="radio-text-buttons">
       {%- for choice in choices %}

@@ -1,10 +1,9 @@
 {% extends "layouts/base.html" %}
 
 {%- block selections %}
-<p> Camera position: Measure 'A' from camera plumb bob mark to the left doubles corner; 
-  'B' is from camera plumb bob mark to the right doubles corner.</p>
+<p class="para-nomargin">Measure 'A' from camera plumb bob to the left doubles corner.<br>'B' is from camera plumb bob to the right doubles corner.</p>
 <form method="post" action="{{ url_for('cam_calib') }}">
-  <div class="selections-class"> 
+  <div class="selections_100percent"> 
 <!-- 
     <fieldset  class="radio-slider-buttons">
       <label>Camera: </label>
@@ -15,6 +14,12 @@
     </fieldset>
      -->
     <table>
+      <colgroup>
+        <col span="1" style="width: 10%;">
+        <col span="1" style="width: 30%;">
+        <col span="1" style="width: 30%;">
+        <col span="1" style="width: 30%;">
+      </colgroup>
       <tr><td></td><td>Feet</td><td>Inches</td><td>Quarters</td></tr>
       {% for key,item in options.items() %}
         {%- if (item['start_div'] != null) %}<tr><td>{{item['start_div']}}</td>{% endif %}

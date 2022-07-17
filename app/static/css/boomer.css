@@ -74,11 +74,14 @@ body {
 .statistics-display {
   width: 44%;            
 }
-.selections {
+.selections_45percent {
   width: 45%;            
 }
-.selections-class {
+.selections_90percent {
   width: 90%;
+}
+.selections_100percent {
+  width: 100%;
 }
 .start-stop {
   width: 9%;  
@@ -230,14 +233,3 @@ body {
         font-size: 8vw;
     }
 }
-
-/*
-.nav ul {
-  list-style: none; 
-  line-height: 24px;
-  padding: 0px; 
-}
-.nav ul li a {
-  color: #333;
-}    
-*/

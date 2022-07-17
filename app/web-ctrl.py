@@ -2,6 +2,7 @@
 
 #from flask import ? session, abort
 from operator import contains
+from tkinter import FALSE
 from flask import Flask, render_template, Response, request, redirect, url_for, Markup, send_from_directory
 try:
    from flask_socketio import SocketIO, emit
@@ -78,6 +79,8 @@ client_state = False
 bbase_down_timestamp = None
 printout_counter = 0
 
+workout_select = False
+
 try:
    with open(f'{settings_dir}/ui_customization.json') as f:
       customization_dict = json.load(f)
@@ -111,7 +114,7 @@ DRILL_SELECT_TYPE_URL = '/drill_select_type'
 SELECT_URL = '/select'
 DRILL_URL = '/drill'
 CAM_CALIB_URL = '/cam_calib'
-CAM_POSITION_URL = '/cam_position'
+CAM_LOCATION_URL = '/cam_location'
 CAM_CALIB_DONE_URL = '/cam_calib_done'
 SETTINGS_URL = '/settings'
 FAULTS_URL = '/faults'
@@ -127,7 +130,7 @@ CHOICE_INPUTS_TEMPLATE = '/layouts' + '/choice_inputs' + '.html'
 SELECT_TEMPLATE = '/layouts' + SELECT_URL + '.html'
 DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
 CAM_CALIBRATION_TEMPLATE = '/layouts' + CAM_CALIB_URL + '.html'
-CAM_POSITION_TEMPLATE = '/layouts' + CAM_POSITION_URL + '.html'
+CAM_LOCATION_TEMPLATE = '/layouts' + CAM_LOCATION_URL + '.html'
 FAULTS_TEMPLATE = '/layouts' + FAULTS_URL + '.html'
 
 # base process status strings:
@@ -144,10 +147,12 @@ DRILL_SELECT_TYPE_INSTRUCTORS = 'Instructors'
 DRILL_SELECT_TYPE_TEST ='Test'
 
 WORKOUT_ID = 'workout_id'
-DRILL_ID = 'drill_id'
+DRILL_ID = 'drill_id' # indicates drill_id for thrower calibration, which doesn't use a POST
 CREEP_ID = "creep_type"
 ONCLICK_MODE_KEY = 'mode'
 ONCLICK_MODE_WORKOUT_VALUE = 'workouts'
+
+THROWER_CALIB_WORKOUT_NUMBER = 2
 
 previous_url = None
 back_url = None
@@ -238,12 +243,12 @@ app.config['SECRET_KEY'] = 'secret!'
 # socketio = SocketIO(app, cors_allowed_origins="http://127.0.0.1")
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-@app.route(CAM_POSITION_URL, methods=DEFAULT_METHODS)
-def cam_position():
+@app.route(CAM_LOCATION_URL, methods=DEFAULT_METHODS)
+def cam_location():
    global cam_side, Units, unit_lengths
    if request.method=='POST':
-      # print(f"POST to CAM_POSITION request.form: {request.form}")
-      # POST to CAM_POSITION request.form: ImmutableMultiDict([('choice', 'Left Cam Calib')])
+      # print(f"POST to CAM_LOCATION request.form: {request.form}")
+      # POST to CAM_LOCATION request.form: ImmutableMultiDict([('choice', 'Left Cam Calib')])
       if ('choice' in request.form) and request.form['choice'].lower().startswith('r'):
          cam_side = cam_side_right_label
       else:
@@ -326,12 +331,12 @@ def cam_position():
             position_options[main_key]["end_div"] = "Y"
    # print(f"position_options={position_options}")
 
-   return render_template(CAM_POSITION_TEMPLATE, \
+   return render_template(CAM_LOCATION_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
       options = position_options, \
-      footer_center = f"Mode: Get {cam_side} Cam Position")
+      footer_center = f"Mode: Cam Location")
 
 
 @app.route(CAM_CALIB_URL, methods=DEFAULT_METHODS)
@@ -426,7 +431,7 @@ def cam_calib():
       else:
          app.logger.info(f"No change in {cam_side} cam measurements, not updating cam_measurements or cam_location")
 
-   mode_str = f"{cam_side} Court Coord"
+   mode_str = f"Court Points"
    cam_lower = cam_side.lower()
    # copy the lastest PNG from the camera to the base
    DO_SCP_FOR_CALIBRATION = True #False
@@ -590,7 +595,7 @@ def settings():
       onclick_choices = onclick_choice_list, \
       radio_options = settings_radio_options, \
       form_choices = form_choice_list, \
-      url_for_post = CAM_POSITION_URL, \
+      url_for_post = CAM_LOCATION_URL, \
       page_specific_js = page_js, \
       footer_center = "Mode: --")
 
@@ -627,6 +632,7 @@ def creep_calib():
    if creep_type is None:
       app.logger.error(f"request for creep; type is None")
    else:
+      app.logger.debug(f"sending FUNC_CREEP to bbase")
       rc, code = send_msg(PUT_METHOD, FUNC_RSRC, {FUNC_CREEP: creep_type})
       if not rc:
          app.logger.error("PUT Function Creep failed, code: {}".format(code))
@@ -743,6 +749,7 @@ def drill_select_type():
 @app.route(SELECT_URL, methods=DEFAULT_METHODS)
 def select():
    global back_url, previous_url
+   global workout_select
    back_url = '/'
    previous_url = "/" + inspect.currentframe().f_code.co_name
 
@@ -755,12 +762,14 @@ def select():
    select_post_param = []
    filter_list = []
    if request.args.get(ONCLICK_MODE_KEY) == ONCLICK_MODE_WORKOUT_VALUE:
-      is_workout = True
+      workout_select = True
       selection_list = workout_list
-      select_post_param = {"name": ONCLICK_MODE_KEY, "value": ONCLICK_MODE_WORKOUT_VALUE}
+      # select_post_param = {"name": ONCLICK_MODE_KEY, "value": ONCLICK_MODE_WORKOUT_VALUE}
+      mode_string = MODE_WORKOUT_NOT_SELECTED
    else:
-      is_workout = False
+      workout_select = False
       drill_select_type = None
+      mode_string = MODE_DRILL_NOT_SELECTED
       if request.method=='POST':
          app.logger.info(f"request_form_getlist_type: {request.form.getlist('choice')}")
          drill_select_type = request.form.getlist('choice')[0]
@@ -784,10 +793,11 @@ def select():
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
       url_for_post = DRILL_URL, \
-      post_param = select_post_param, \
+      # the following doesn't work: the query parameter is now stripped by the browser.  TODO: remove from template
+      # post_param = select_post_param, \
       choices = selection_list, \
       filters = filter_list, \
-      footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED, \
+      footer_center = "Mode: " + mode_string, \
       page_specific_js = page_js
    )
  
@@ -795,12 +805,13 @@ def select():
 def drill():
    global beep_mode_choices
    global back_url, previous_url
+   global workout_select
    back_url = previous_url
 
    '''
    There are multiple ways of getting to this page
-      - select_url: the post contains the drill ID (choice) or there is a workout param with ID
-      = thrower_calib: the post contains a workout/drill param and an drill/workout ID
+      - select_url: the post contains the choice_id  The global variable 'workout_select' indicates workout or drill
+      = thrower_calib: the post contains a drill_id  or workout ID
       - beep_select: the post contains radio buttons selections (stroke, difficulty) which are mapped to a drillID
    example from beep test:
       DRILL_URL request_form: ImmutableMultiDict([('Stroke', 'Mini-Tennis'), ('Ground Stroke Type', 'Topspin'), ('Difficulty', 'Medium')])
@@ -808,58 +819,60 @@ def drill():
    '''
    app.logger.info(f"DRILL_URL request_form: {request.form}")
    app.logger.info(f"DRILL_URL request_args: {request.args}")
-   is_workout = request.args.get(ONCLICK_MODE_KEY)
-   app.logger.info(f"is_workout in request_args: {is_workout}")
-   id = request.args.get(WORKOUT_ID)
-   app.logger.info(f"WORKOUT_ID in request_args: {id}")
-   if id is not None:
-      # workout mode
-      id = int(id)
-      mode = {MODE_PARAM: base_mode_e.WORKOUT.value, ID_PARAM: id}
-      mode_string = f"{MODE_WORKOUT_SELECTED}{id}"
-   elif request.method=='POST':
-      # drill or beep mode
-      # app.logger.info(f"request.form is of type: {type(request.form)}")
-      # for key, value in request.form.items():
-      #    print(key, '->', value)
-      if 'choice_id' in request.form:
-         # drill mode
-         #INFO:flask.app:DRILL_URL request_form: ImmutableMultiDict([('choice_id', '100')])
-         id = int(request.form['choice_id'])
-         app.logger.info(f"Setting drill_id= {id}")
-      elif 'beep_options.Type' in request.form:
-         beep_type_value = int(request.form['beep_options.Type'])
-         # beep drill mode
-         #request_form: ImmutableMultiDict([('beep_options.Type', '2'), ('beep_options.Stroke', '5'), ('beep_options.Difficulty', '2')])
-         # for key in request.form:
-         #    app.logger.info(f"Beep choice {key} = {request.form[key]}")
-         id = BEEP_DRILL_NUMBER_START
-         #BEEP_DRILL_NUMBER_END = 949
-         #mini-tennis: 900-904; volley: 905-909; 910-914 flat, 915-919 loop, 920-924 chip, 925-929 topspin, 930-934 random
-         if 'beep_options.Difficulty' in request.form:
-            difficulty_offset = int(request.form['beep_options.Difficulty'])
-            app.logger.info(f"beep_type={beep_type(beep_type_value).name}; Increasing id by {difficulty_offset}, e.g. {beep_difficulty(difficulty_offset).name}")
-            id += difficulty_offset
-         else:
-            app.logger.warning(f"beep_options.Difficulty not in request.form")
-         if beep_type_value is beep_type.Volley.value:
-            app.logger.info(f"Increasing id by 5, since Volley beep_type")
-            id += 5
-         if beep_type_value is beep_type.Ground.value:
-            stroke_type_offset = int(request.form['beep_options.Stroke'])
-            id = BEEP_DRILL_NUMBER_START + 10 + (stroke_type_offset * 5)
-            app.logger.info(f"drill_id={id} using stroke_type={beep_stroke(stroke_type_offset).name}, offset=({stroke_type_offset} * 5) + 10")
-      else:
-         app.logger.error("DRILL_URL - no drill ID or beep Stroke in POST form")
-         id = 1
-      mode = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: id}
-      mode_string = f"{MODE_DRILL_SELECTED}{id}"
-   else:
-      app.logger.error("DRILL_URL - no form (didn't get POST) or args (workout ID")
 
-   if id is None:
-      app.logger.error("DRILL_URL - no drill or workout id!")
+   # app.logger.info(f"request.form is of type: {type(request.form)}")
+   # for key, value in request.form.items():
+   #    print(key, '->', value)
+   id = None
+   if 'choice_id' in request.form:
+      #INFO:flask.app:DRILL_URL request_form: ImmutableMultiDict([('choice_id', '100')])
+      id = int(request.form['choice_id'])
+      app.logger.info(f"Setting drill_id= {id} from request.form")
+   elif DRILL_ID in request.args:
+      #DRILL_URL request_args: ImmutableMultiDict([('choice_id', '781')])
+      id = int(request.args[DRILL_ID])
+      app.logger.info(f"Setting drill_id= {id} from request.args")
+   elif WORKOUT_ID in request.args:
+      #DRILL_URL request_args: ImmutableMultiDict([('workout_id', '2')])
+      id = int(request.args[WORKOUT_ID])
+      workout_select = True
+      app.logger.info(f"Setting workout_id= {id} from request.args")
+   elif 'beep_options.Type' in request.form:
+      beep_type_value = int(request.form['beep_options.Type'])
+      # beep drill mode
+      #request_form: ImmutableMultiDict([('beep_options.Type', '2'), ('beep_options.Stroke', '5'), ('beep_options.Difficulty', '2')])
+      # for key in request.form:
+      #    app.logger.info(f"Beep choice {key} = {request.form[key]}")
+      id = BEEP_DRILL_NUMBER_START
+      #BEEP_DRILL_NUMBER_END = 949
+      #mini-tennis: 900-904; volley: 905-909; 910-914 flat, 915-919 loop, 920-924 chip, 925-929 topspin, 930-934 random
+      if 'beep_options.Difficulty' in request.form:
+         difficulty_offset = int(request.form['beep_options.Difficulty'])
+         app.logger.info(f"beep_type={beep_type(beep_type_value).name}; Increasing id by {difficulty_offset}, e.g. {beep_difficulty(difficulty_offset).name}")
+         id += difficulty_offset
+      else:
+         app.logger.warning(f"beep_options.Difficulty not in request.form")
+      if beep_type_value is beep_type.Volley.value:
+         app.logger.info(f"Increasing id by 5, since Volley beep_type")
+         id += 5
+      if beep_type_value is beep_type.Ground.value:
+         stroke_type_offset = int(request.form['beep_options.Stroke'])
+         id = BEEP_DRILL_NUMBER_START + 10 + (stroke_type_offset * 5)
+         app.logger.info(f"drill_id={id} using stroke_type={beep_stroke(stroke_type_offset).name}, offset=({stroke_type_offset} * 5) + 10")
    else:
+      app.logger.error("DRILL_URL - no drill or workout id!")
+      mode_string = f"ERROR: no drill selected"
+
+   drill_stepper_options = {}
+   if id is not None:
+      if workout_select:
+         mode = {MODE_PARAM: base_mode_e.WORKOUT.value, ID_PARAM: id}
+         mode_string = f"{MODE_WORKOUT_SELECTED}{id}"
+         workout_select = False
+      else:
+         mode = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: id}
+         mode_string = f"{MODE_DRILL_SELECTED}{id}"
+      
       rc, code = send_msg(PUT_METHOD, MODE_RSRC, mode)
       if not rc:
          app.logger.error("DRILL_URL: PUT Mode failed, code: {}".format(code))
@@ -868,21 +881,20 @@ def drill():
          if not rc:
             app.logger.error("PUT START failed, code: {}".format(code))
 
-   thrower_calib_drill_number_end = THROWER_CALIB_DRILL_NUMBER_START + len(thrower_calib_drill_dict) + 1
-   if id not in range(THROWER_CALIB_DRILL_NUMBER_START, thrower_calib_drill_number_end):
-      # the defaults are set from what was last saved in the settings file
-      drill_stepper_options = { \
-         LEVEL_PARAM:{"legend":"Level", "dflt":settings_dict[LEVEL_PARAM]/LEVEL_UI_FACTOR, \
-            "min":LEVEL_MIN/LEVEL_UI_FACTOR, "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
-         SPEED_MOD_PARAM:{"legend":"Speed", "dflt":settings_dict[SPEED_MOD_PARAM], \
-            "min":SPEED_MOD_MIN, "max":SPEED_MOD_MAX, "step":SPEED_MOD_STEP}, \
-         DELAY_MOD_PARAM:{"legend":"Delay", "dflt":settings_dict[DELAY_MOD_PARAM]/DELAY_UI_FACTOR, \
-            "min":DELAY_MOD_MIN/DELAY_UI_FACTOR, "max":DELAY_MOD_MAX/DELAY_UI_FACTOR, "step":DELAY_UI_STEP/DELAY_UI_FACTOR}, \
-         ELEVATION_MOD_PARAM:{"legend":"Height", "dflt":settings_dict[ELEVATION_MOD_PARAM], \
-            "min":ELEVATION_ANGLE_MOD_MIN, "max":ELEVATION_ANGLE_MOD_MAX, "step":ELEVATION_ANGLE_MOD_STEP} \
-      }
-   else:
-      drill_stepper_options = {}
+      thrower_calib_drill_number_end = THROWER_CALIB_DRILL_NUMBER_START + len(thrower_calib_drill_dict) + 1
+      if (id not in range(THROWER_CALIB_DRILL_NUMBER_START, thrower_calib_drill_number_end)) and \
+         (id != THROWER_CALIB_WORKOUT_NUMBER):
+         # the defaults are set from what was last saved in the settings file
+         drill_stepper_options = { \
+            LEVEL_PARAM:{"legend":"Level", "dflt":settings_dict[LEVEL_PARAM]/LEVEL_UI_FACTOR, \
+               "min":LEVEL_MIN/LEVEL_UI_FACTOR, "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
+            SPEED_MOD_PARAM:{"legend":"Speed", "dflt":settings_dict[SPEED_MOD_PARAM], \
+               "min":SPEED_MOD_MIN, "max":SPEED_MOD_MAX, "step":SPEED_MOD_STEP}, \
+            DELAY_MOD_PARAM:{"legend":"Delay", "dflt":settings_dict[DELAY_MOD_PARAM]/DELAY_UI_FACTOR, \
+               "min":DELAY_MOD_MIN/DELAY_UI_FACTOR, "max":DELAY_MOD_MAX/DELAY_UI_FACTOR, "step":DELAY_UI_STEP/DELAY_UI_FACTOR}, \
+            ELEVATION_MOD_PARAM:{"legend":"Height", "dflt":settings_dict[ELEVATION_MOD_PARAM], \
+               "min":ELEVATION_ANGLE_MOD_MIN, "max":ELEVATION_ANGLE_MOD_MAX, "step":ELEVATION_ANGLE_MOD_STEP} \
+         }
          
    previous_url = "/" + inspect.currentframe().f_code.co_name
    return render_template(DRILL_TEMPLATE, \
@@ -979,37 +991,34 @@ def handle_client_connected(data):
 @socketio.on('change_params')     # Decorator to catch an event named change_params
 def handle_change_params(data):          # change_params() is the event callback function.
    #  print('change_params data: ', data)      # data is a json string: {"speed":102}
-   #  item_to_change = json.loads(data)
    app.logger.info(f'received change_params: {data}')
    for k in data.keys():
       if data[k] == None:
-         new_value = 0
          app.logger.warning(f'Received NoneType for {k}')
       else:
-         new_value = int(data[k])
-      app.logger.debug(f'Setting: {k} to {new_value}')
-      if (k == LEVEL_PARAM):
-         settings_dict[k] = new_value*10
-      elif (k == DELAY_MOD_PARAM):
-         settings_dict[k] = new_value*1000
-      else:
-         settings_dict[k] = new_value
-      if (k == LEVEL_PARAM or k == GRUNTS_PARAM or k == TRASHT_PARAM):
-         rc, code = send_msg(PUT_METHOD, BCFG_RSRC, {k: settings_dict[k]})
-      elif (k == SPEED_MOD_PARAM or k == DELAY_MOD_PARAM or k == ELEVATION_MOD_PARAM):
-         rc, code = send_msg(PUT_METHOD, DCFG_RSRC, {k: settings_dict[k]})
-      elif (k == SERVE_MODE_PARAM or k == TIEBREAKER_PARAM or k == POINTS_DELAY_PARAM):
-         rc, code = send_msg(PUT_METHOD, GCFG_RSRC, {k: settings_dict[k]})
-      elif (k == 'drill_id'):
-         # ignore for now - taking ID on POST
-         rc = True
-      else:
-         app.logger.error(f"Unrecognized key in change_params: {k}")
-         rc = True
-      if not rc:
-         app.logger.error(f"PUT base_config {k} failed, code: {code}")
-      with open(f'{settings_dir}/{settings_filename}', 'w') as f:
-         json.dump(settings_dict, f)
+         if (k == LEVEL_PARAM):
+            settings_dict[k] = int(data[k]*10)
+         elif (k == DELAY_MOD_PARAM):
+            settings_dict[k] = int(data[k]*1000)
+         else:
+            settings_dict[k] = int(data[k])
+         app.logger.debug(f'Setting: {k} to {settings_dict[k]}')
+         if (k == LEVEL_PARAM or k == GRUNTS_PARAM or k == TRASHT_PARAM):
+            rc, code = send_msg(PUT_METHOD, BCFG_RSRC, {k: settings_dict[k]})
+         elif (k == SPEED_MOD_PARAM or k == DELAY_MOD_PARAM or k == ELEVATION_MOD_PARAM):
+            rc, code = send_msg(PUT_METHOD, DCFG_RSRC, {k: settings_dict[k]})
+         elif (k == SERVE_MODE_PARAM or k == TIEBREAKER_PARAM or k == POINTS_DELAY_PARAM):
+            rc, code = send_msg(PUT_METHOD, GCFG_RSRC, {k: settings_dict[k]})
+         elif (k == 'drill_id'):
+            # ignore for now - taking ID on POST
+            rc = True
+         else:
+            app.logger.error(f"Unrecognized key in change_params: {k}")
+            rc = True
+         if not rc:
+            app.logger.error(f"PUT base_config {k} failed, code: {code}")
+   with open(f'{settings_dir}/{settings_filename}', 'w') as f:
+      json.dump(settings_dict, f)
 
 
 @socketio.on('pause_resume')
