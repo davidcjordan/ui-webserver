@@ -48,17 +48,20 @@ body {
   width: 80%;
   text-align: center;
 }
+
+.para-nomargin {
+  margin-block-start: 5px;
+  margin-block-end: 5px;
+  margin-inline-start: 10px;
+  /* margin-inline-end: 5px; */
+}
+
 /* min-height: 500px; */
-.nav, .section {
-  padding: 20px;
+.section {
+  padding: 8px;
   box-sizing: border-box;
   display: inline-block;
   vertical-align: top;
-}
-/* nav not being used anymore */
-.nav {            
-  width: 18%;             
-  background: #acb3b9;            
 }
 /* touchscreen height is 800; header=90; footer=50; -> section is 640 */
 .section {
@@ -67,18 +70,18 @@ body {
 }
 
 /* vertical-align: middle; */
-.statistics-display, .selections, .selections-class, .start-stop {
+.statistics-display, .selections, .selections-class, .start-stop, .selections_45percent, .selections_90percent, .selections_100percent {
   display: inline-block;
   vertical-align: top;      
 }
 .statistics-display {
-  width: 44%;            
+  width: 49%;       
 }
 .selections_45percent {
-  width: 45%;            
+  width: 39%;            
 }
 .selections_90percent {
-  width: 90%;
+  width: 88%;
 }
 .selections_100percent {
   width: 100%;

@@ -30,6 +30,7 @@
   */
 .stepper {
 	border: 1px solid #eee;
+	/* display: inline-block;  <--- this screws up using steppers in a table */
 }
 /*
 .stepper label {
@@ -43,9 +44,9 @@
   padding: 10px 10px;
 */
 .stepper input {
-	font-size: 1.5em;
+	font-size: 1.7em;
 	font-weight: bold;
-	width: 1.5em;
+	width: 1.7em;
 	text-align: center;
 	border: 1px solid #eee;
 	background: transparent;

@@ -3,7 +3,7 @@
 {%- block selections %}
 <p class="para-nomargin">Measure 'A' from camera plumb bob to the left doubles corner.<br>'B' is from camera plumb bob to the right doubles corner.</p>
 <form method="post" action="{{ url_for('cam_calib') }}">
-  <div class="selections_100percent"> 
+  <div> 
 <!-- 
     <fieldset  class="radio-slider-buttons">
       <label>Camera: </label>
@@ -14,11 +14,9 @@
     </fieldset>
      -->
     <table>
-      <colgroup>
-        <col span="1" style="width: 10%;">
-        <col span="1" style="width: 30%;">
-        <col span="1" style="width: 30%;">
-        <col span="1" style="width: 30%;">
+        <colgroup>
+        <col span="1" style="width: 130px;">
+        <col span="3" style="width: 360px;">
       </colgroup>
       <tr><td></td><td>Feet</td><td>Inches</td><td>Quarters</td></tr>
       {% for key,item in options.items() %}
@@ -40,11 +38,12 @@
   table {
     font-family: arial, sans-serif;
     border-collapse: collapse;
-    width: 100%;
+    table-layout: fixed;
+    /* width:1240px */
   }
   td, th {
     border: 1px solid #dddddd;
-    text-align: left;
+    /* text-align: left; */
     padding: 8px;
   }
   tr:nth-child(even) {
