@@ -449,6 +449,7 @@ def cam_calib():
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
+      cam_side = cam_lower, \
       footer_center = "Mode: " + mode_str)
 
 
@@ -491,6 +492,7 @@ def cam_calib_done():
             # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
             cam_side == "Left"
             app.logger.warning("cam_side was None in cam_calib_done")
+
          #persist values for base to use to generate correction vectors
          dt = datetime.datetime.now()
          dt_str = dt.strftime("%Y-%m-%d_%H-%M")

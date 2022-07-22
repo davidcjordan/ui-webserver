@@ -33,6 +33,7 @@
         <input type="hidden" id="nbly" name="nbly" value=0>
         <input type="hidden" id="nbrx" name="nbrx" value=0>
         <input type="hidden" id="nbry" name="nbry" value=0>
+        <input type="hidden" id="cam_side" name="cam_side" value="{{cam_side}}">
         <p id="current_x_y">Current X: ___ Y: ___</p>
       </div>
     </form>
@@ -136,7 +137,10 @@
   var background_top, background_left;
   var coords = {};
   var left;
+  var img, lens, result, cx, cy;
+  var lens_borderTotal;
 
+  // initialize:
   window.addEventListener('load', (event) => {
     // console.log('The page has fully loaded');
     imageZoom("myimage", "myresult");
@@ -145,12 +149,43 @@
     background_top = background_left = 0;
     x_px_selector = canvas.width/2;
     y_px_selector = canvas.height/2;
-    left = (document.getElementById("mode").innerText.substring(6,7).toLowerCase() === "l") ? true : false;
+    var cam_side = document.getElementById("cam_side").value;
+    left = (cam_side === "left") ? true : false;
+    // console.log("cam_side value=" + cam_side + "  left=" + left);
     draw();
   });
 
-  // document.getElementById('court_coordinates').submit(check_coords());
+  function imageZoom(imgID, resultID) {
+    img = document.getElementById(imgID);
+    result = document.getElementById(resultID);
+    /* Create lens: */
+    lens = document.createElement("DIV");
+    lens.setAttribute("class", "img-zoom-lens");
+    lens.id = "LENS"
+    /* Insert lens: */
+    img.parentElement.insertBefore(lens, img);
+    /* Calculate the ratio between result DIV and lens: */
+    lens_style = getComputedStyle(lens);
+    lens_borderTotal = (parseInt(lens_style.borderLeftWidth) || 0) * 2;
+    result_style = getComputedStyle(result);
+    let result_borderTotal = (parseInt(result_style.borderLeftWidth) || 0) *2;
+    cx = (result.offsetWidth - result_borderTotal) / (lens.offsetWidth - lens_borderTotal);
+    cy = (result.offsetHeight - result_borderTotal) / (lens.offsetHeight - lens_borderTotal);
+    // console.log("result.offsetWidth & Height: %d x %d   lens.offsetWidth & Height: %d x %d", result.offsetWidth, result.offsetHeight, lens.offsetWidth, lens.offsetHeight);
+    // console.log("lens_borderTotal: %d   result_borderTotal: %d  cx: %d  cy: %d", lens_borderTotal, result_borderTotal, cx, cy);
 
+    /* Set background properties for the result DIV */
+    result.style.backgroundImage = "url('" + img.src + "')";
+    result.style.backgroundSize = (img.width * cx) + "px " + (img.height * cy) + "px";
+    /* Execute a function when someone moves the cursor over the image: */
+    lens.addEventListener("mousedown", moveLens);
+    img.addEventListener("mousedown", moveLens);
+    /* And also for touch screens: */
+    lens.addEventListener("touchmove", moveLens);
+    img.addEventListener("touchmove", moveLens);
+  }
+
+  // verify all 7 points have been set, called when SUBMIT (Fini) is hit for the form
   function check_coords() {
     // alert("check_coords called; fblx=" + document.getElementById("fblx").value + "typeof: " + typeof(document.getElementById("fblx").value));
     //only checking the X coordinate; if X is set, then Y should be set via the set_point script
@@ -222,6 +257,7 @@
     current_x_y.innerText = `Current X: ${x_px} Y: ${y_px}`;
   }
 
+  // cursor move functions
   function move_down() {
     if (y_px_selector < (canvas.height - move_px))
       y_px_selector += move_px;
@@ -253,18 +289,19 @@
     var nsc_x_max = left ? 730 : 800;
     var nb_x_max = 500;
 
+    // console.log("x_px=" + x_px + "y_px=" + y_px);
     if (y_px < fb_y_max) {
       // set far base line left or right
       if (x_px < fb_x_max) {
         coords["fblx"] = x_px; coords["fbly"] = y_px;
         var fbl_x_y = document.getElementById('fbl_x_y');
-        fbl_x_y.innerText = `Far Baseline Left: X: ${x_px} Y: ${y_px}`;
+        fbl_x_y.innerText = `FBL: X: ${x_px} Y: ${y_px}`;
         document.getElementById("fblx").value = x_px;
         document.getElementById("fbly").value = y_px;
       } else {
         coords["fbrx"] = x_px; coords["fbry"] = y_px;
         var fbr_x_y = document.getElementById('fbr_x_y');
-        fbr_x_y.innerText = `Far Baseline Right: X: ${x_px} Y: ${y_px}`;
+        fbr_x_y.innerText = `FBR: X: ${x_px} Y: ${y_px}`;
         document.getElementById("fbrx").value = x_px;
         document.getElementById("fbry").value = y_px;
       }
@@ -273,19 +310,19 @@
       if (x_px < nsl_x_max) {
         coords["nslx"] = x_px; coords["nsly"] = y_px;
         var nsl_x_y = document.getElementById('nsl_x_y');
-        nsl_x_y.innerText = `Near Service Left: X: ${x_px} Y: ${y_px}`;
+        nsl_x_y.innerText = `NSL: X: ${x_px} Y: ${y_px}`;
         document.getElementById("nslx").value = x_px;
         document.getElementById("nsly").value = y_px;
       } else if (x_px > nsl_x_max && x_px < nsc_x_max) {
         coords["nscx"] = x_px; coords["nscy"] = y_px;
         var nsc_x_y = document.getElementById('nsc_x_y');
-        nsc_x_y.innerText = `Near Service Center: X: ${x_px} Y: ${y_px}`;
+        nsc_x_y.innerText = `NSC: X: ${x_px} Y: ${y_px}`;
         document.getElementById("nscx").value = x_px;
         document.getElementById("nscy").value = y_px;
       } else {
         coords["nsrx"] = x_px; coords["nsry"] = y_px;
         var nsr_x_y = document.getElementById('nsr_x_y');
-        nsr_x_y.innerText = `Near Service Right: X: ${x_px} Y: ${y_px}`;
+        nsr_x_y.innerText = `NSR: X: ${x_px} Y: ${y_px}`;
         document.getElementById("nsrx").value = x_px;
         document.getElementById("nsry").value = y_px;
       }
@@ -294,13 +331,13 @@
       if (x_px < nb_x_max) {
         coords["nblx"] = x_px; coords["nbly"] = y_px;
         var nbl_x_y = document.getElementById('nbl_x_y');
-        nbl_x_y.innerText = `Near Baseline Left: X: ${x_px} Y: ${y_px}`;
+        nbl_x_y.innerText = `NBL: X: ${x_px} Y: ${y_px}`;
         document.getElementById("nblx").value = x_px;
         document.getElementById("nbly").value = y_px;
       } else {
         coords["nbrx"] = x_px; coords["nbry"] = y_px;
         var nbr_x_y = document.getElementById('nbr_x_y');
-        nbr_x_y.innerText = `Near Baseline Right: X: ${x_px} Y: ${y_px}`;
+        nbr_x_y.innerText = `NBR: X: ${x_px} Y: ${y_px}`;
         document.getElementById("nbrx").value = x_px;
         document.getElementById("nbry").value = y_px;
       }
@@ -309,55 +346,7 @@
     }
   }
 
-  // the following funciotn is no longer used to send the data:
-  function send_points() {
-    var number_of_calib_points = 7;
-
-    if (Object.keys(coords).length < number_of_calib_points * 2)
-    {
-      window.alert("Please finish setting all " + number_of_calib_points + " coordinates.");
-    } else
-    {
-      var xhr = new XMLHttpRequest();
-      xhr.open("POST", "/cam_calib_done", true);
-      xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.send(JSON.stringify(coords));
-      // used the following to get webpage update after the post; there is probably a better way
-      // window.location.replace('/cam_calib_done');
-    }
-  }
-</script>
-  
-<script type="text/javascript">
-function imageZoom(imgID, resultID) {
-  var img, lens, result, cx, cy;
-  img = document.getElementById(imgID);
-  result = document.getElementById(resultID);
-  /* Create lens: */
-  lens = document.createElement("DIV");
-  lens.setAttribute("class", "img-zoom-lens");
-  lens.id = "LENS"
-  /* Insert lens: */
-  img.parentElement.insertBefore(lens, img);
-  /* Calculate the ratio between result DIV and lens: */
-  lens_style = getComputedStyle(lens);
-  let lens_borderTotal = (parseInt(lens_style.borderLeftWidth) || 0) * 2;
-  result_style = getComputedStyle(result);
-  let result_borderTotal = (parseInt(result_style.borderLeftWidth) || 0) *2;
-  cx = (result.offsetWidth - result_borderTotal) / (lens.offsetWidth - lens_borderTotal);
-  cy = (result.offsetHeight - result_borderTotal) / (lens.offsetHeight - lens_borderTotal);
-  // console.log("result.offsetWidth & Height: %d x %d   lens.offsetWidth & Height: %d x %d", result.offsetWidth, result.offsetHeight, lens.offsetWidth, lens.offsetHeight);
-  // console.log("lens_borderTotal: %d   result_borderTotal: %d  cx: %d  cy: %d", lens_borderTotal, result_borderTotal, cx, cy);
-
-  /* Set background properties for the result DIV */
-  result.style.backgroundImage = "url('" + img.src + "')";
-  result.style.backgroundSize = (img.width * cx) + "px " + (img.height * cy) + "px";
-  /* Execute a function when someone moves the cursor over the image, or the lens: */
-  lens.addEventListener("mousedown", moveLens);
-  img.addEventListener("mousedown", moveLens);
-  /* And also for touch screens: */
-  lens.addEventListener("touchmove", moveLens);
-  img.addEventListener("touchmove", moveLens);
+  // zoomed image (lens) displays the rectangle that has been touched
   function moveLens(e) {
     var pos, x, y;
     /* Prevent any other actions that may occur when moving over the image */
@@ -418,6 +407,8 @@ function imageZoom(imgID, resultID) {
     y_px_selector = canvas.height/2
     draw()
   }
+
+  // get the rectangle that's been touched coordinates
   function getCursorPos(e) {
     var a, x = 0, y = 0;
     e = e || window.event;
@@ -431,6 +422,5 @@ function imageZoom(imgID, resultID) {
     y = y - window.pageYOffset;
     return {x : x, y : y};
   }
-}
 </script>
 {% endblock %} 
