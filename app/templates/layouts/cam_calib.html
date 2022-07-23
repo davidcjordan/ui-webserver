@@ -2,11 +2,11 @@
 
 {% block selections %}
 <div class="img-zoom-container">
-  <div class="img-zoom-image">
-    <img id="myimage" src="{{court_pic}}" alt="Image from camera is missing" height="400">
+  <div class="img_non_zoomed_class">
+    <img id="img_non_zoomed" src="{{court_pic}}" alt="Image from camera is missing" height="400">
   </div>
-  <div id="myresult" class="img-zoom-result">
-    <canvas id="zoom-canvas" width="256" height="256" ></canvas>
+  <div id="div_zoomed_8" class="div_zoomed_8_class">
+    <canvas id="canvas_id_zoomed_8" width="256" height="256" ></canvas>
   </div>
   <div class="calibration_controls">
     <form id="court_coordinates" action="/cam_calib_done" method="post" onsubmit="return check_coords();">
@@ -94,13 +94,13 @@
   position: relative;
   vertical-align: top;
 }
-.img-zoom-image {
+.img_non_zoomed_class {
   display: inline-block;
   border: 1px solid #d4d4d4;
   height: 400px;
   vertical-align: top;
 }
-.img-zoom-lens {
+.lens_class {
   position: absolute;
   /* border: 1px solid #d4d4d4; */
   border: 2px solid #702727;
@@ -108,7 +108,7 @@
   width: 16px;
   height: 16px;
 }
-.img-zoom-result {
+.div_zoomed_8_class {
   vertical-align: top;
   display: inline-block;
   border: 1px solid #d4d4d4;
@@ -129,8 +129,9 @@
 
 {% block page_specific_js %} 
 <script>
-  var canvas;
-  var contxt;
+  // modified from: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_image_zoom
+  var canvas_zoomed_8;
+  var contxt_zoomed_8;
   var x_px_selector, y_px_selector;
   var x_px, y_px;
   let move_px = 8;
@@ -143,12 +144,12 @@
   // initialize:
   window.addEventListener('load', (event) => {
     // console.log('The page has fully loaded');
-    imageZoom("myimage", "myresult");
-    canvas = document.getElementById("zoom-canvas");
-    contxt = canvas.getContext("2d");
+    imageZoom("img_non_zoomed", "div_zoomed_8");
+    canvas_zoomed_8 = document.getElementById("canvas_id_zoomed_8");
+    contxt_zoomed_8 = canvas_zoomed_8.getContext("2d");
     background_top = background_left = 0;
-    x_px_selector = canvas.width/2;
-    y_px_selector = canvas.height/2;
+    x_px_selector = canvas_zoomed_8.width/2;
+    y_px_selector = canvas_zoomed_8.height/2;
     var cam_side = document.getElementById("cam_side").value;
     left = (cam_side === "left") ? true : false;
     // console.log("cam_side value=" + cam_side + "  left=" + left);
@@ -157,18 +158,21 @@
 
   function imageZoom(imgID, resultID) {
     img = document.getElementById(imgID);
-    result = document.getElementById(resultID);
-    /* Create lens: */
+    // Create lens & insert lens: */
     lens = document.createElement("DIV");
-    lens.setAttribute("class", "img-zoom-lens");
+    // lens_class defines the pixel height/width of the lens
+    lens.setAttribute("class", "lens_class");
     lens.id = "LENS"
-    /* Insert lens: */
     img.parentElement.insertBefore(lens, img);
+
     /* Calculate the ratio between result DIV and lens: */
     lens_style = getComputedStyle(lens);
     lens_borderTotal = (parseInt(lens_style.borderLeftWidth) || 0) * 2;
+
+    result = document.getElementById(resultID);
     result_style = getComputedStyle(result);
     let result_borderTotal = (parseInt(result_style.borderLeftWidth) || 0) *2;
+    // cx/cy is the ratio of the result DIV and the lens
     cx = (result.offsetWidth - result_borderTotal) / (lens.offsetWidth - lens_borderTotal);
     cy = (result.offsetHeight - result_borderTotal) / (lens.offsetHeight - lens_borderTotal);
     // console.log("result.offsetWidth & Height: %d x %d   lens.offsetWidth & Height: %d x %d", result.offsetWidth, result.offsetHeight, lens.offsetWidth, lens.offsetHeight);
@@ -177,6 +181,7 @@
     /* Set background properties for the result DIV */
     result.style.backgroundImage = "url('" + img.src + "')";
     result.style.backgroundSize = (img.width * cx) + "px " + (img.height * cy) + "px";
+    // console.log("img.width-%d result.backgroundSize=%s", img.width, result.style.backgroundSize);
     /* Execute a function when someone moves the cursor over the image: */
     lens.addEventListener("mousedown", moveLens);
     img.addEventListener("mousedown", moveLens);
@@ -221,36 +226,36 @@
   }
 
   function draw() {
-    contxt.clearRect(0, 0, canvas.width, canvas.height);
-    // contxt.beginPath();
+    contxt_zoomed_8.clearRect(0, 0, canvas_zoomed_8.width, canvas_zoomed_8.height);
+    // contxt_zoomed_8.beginPath();
     // // x, y, radius, starting angle, ending angle
-    // contxt.arc((x_px_selector-3), (y_px_selector-3), 6, 0, 2 * Math.PI);
-    // contxt.lineWidth = 3;
-    // contxt.strokeStyle = "Chartreuse";
-    // contxt.setLineDash([2]);
-    // contxt.stroke();
+    // contxt_zoomed_8.arc((x_px_selector-3), (y_px_selector-3), 6, 0, 2 * Math.PI);
+    // contxt_zoomed_8.lineWidth = 3;
+    // contxt_zoomed_8.strokeStyle = "Chartreuse";
+    // contxt_zoomed_8.setLineDash([2]);
+    // contxt_zoomed_8.stroke();
     let len_half_line = 8;
-    contxt.beginPath();
-  // contxt.setLineDash([2]);
-    contxt.strokeStyle = "Chartreuse";
-    contxt.lineWidth = 1;
-    contxt.moveTo(x_px_selector-len_half_line, y_px_selector);
-    contxt.lineTo(x_px_selector+len_half_line, y_px_selector);
-    contxt.moveTo(x_px_selector, y_px_selector-len_half_line);
-    contxt.lineTo(x_px_selector, y_px_selector+len_half_line);
-    contxt.stroke();   
+    contxt_zoomed_8.beginPath();
+  // contxt_zoomed_8.setLineDash([2]);
+    contxt_zoomed_8.strokeStyle = "Chartreuse";
+    contxt_zoomed_8.lineWidth = 1;
+    contxt_zoomed_8.moveTo(x_px_selector-len_half_line, y_px_selector);
+    contxt_zoomed_8.lineTo(x_px_selector+len_half_line, y_px_selector);
+    contxt_zoomed_8.moveTo(x_px_selector, y_px_selector-len_half_line);
+    contxt_zoomed_8.lineTo(x_px_selector, y_px_selector+len_half_line);
+    contxt_zoomed_8.stroke();   
 
-    contxt.beginPath();
-    contxt.strokeStyle = "DarkGreen";
-    contxt.lineWidth = 1;
-    contxt.moveTo(x_px_selector-len_half_line, y_px_selector-len_half_line);
-    contxt.lineTo(x_px_selector+len_half_line, y_px_selector+len_half_line);
-    contxt.moveTo(x_px_selector-len_half_line, y_px_selector+len_half_line);
-    contxt.lineTo(x_px_selector+len_half_line, y_px_selector-len_half_line);
-    contxt.stroke();   
+    contxt_zoomed_8.beginPath();
+    contxt_zoomed_8.strokeStyle = "DarkGreen";
+    contxt_zoomed_8.lineWidth = 1;
+    contxt_zoomed_8.moveTo(x_px_selector-len_half_line, y_px_selector-len_half_line);
+    contxt_zoomed_8.lineTo(x_px_selector+len_half_line, y_px_selector+len_half_line);
+    contxt_zoomed_8.moveTo(x_px_selector-len_half_line, y_px_selector+len_half_line);
+    contxt_zoomed_8.lineTo(x_px_selector+len_half_line, y_px_selector-len_half_line);
+    contxt_zoomed_8.stroke();   
 
     // the 1280x800 image is displayed at 640x400, so double the left/top to get the pixel on the real image
-    console.log("background left: %d  top: %d", background_left, background_top); 
+    // console.log("background left: %d  top: %d", background_left, background_top); 
     x_px = (background_left*2) + (x_px_selector/move_px - 1);
     y_px = (background_top *2) + (y_px_selector/move_px -1);
     var current_x_y = document.getElementById('current_x_y');
@@ -259,9 +264,11 @@
 
   // cursor move functions
   function move_down() {
-    if (y_px_selector < (canvas.height - move_px))
-      y_px_selector += move_px;
-    draw();
+    // if (y_px_selector < (canvas_zoomed_8.height - move_px))
+    //   y_px_selector += move_px;
+    background_top += 1;
+    result.style.backgroundPosition = "-" + (background_left * cx) + "px -" + (background_top * cy) + "px";
+    // draw();
   }
   function move_up() {
     if (y_px_selector > move_px)
@@ -269,7 +276,7 @@
     draw();
   }
   function move_right() {
-    if (x_px_selector < (canvas.width - move_px))
+    if (x_px_selector < (canvas_zoomed_8.width - move_px))
       x_px_selector += move_px;
     draw();
   }
@@ -385,7 +392,7 @@
 
     /* position the lens based on the background; add in the border
      */
-    console.log("cursor x: %d  y: %d    backg left: %d  top: %d    lens left: %d  top: %d", pos.x, pos.y, background_left, background_top, lens_left, lens_top);
+    console.log("touch cursor x: %d  y: %d    backg left: %d  top: %d    lens left: %d  top: %d", pos.x, pos.y, background_left, background_top, lens_left, lens_top);
     /* Prevent the lens from being positioned outside the image:  (BUT: OK to have lens border outside the image
        on the zero sides, allow the lens to overlap the image border - hence limit to -1
        on the other side, have the lens be inside the img.height/widht - the lens size not including the border
@@ -403,8 +410,8 @@
     result.style.backgroundPosition = "-" + (background_left * cx) + "px -" + (background_top * cy) + "px";
 
     // reset the pixel selectors to the middle
-    x_px_selector = canvas.width/2
-    y_px_selector = canvas.height/2
+    x_px_selector = canvas_zoomed_8.width/2
+    y_px_selector = canvas_zoomed_8.height/2
     draw()
   }
 

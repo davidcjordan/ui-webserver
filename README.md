@@ -78,3 +78,15 @@ When a filter_list is provided, and the drill_list includes filter_values, the s
 ```
 data-Type="Development"
 ```
+
+# Locating Court Points web-page notes:
+
+* the PNG of the right or left camera is shown in 1/4 size: 640x400
+* a 64x64 pixel square shows the area that is zoomed
+ * currently at 8x 
+
+## templates
+The base template has a section for page specific javascript.  This is used on the following pages:
+* select.html: whether to enable filtrify (or not); NOT include
+* game and drill.html: enable pause_resume, number-picker
+* choice_inputs: enable emits per radio button

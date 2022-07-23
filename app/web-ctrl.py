@@ -247,12 +247,15 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 def cam_location():
    global cam_side, Units, unit_lengths
    if request.method=='POST':
-      # print(f"POST to CAM_LOCATION request.form: {request.form}")
+      app.logger.debug(f"POST to CAM_LOCATION request.form: {request.form}")
       # POST to CAM_LOCATION request.form: ImmutableMultiDict([('choice', 'Left Cam Calib')])
       if ('choice' in request.form) and request.form['choice'].lower().startswith('r'):
          cam_side = cam_side_right_label
       else:
          cam_side = cam_side_left_label
+   else:
+      app.logger.warning(f"Did not get POST to CAM_LOCATION; request.method: {request.method}")
+      cam_side = cam_side_right_label
 
    # restore measurements, which are A (camera to left doubles), B (cam to right doubles), and Z (cam height)
    cam_measurements_filepath = f'{settings_dir}/{cam_side.lower()}_cam_measurements.json'
@@ -263,7 +266,7 @@ def cam_location():
          previous_cam_measurement_mm = json.loads(full_line[0:bracket_index+1])
          # previous_cam_measurement_mm = json.load(infile)
    except:
-      app.logger.info(f"using default values for cam_location; couldn't read {cam_measurements_filepath}")
+      app.logger.warning(f"using default values for cam_location; couldn't read {cam_measurements_filepath}")
       if cam_side == cam_side_left_label:
          previous_cam_measurement_mm = [6402, 12700, 2440]
       else:
@@ -349,7 +352,7 @@ def cam_calib():
    change_from_persisted_measurement = False
 
    if request.method=='POST':
-      app.logger.info(f"POST to CALIB (location) request.form: {request.form}")
+      app.logger.debug(f"POST to CALIB (location) request.form: {request.form}")
       # example: 
       # POST to CALIB (location) request.form: ImmutableMultiDict([('x_feet', '6'), ('x_inch', '6'), ('x_quar', '2'), ('y_feet', '54'), ('y_inch', '6'), ('y_quar', '3'), ('z_feet', '13'), ('z_inch', '8'), ('z_quar', '3')])
       for i in Measurement:
@@ -360,7 +363,7 @@ def cam_calib():
                new_value = int(request.form[key])
                if ((new_value != unit_lengths[Measurement(i).value][Units(j).value]) and not change_from_persisted_measurement):
                   change_from_persisted_measurement = True
-               app.logger.info(f"key={key} prev={unit_lengths[Measurement(i).value][Units(j).value]} new={new_value} change={change_from_persisted_measurement}")
+               app.logger.debug(f"key={key} prev={unit_lengths[Measurement(i).value][Units(j).value]} new={new_value} change={change_from_persisted_measurement}")
                if j == Units['feet']:
                   new_cam_measurement_mm[Measurement(i).value] += new_value * 12 * INCHES_TO_MM
                if j == Units['inch']:
@@ -371,7 +374,7 @@ def cam_calib():
                app.logger.error("Unknown key '{key}' in POST of camera location measurement")
 
       if change_from_persisted_measurement:
-         app.logger.info(f"Updating {cam_side} cam_measurements and cam_location")
+         app.logger.debug(f"Updating {cam_side} cam_measurements and cam_location")
          #persist new A,B, Z measurements and cam_location for base to use to generate correction vectors
          dt = datetime.datetime.now()
          dt_str = dt.strftime("%Y-%m-%d_%H-%M")
@@ -429,7 +432,7 @@ def cam_calib():
          # with open(f"{settings_dir}/{cam_side.lower()}_cam_location.json", "w") as outfile:
          #    json.dump(new_cam_location_mm, outfile)
       else:
-         app.logger.info(f"No change in {cam_side} cam measurements, not updating cam_measurements or cam_location")
+         app.logger.debug(f"No change in {cam_side} cam measurements, not updating cam_measurements or cam_location")
 
    mode_str = f"Court Points"
    cam_lower = cam_side.lower()
@@ -471,7 +474,7 @@ def cam_calib_done():
             f" --nscx {c['nscx']} --nscy {c['nscy']} --nsrx {c['nsrx']} --nsry {c['nsry']}"
             f" --camx {new_cam_location_mm[Axis.x.value]} --camy {new_cam_location_mm[Axis.y.value]} --camz {new_cam_location_mm[Axis.z.value]}" )
       else:
-         app.logger.info(f"POST to CALIB_DONE request.form: {request.form}")
+         app.logger.debug(f"POST to CALIB_DONE request.form: {request.form}")
          # example: ImmutableMultiDict
          # coord_args = ""
          for court_point_id in COURT_POINT_KEYS:
@@ -755,7 +758,7 @@ def select():
    back_url = '/'
    previous_url = "/" + inspect.currentframe().f_code.co_name
 
-   app.logger.debug(f"select request: {request}")
+   app.logger.debug(f"select [drill/workout] request: {request}")
 
    restore_settings() #restore level, delay, speed, etc
 
@@ -773,7 +776,7 @@ def select():
       drill_select_type = None
       mode_string = MODE_DRILL_NOT_SELECTED
       if request.method=='POST':
-         app.logger.info(f"request_form_getlist_type: {request.form.getlist('choice')}")
+         app.logger.debug(f"request_form_getlist_type: {request.form.getlist('choice')}")
          drill_select_type = request.form.getlist('choice')[0]
 
       # refer to /home/pi/boomer/drills/ui_drill_selection_lists.py for drill_list format
@@ -819,8 +822,8 @@ def drill():
       DRILL_URL request_form: ImmutableMultiDict([('Stroke', 'Mini-Tennis'), ('Ground Stroke Type', 'Topspin'), ('Difficulty', 'Medium')])
       DRILL_URL request_args: ImmutableMultiDict([])
    '''
-   app.logger.info(f"DRILL_URL request_form: {request.form}")
-   app.logger.info(f"DRILL_URL request_args: {request.args}")
+   app.logger.debug(f"DRILL_URL request_form: {request.form}")
+   app.logger.debug(f"DRILL_URL request_args: {request.args}")
 
    # app.logger.info(f"request.form is of type: {type(request.form)}")
    # for key, value in request.form.items():
@@ -986,7 +989,7 @@ def textify_faults_table():
  
 @socketio.on('client_connected')
 def handle_client_connected(data):
-   app.logger.info(f"received client_connected: {data}")
+   app.logger.debug(f"received client_connected: {data}")
    global client_state
    client_state = True
 
@@ -1025,7 +1028,7 @@ def handle_change_params(data):          # change_params() is the event callback
 
 @socketio.on('pause_resume')
 def handle_pause_resume():
-   app.logger.debug('received pause_resume.')
+   app.logger.info('received pause_resume.')
    rc, code = send_msg(PUT_METHOD, PAUS_RSRC)
    if not rc:
       app.logger.error("PUT PAUSE failed, code: {}".format(code))
