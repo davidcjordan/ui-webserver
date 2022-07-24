@@ -130,63 +130,70 @@
 {% block page_specific_js %} 
 <script>
   // modified from: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_image_zoom
-  var canvas_zoomed_8;
-  var contxt_zoomed_8;
+  var canvasZoomed8;
+  var contextZoomed8;
+  var isLeftCam;
+  let move_px = 8; //move 1 pixel, which is 8 pixels on the zoomed image
+
   var x_px_selector, y_px_selector;
   var x_px, y_px;
-  let move_px = 8;
   var background_top, background_left;
-  var coords = {};
-  var left;
-  var img, lens, result, cx, cy;
+  var img;
+  var lensDiv;
+  var result;
+  var cx, cy; 
   var lens_borderTotal;
 
   // initialize:
   window.addEventListener('load', (event) => {
     // console.log('The page has fully loaded');
     imageZoom("img_non_zoomed", "div_zoomed_8");
-    canvas_zoomed_8 = document.getElementById("canvas_id_zoomed_8");
-    contxt_zoomed_8 = canvas_zoomed_8.getContext("2d");
+    canvasZoomed8 = document.getElementById("canvas_id_zoomed_8");
+    contextZoomed8 = canvasZoomed8.getContext("2d");
     background_top = background_left = 0;
-    x_px_selector = canvas_zoomed_8.width/2;
-    y_px_selector = canvas_zoomed_8.height/2;
-    var cam_side = document.getElementById("cam_side").value;
-    left = (cam_side === "left") ? true : false;
-    // console.log("cam_side value=" + cam_side + "  left=" + left);
+    x_px_selector = canvasZoomed8.width/2;
+    y_px_selector = canvasZoomed8.height/2;
+    var camSide = document.getElementById("cam_side").value;
+    isLeftCam = (camSide === "left") ? true : false;
+    // console.log("cam_side value=" + cam_side + "  isLeftCam=" + isLeftCam);
     draw();
   });
 
   function imageZoom(imgID, resultID) {
     img = document.getElementById(imgID);
-    // Create lens & insert lens: */
-    lens = document.createElement("DIV");
+    // Create & insert lens
+    lensDiv = document.createElement("DIV");
     // lens_class defines the pixel height/width of the lens
-    lens.setAttribute("class", "lens_class");
-    lens.id = "LENS"
-    img.parentElement.insertBefore(lens, img);
+    lensDiv.setAttribute("class", "lens_class");
+    lensDiv.id = "LENS"
+    img.parentElement.insertBefore(lensDiv, img);
 
     /* Calculate the ratio between result DIV and lens: */
-    lens_style = getComputedStyle(lens);
+    lens_style = getComputedStyle(lensDiv);
     lens_borderTotal = (parseInt(lens_style.borderLeftWidth) || 0) * 2;
 
     result = document.getElementById(resultID);
     result_style = getComputedStyle(result);
     let result_borderTotal = (parseInt(result_style.borderLeftWidth) || 0) *2;
+
     // cx/cy is the ratio of the result DIV and the lens
-    cx = (result.offsetWidth - result_borderTotal) / (lens.offsetWidth - lens_borderTotal);
-    cy = (result.offsetHeight - result_borderTotal) / (lens.offsetHeight - lens_borderTotal);
-    // console.log("result.offsetWidth & Height: %d x %d   lens.offsetWidth & Height: %d x %d", result.offsetWidth, result.offsetHeight, lens.offsetWidth, lens.offsetHeight);
-    // console.log("lens_borderTotal: %d   result_borderTotal: %d  cx: %d  cy: %d", lens_borderTotal, result_borderTotal, cx, cy);
+    cx = (result.offsetWidth - result_borderTotal) / (lensDiv.offsetWidth - lens_borderTotal);
+    cy = (result.offsetHeight - result_borderTotal) / (lensDiv.offsetHeight - lens_borderTotal);
+
+    console.log("result.offsetWidth & Height: %d x %d   lensDiv.offsetWidth & Height: %d x %d",
+      result.offsetWidth, result.offsetHeight, lensDiv.offsetWidth, lensDiv.offsetHeight);
+    console.log("lens_borderTotal: %d   result_borderTotal: %d  cx: %d  cy: %d", 
+      lens_borderTotal, result_borderTotal, cx, cy);
 
     /* Set background properties for the result DIV */
     result.style.backgroundImage = "url('" + img.src + "')";
     result.style.backgroundSize = (img.width * cx) + "px " + (img.height * cy) + "px";
     // console.log("img.width-%d result.backgroundSize=%s", img.width, result.style.backgroundSize);
     /* Execute a function when someone moves the cursor over the image: */
-    lens.addEventListener("mousedown", moveLens);
+    lensDiv.addEventListener("mousedown", moveLens);
     img.addEventListener("mousedown", moveLens);
     /* And also for touch screens: */
-    lens.addEventListener("touchmove", moveLens);
+    lensDiv.addEventListener("touchmove", moveLens);
     img.addEventListener("touchmove", moveLens);
   }
 
@@ -226,33 +233,33 @@
   }
 
   function draw() {
-    contxt_zoomed_8.clearRect(0, 0, canvas_zoomed_8.width, canvas_zoomed_8.height);
-    // contxt_zoomed_8.beginPath();
+    contextZoomed8.clearRect(0, 0, canvasZoomed8.width, canvasZoomed8.height);
+    // contextZoomed8.beginPath();
     // // x, y, radius, starting angle, ending angle
-    // contxt_zoomed_8.arc((x_px_selector-3), (y_px_selector-3), 6, 0, 2 * Math.PI);
-    // contxt_zoomed_8.lineWidth = 3;
-    // contxt_zoomed_8.strokeStyle = "Chartreuse";
-    // contxt_zoomed_8.setLineDash([2]);
-    // contxt_zoomed_8.stroke();
+    // contextZoomed8.arc((x_px_selector-3), (y_px_selector-3), 6, 0, 2 * Math.PI);
+    // contextZoomed8.lineWidth = 3;
+    // contextZoomed8.strokeStyle = "Chartreuse";
+    // contextZoomed8.setLineDash([2]);
+    // contextZoomed8.stroke();
     let len_half_line = 8;
-    contxt_zoomed_8.beginPath();
-  // contxt_zoomed_8.setLineDash([2]);
-    contxt_zoomed_8.strokeStyle = "Chartreuse";
-    contxt_zoomed_8.lineWidth = 1;
-    contxt_zoomed_8.moveTo(x_px_selector-len_half_line, y_px_selector);
-    contxt_zoomed_8.lineTo(x_px_selector+len_half_line, y_px_selector);
-    contxt_zoomed_8.moveTo(x_px_selector, y_px_selector-len_half_line);
-    contxt_zoomed_8.lineTo(x_px_selector, y_px_selector+len_half_line);
-    contxt_zoomed_8.stroke();   
+    contextZoomed8.beginPath();
+  // contextZoomed8.setLineDash([2]);
+    contextZoomed8.strokeStyle = "Chartreuse";
+    contextZoomed8.lineWidth = 1;
+    contextZoomed8.moveTo(x_px_selector-len_half_line, y_px_selector);
+    contextZoomed8.lineTo(x_px_selector+len_half_line, y_px_selector);
+    contextZoomed8.moveTo(x_px_selector, y_px_selector-len_half_line);
+    contextZoomed8.lineTo(x_px_selector, y_px_selector+len_half_line);
+    contextZoomed8.stroke();   
 
-    contxt_zoomed_8.beginPath();
-    contxt_zoomed_8.strokeStyle = "DarkGreen";
-    contxt_zoomed_8.lineWidth = 1;
-    contxt_zoomed_8.moveTo(x_px_selector-len_half_line, y_px_selector-len_half_line);
-    contxt_zoomed_8.lineTo(x_px_selector+len_half_line, y_px_selector+len_half_line);
-    contxt_zoomed_8.moveTo(x_px_selector-len_half_line, y_px_selector+len_half_line);
-    contxt_zoomed_8.lineTo(x_px_selector+len_half_line, y_px_selector-len_half_line);
-    contxt_zoomed_8.stroke();   
+    contextZoomed8.beginPath();
+    contextZoomed8.strokeStyle = "DarkGreen";
+    contextZoomed8.lineWidth = 1;
+    contextZoomed8.moveTo(x_px_selector-len_half_line, y_px_selector-len_half_line);
+    contextZoomed8.lineTo(x_px_selector+len_half_line, y_px_selector+len_half_line);
+    contextZoomed8.moveTo(x_px_selector-len_half_line, y_px_selector+len_half_line);
+    contextZoomed8.lineTo(x_px_selector+len_half_line, y_px_selector-len_half_line);
+    contextZoomed8.stroke();   
 
     // the 1280x800 image is displayed at 640x400, so double the left/top to get the pixel on the real image
     // console.log("background left: %d  top: %d", background_left, background_top); 
@@ -264,11 +271,11 @@
 
   // cursor move functions
   function move_down() {
-    // if (y_px_selector < (canvas_zoomed_8.height - move_px))
-    //   y_px_selector += move_px;
-    background_top += 1;
-    result.style.backgroundPosition = "-" + (background_left * cx) + "px -" + (background_top * cy) + "px";
-    // draw();
+    if (y_px_selector < (canvasZoomed8.height - move_px))
+      y_px_selector += move_px;
+    // background_top += 1;
+    // result.style.backgroundPosition = "-" + (background_left * cx) + "px -" + (background_top * cy) + "px";
+    draw();
   }
   function move_up() {
     if (y_px_selector > move_px)
@@ -276,7 +283,7 @@
     draw();
   }
   function move_right() {
-    if (x_px_selector < (canvas_zoomed_8.width - move_px))
+    if (x_px_selector < (canvasZoomed8.width - move_px))
       x_px_selector += move_px;
     draw();
   }
@@ -286,27 +293,25 @@
     draw();
   }
   function set_point() {
-    // the following define x/y areas for the 7 coordinates: Near/Far(y) Baseline Left/Right (x), and ServiceLine
-    // console.log("Value of left on set_point: " + left);
+    // the following define x/y areas for the 7 coordinates: Near/Far(y) Baseline isLeftCam/Right (x), and ServiceLine
+    // console.log("Value of isLeftCam on set_point: " + isLeftCam);
     var fb_y_max = 100;
-    var fb_x_max = left ? 500 : 1000;
+    var fb_x_max = isLeftCam ? 500 : 1000;
     var ns_y_min = 220;
-    var ns_y_max = left ? 425 : 375;
-    var nsl_x_max = left ? 440 : 520;
-    var nsc_x_max = left ? 730 : 800;
+    var ns_y_max = isLeftCam ? 425 : 375;
+    var nsl_x_max = isLeftCam ? 440 : 520;
+    var nsc_x_max = isLeftCam ? 730 : 800;
     var nb_x_max = 500;
 
     // console.log("x_px=" + x_px + "y_px=" + y_px);
     if (y_px < fb_y_max) {
       // set far base line left or right
       if (x_px < fb_x_max) {
-        coords["fblx"] = x_px; coords["fbly"] = y_px;
         var fbl_x_y = document.getElementById('fbl_x_y');
         fbl_x_y.innerText = `FBL: X: ${x_px} Y: ${y_px}`;
         document.getElementById("fblx").value = x_px;
         document.getElementById("fbly").value = y_px;
       } else {
-        coords["fbrx"] = x_px; coords["fbry"] = y_px;
         var fbr_x_y = document.getElementById('fbr_x_y');
         fbr_x_y.innerText = `FBR: X: ${x_px} Y: ${y_px}`;
         document.getElementById("fbrx").value = x_px;
@@ -315,19 +320,16 @@
     } else if (y_px > ns_y_min && y_px < ns_y_max) {
       // set far near service line left, center or right
       if (x_px < nsl_x_max) {
-        coords["nslx"] = x_px; coords["nsly"] = y_px;
         var nsl_x_y = document.getElementById('nsl_x_y');
         nsl_x_y.innerText = `NSL: X: ${x_px} Y: ${y_px}`;
         document.getElementById("nslx").value = x_px;
         document.getElementById("nsly").value = y_px;
       } else if (x_px > nsl_x_max && x_px < nsc_x_max) {
-        coords["nscx"] = x_px; coords["nscy"] = y_px;
         var nsc_x_y = document.getElementById('nsc_x_y');
         nsc_x_y.innerText = `NSC: X: ${x_px} Y: ${y_px}`;
         document.getElementById("nscx").value = x_px;
         document.getElementById("nscy").value = y_px;
       } else {
-        coords["nsrx"] = x_px; coords["nsry"] = y_px;
         var nsr_x_y = document.getElementById('nsr_x_y');
         nsr_x_y.innerText = `NSR: X: ${x_px} Y: ${y_px}`;
         document.getElementById("nsrx").value = x_px;
@@ -336,13 +338,11 @@
     } else if (y_px > ns_y_max) {
       // set near base line left or right
       if (x_px < nb_x_max) {
-        coords["nblx"] = x_px; coords["nbly"] = y_px;
         var nbl_x_y = document.getElementById('nbl_x_y');
         nbl_x_y.innerText = `NBL: X: ${x_px} Y: ${y_px}`;
         document.getElementById("nblx").value = x_px;
         document.getElementById("nbly").value = y_px;
       } else {
-        coords["nbrx"] = x_px; coords["nbry"] = y_px;
         var nbr_x_y = document.getElementById('nbr_x_y');
         nbr_x_y.innerText = `NBR: X: ${x_px} Y: ${y_px}`;
         document.getElementById("nbrx").value = x_px;
@@ -363,10 +363,10 @@
     /* Calculate the top & left of the lens - placing the cursor at the center of the lens
        x -> horizontal left to right, e.g. Width.
       img.width & height do NOT include the border
-      lens.offsetHeight & Width DO include the border
+      lensDiv.offsetHeight & Width DO include the border
     */
-    background_top = pos.y - (lens.offsetWidth/2);
-    background_left = pos.x - (lens.offsetHeight/2);
+    background_top = pos.y - (lensDiv.offsetWidth/2);
+    background_left = pos.x - (lensDiv.offsetHeight/2);
     lens_top = background_top + lens_borderTotal/2;
     lens_left = background_left + lens_borderTotal/2;
 
@@ -375,7 +375,7 @@
       background_top = 0;
       lens_top = -1;
     }
-    background_top_limit = img.height - lens.offsetHeight + lens_borderTotal;
+    background_top_limit = img.height - lensDiv.offsetHeight + lens_borderTotal;
     if (background_top > background_top_limit) {
       background_top = background_top_limit;
       lens_top = background_top + 1;
@@ -384,34 +384,34 @@
       background_left = 0;
       lens_left = -1;
     }
-    background_left_limit = img.width - lens.offsetWidth + lens_borderTotal;
+    background_left_limit = img.width - lensDiv.offsetWidth + lens_borderTotal;
     if (background_left > background_left_limit) {
       background_left = background_left_limit;
       lens_left = background_left + 1;
     }
 
-    /* position the lens based on the background; add in the border
-     */
+    // position the lens based on the background; add in the border
     console.log("touch cursor x: %d  y: %d    backg left: %d  top: %d    lens left: %d  top: %d", pos.x, pos.y, background_left, background_top, lens_left, lens_top);
     /* Prevent the lens from being positioned outside the image:  (BUT: OK to have lens border outside the image
        on the zero sides, allow the lens to overlap the image border - hence limit to -1
        on the other side, have the lens be inside the img.height/widht - the lens size not including the border
     */
-    // if (x > img.width - lens.offsetWidth) {x = img.width - lens.offsetWidth;}
+    // if (x > img.width - lensDiv.offsetWidth) {x = img.width - lensDiv.offsetWidth;}
     // if (x < 0) {x = 0;}
-    // if (y > img.height - lens.offsetHeight) {y = img.height - lens.offsetHeight;}
+    // if (y > img.height - lensDiv.offsetHeight) {y = img.height - lensDiv.offsetHeight;}
     // if (y < 0) {y = 0;}
     // console.log("img.width: %d  img.height: %d   img.offsetWidth: %d  img.offsetHeight: %d", img.width, img.height, img.offsetWidth, img.offsetHeight);
     /* Set the position of the lens: */
-    lens.style.left = lens_left + "px";
-    lens.style.top = lens_top + "px";
+
+    lensDiv.style.left = lens_left + "px";
+    lensDiv.style.top = lens_top + "px";
     /* Display what the lens "sees": */
     // result.style.backgroundPosition = "-" + (x * cx) + "px -" + (y * cy) + "px";
     result.style.backgroundPosition = "-" + (background_left * cx) + "px -" + (background_top * cy) + "px";
 
     // reset the pixel selectors to the middle
-    x_px_selector = canvas_zoomed_8.width/2
-    y_px_selector = canvas_zoomed_8.height/2
+    x_px_selector = canvasZoomed8.width/2
+    y_px_selector = canvasZoomed8.height/2
     draw()
   }
 
