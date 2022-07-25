@@ -85,6 +85,14 @@ data-Type="Development"
 * a 64x64 pixel square shows the area that is zoomed
  * currently at 8x 
 
+
+## Selecting a pixel
+When the up/down buttons are pushed, the background.top is reduced or increased by 1 pixel.
+Same for the left/right buttons: background.left is reduced or increased.
+A cursor used to identify the selected pixels is in the center of the zoomedDiv.
+So only the background.top/left need to be maintained; the cursor/selected pixels is constant relative to the top/left.
+(The lens needs to be moved also... TBD)
+
 ## templates
 The base template has a section for page specific javascript.  This is used on the following pages:
 * select.html: whether to enable filtrify (or not); NOT include
