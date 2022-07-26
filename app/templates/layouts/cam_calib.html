@@ -149,7 +149,7 @@
   // initialize:
   window.addEventListener('load', (event) => {
     // console.log('The page has fully loaded');
-    console.log('Version 7');
+    // console.log('Version 7');
     imageZoom("img_non_zoomed", "div_zoomed_8");
     zoomed8Canvas = document.getElementById("canvas_id_zoomed_8");
     zoomed8Context = zoomed8Canvas.getContext("2d");
@@ -189,12 +189,12 @@
     zoomed8Div.style.backgroundSize = (img.width * zoomRatio) + "px " + (img.height * zoomRatio) + "px";
     // console.log("img: width=%d height=%d zoomed8Div.backgroundSize=%s", img.width, img.height, zoomed8Div.style.backgroundSize);
 
-    //The img.width/height is doubled in order to be able to move the center pixel by pixel
+    //The max is doubled in order to be able to move the center pixel by pixel
     backgroundMax = {
-      left: ((2*img.width) - lensDiv.offsetWidth + lensDivBorderTotalWidth),
-      top: ((2*img.height) - lensDiv.offsetHeight + lensDivBorderTotalWidth)
+      left: 2*(img.width - lensDiv.offsetWidth + lensDivBorderTotalWidth),
+      top:  2*(img.height - lensDiv.offsetHeight + lensDivBorderTotalWidth)
     };
-    // console.log("backgroundMax top=%d left=%s", backgroundMax.left, backgroundMax.top);
+    // console.log("backgroundMax left=%d top=%s ", backgroundMax.left, backgroundMax.top);
 
     /* Execute a function when someone moves the cursor over the image: */
     lensDiv.addEventListener("mousedown", moveLensByTouch);
@@ -378,35 +378,28 @@
   }
 
   function moveLensBoundaryCheck() {
-    //halve the background to position the lens
-    // the lensBorderOffset was determined by experimentation on what looked good; lensDivBorderTotalWidth=4 defined in lens_class
-    let lensBorderOffset = lensDivBorderTotalWidth/4 - 1;
-    lens_top = background.top/2 + lensBorderOffset;
-    lens_left = background.left/2 + lensBorderOffset;
-
-    /* Prevent the lens from being positioned outside the image:  (BUT: OK to have lens border outside the image
+      /* Prevent the lens from being positioned outside the image:  (BUT: OK to have lens border outside the image
        on the zero sides, allow the lens to overlap the image border - hence limit to -1
        on the other side, have the lens be inside the img.height/widht - the lens size not including the border
     */
     if (background.top < 0) {
       background.top = 0;
-      lens_top = -1;
     }
     if (background.top > backgroundMax.top) {
-      background.top = background_top_limit;
-      lens_top = background.top + 1;
+      background.top = backgroundMax.top;
     }
     if (background.left < 0) {
       background.left = 0;
-      lens_left = -1;
     }
     if (background.left > backgroundMax.left) {
       background.left = backgroundMax.left;
-      lens_left = background.left + 1;
     }
 
-    console.log("background left=%d  top=%d    lens left: %d  top: %d", background.left, background.top, lens_left, lens_top);
-
+    //halve the background to position the lens
+    // the lensBorderOffset was determined by experimentation on what looked good; lensDivBorderTotalWidth=4 defined in lens_class
+    let lensBorderOffset = lensDivBorderTotalWidth/4 - 1;
+    lens_top = background.top/2 + lensBorderOffset;
+    lens_left = background.left/2 + lensBorderOffset;
     // reposition the lens:
     lensDiv.style.left = lens_left + "px";
     lensDiv.style.top = lens_top + "px";
@@ -416,6 +409,7 @@
     //In order to move 1 pixel at time, the zoomRatio needs to be halved since the background.x/y doubled
     var backgroundCoords = {x: (background.left * zoomRatio/2), y: (background.top * zoomRatio/2)};
     zoomed8Div.style.backgroundPosition = "-" + backgroundCoords.x + "px -" + backgroundCoords.y + "px";
+    // console.log("background left=%d  top=%d    lens left: %d  top: %d", background.left, background.top, lens_left, lens_top);
     // console.log(" updated background position=%s", zoomed8Div.style.backgroundPosition);
 
     // the 1280x800 image is displayed at 640x400, which is what the background.left/top range is
