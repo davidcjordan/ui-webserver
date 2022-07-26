@@ -145,8 +145,6 @@
   var backgroundMax = {};
   var background = {top: 0, left: 0};
   var centerOfZoomed = {x: 16, y: 16};
-
-  var x_px, y_px;
  
   // initialize:
   window.addEventListener('load', (event) => {
@@ -181,21 +179,22 @@
 
     // zoomRatio is the ratio of the zoomed8Div and the lens
     zoomRatio = (zoomed8Div.offsetWidth - zoomed8DivBorderTotalWidth) / (lensDiv.offsetWidth - lensDivBorderTotalWidth);
-    console.log("zoomed8Div.offsetWidth & Height: %d x %d   lensDiv.offsetWidth & Height: %d x %d",
-      zoomed8Div.offsetWidth, zoomed8Div.offsetHeight, lensDiv.offsetWidth, lensDiv.offsetHeight);
-    console.log("zoomRatio=%d", zoomRatio);
+    // console.log("zoomed8Div.offsetWidth & Height: %d x %d   lensDiv.offsetWidth & Height: %d x %d",
+    //   zoomed8Div.offsetWidth, zoomed8Div.offsetHeight, lensDiv.offsetWidth, lensDiv.offsetHeight);
+    // console.log("zoomRatio=%d", zoomRatio);
 
     /* Set background properties for the zoomed8Div */
     zoomed8Div.style.backgroundImage = "url('" + img.src + "')";
     // NOTE: the img.width and height is 1/2 the full size image, since the img height is set to 400 in the html
     zoomed8Div.style.backgroundSize = (img.width * zoomRatio) + "px " + (img.height * zoomRatio) + "px";
-    console.log("img: width=%d height=%d zoomed8Div.backgroundSize=%s", img.width, img.height, zoomed8Div.style.backgroundSize);
+    // console.log("img: width=%d height=%d zoomed8Div.backgroundSize=%s", img.width, img.height, zoomed8Div.style.backgroundSize);
 
+    //The img.width/height is doubled in order to be able to move the center pixel by pixel
     backgroundMax = {
-      top: (img.height - lensDiv.offsetHeight + lensDivBorderTotalWidth),
-      left: (img.width - lensDiv.offsetWidth + lensDivBorderTotalWidth)
+      left: ((2*img.width) - lensDiv.offsetWidth + lensDivBorderTotalWidth),
+      top: ((2*img.height) - lensDiv.offsetHeight + lensDivBorderTotalWidth)
     };
-    console.log("backgroundMax top=%d left=%s", backgroundMax.top, backgroundMax.left);
+    // console.log("backgroundMax top=%d left=%s", backgroundMax.left, backgroundMax.top);
 
     /* Execute a function when someone moves the cursor over the image: */
     lensDiv.addEventListener("mousedown", moveLensByTouch);
@@ -296,13 +295,11 @@
   }
 
   function set_point() {
-    /*
-        the point's X/Y is equal to the center of the zoomed image
-        This would be equal to background.top/left + zoomed8Canvas.width/2 since the zoomed image is square
-    */
+    // the point's X/Y is equal to the center of the zoomed image which is set in moveLensBoundaryCheck()
+    // console.log("background left=%d top=%d  centerOfZoomed x=%d y=%d  canvas.width=%d", 
+    //   background.left, background.top, centerOfZoomed.x, centerOfZoomed.y, zoomed8Canvas.width);
    
     // the following define x/y areas for the 7 coordinates: Near/Far(y) Baseline isLeftCam/Right (x), and ServiceLine
-    // console.log("Value of isLeftCam on set_point: " + isLeftCam);
     var fb_y_max = 100;
     var fb_x_max = isLeftCam ? 500 : 1000;
     var ns_y_min = 220;
@@ -311,54 +308,52 @@
     var nsc_x_max = isLeftCam ? 730 : 800;
     var nb_x_max = 500;
 
-    console.log("background left=%d top=%d  centerOfZoomed x=%d y=%d  canvas.width=%d", 
-      background.left, background.top, centerOfZoomed.x, centerOfZoomed.y, zoomed8Canvas.width);
-    if (y_px < fb_y_max) {
+    if (centerOfZoomed.y < fb_y_max) {
       // set far base line left or right
-      if (x_px < fb_x_max) {
+      if (centerOfZoomed.x < fb_x_max) {
         var fbl_x_y = document.getElementById('fbl_x_y');
-        fbl_x_y.innerText = `FBL: X: ${x_px} Y: ${y_px}`;
-        document.getElementById("fblx").value = x_px;
-        document.getElementById("fbly").value = y_px;
+        fbl_x_y.innerText = `FBL: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
+        document.getElementById("fblx").value = centerOfZoomed.x;
+        document.getElementById("fbly").value = centerOfZoomed.y;
       } else {
         var fbr_x_y = document.getElementById('fbr_x_y');
-        fbr_x_y.innerText = `FBR: X: ${x_px} Y: ${y_px}`;
-        document.getElementById("fbrx").value = x_px;
-        document.getElementById("fbry").value = y_px;
+        fbr_x_y.innerText = `FBR: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
+        document.getElementById("fbrx").value = centerOfZoomed.x;
+        document.getElementById("fbry").value = centerOfZoomed.y;
       }
-    } else if (y_px > ns_y_min && y_px < ns_y_max) {
+    } else if (centerOfZoomed.y > ns_y_min && centerOfZoomed.y < ns_y_max) {
       // set far near service line left, center or right
-      if (x_px < nsl_x_max) {
+      if (centerOfZoomed.x < nsl_x_max) {
         var nsl_x_y = document.getElementById('nsl_x_y');
-        nsl_x_y.innerText = `NSL: X: ${x_px} Y: ${y_px}`;
-        document.getElementById("nslx").value = x_px;
-        document.getElementById("nsly").value = y_px;
-      } else if (x_px > nsl_x_max && x_px < nsc_x_max) {
+        nsl_x_y.innerText = `NSL: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
+        document.getElementById("nslx").value = centerOfZoomed.x;
+        document.getElementById("nsly").value = centerOfZoomed.y;
+      } else if (centerOfZoomed.x > nsl_x_max && centerOfZoomed.x < nsc_x_max) {
         var nsc_x_y = document.getElementById('nsc_x_y');
-        nsc_x_y.innerText = `NSC: X: ${x_px} Y: ${y_px}`;
-        document.getElementById("nscx").value = x_px;
-        document.getElementById("nscy").value = y_px;
+        nsc_x_y.innerText = `NSC: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
+        document.getElementById("nscx").value = centerOfZoomed.x;
+        document.getElementById("nscy").value = centerOfZoomed.y;
       } else {
         var nsr_x_y = document.getElementById('nsr_x_y');
-        nsr_x_y.innerText = `NSR: X: ${x_px} Y: ${y_px}`;
-        document.getElementById("nsrx").value = x_px;
-        document.getElementById("nsry").value = y_px;
+        nsr_x_y.innerText = `NSR: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
+        document.getElementById("nsrx").value = centerOfZoomed.x;
+        document.getElementById("nsry").value = centerOfZoomed.y;
       }
-    } else if (y_px > ns_y_max) {
+    } else if (centerOfZoomed.y > ns_y_max) {
       // set near base line left or right
-      if (x_px < nb_x_max) {
+      if (centerOfZoomed.x < nb_x_max) {
         var nbl_x_y = document.getElementById('nbl_x_y');
-        nbl_x_y.innerText = `NBL: X: ${x_px} Y: ${y_px}`;
-        document.getElementById("nblx").value = x_px;
-        document.getElementById("nbly").value = y_px;
+        nbl_x_y.innerText = `NBL: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
+        document.getElementById("nblx").value = centerOfZoomed.x;
+        document.getElementById("nbly").value = centerOfZoomed.y;
       } else {
         var nbr_x_y = document.getElementById('nbr_x_y');
-        nbr_x_y.innerText = `NBR: X: ${x_px} Y: ${y_px}`;
-        document.getElementById("nbrx").value = x_px;
-        document.getElementById("nbry").value = y_px;
+        nbr_x_y.innerText = `NBR: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
+        document.getElementById("nbrx").value = centerOfZoomed.x;
+        document.getElementById("nbry").value = centerOfZoomed.y;
       }
     } else {
-      console.log("y_px: %d is out of bounds", y_px)
+      console.log("centerOfZoomed.y: %d is out of bounds", centerOfZoomed.y)
     }
   }
 
@@ -375,18 +370,19 @@
        x -> horizontal left to right, e.g. Width.
       img.width & height do NOT include the border
       lensDiv.offsetHeight & Width DO include the border
+      Double the pos.x/y to achieve pixel granularity when moving the zoom center using the buttons
     */
-    background.top = pos.y - (lensDiv.offsetWidth/2);
-    background.left = pos.x - (lensDiv.offsetHeight/2);
-    //NEW: multiply pos.x/y by 2:
-    // background.top = (2*pos.y) - (lensDiv.offsetWidth);
-    // background.left = (2*pos.x) - (lensDiv.offsetHeight);
+    background.top = (2*pos.y) - (lensDiv.offsetWidth);
+    background.left = (2*pos.x) - (lensDiv.offsetHeight);
     moveLensBoundaryCheck();
   }
 
   function moveLensBoundaryCheck() {
-    lens_top = background.top + lensDivBorderTotalWidth/2;
-    lens_left = background.left + lensDivBorderTotalWidth/2;
+    //halve the background to position the lens
+    // the lensBorderOffset was determined by experimentation on what looked good; lensDivBorderTotalWidth=4 defined in lens_class
+    let lensBorderOffset = lensDivBorderTotalWidth/4 - 1;
+    lens_top = background.top/2 + lensBorderOffset;
+    lens_left = background.left/2 + lensBorderOffset;
 
     /* Prevent the lens from being positioned outside the image:  (BUT: OK to have lens border outside the image
        on the zero sides, allow the lens to overlap the image border - hence limit to -1
@@ -411,23 +407,21 @@
 
     console.log("background left=%d  top=%d    lens left: %d  top: %d", background.left, background.top, lens_left, lens_top);
 
-    /* Set the position of the lens: */
+    // reposition the lens:
     lensDiv.style.left = lens_left + "px";
     lensDiv.style.top = lens_top + "px";
-    // Display what the lens "sees" by positioning the image position in the background of the DIV
-    console.log("previous background position=%s", zoomed8Div.style.backgroundPosition);
-    var backgroundCoords = {x: 0, y:0};
-    //!! In order to move 1 pixel at time, the zoomRatio needs to be halved (and background.x/y doubled) but that messes things up.
-    backgroundCoords.x = (background.left * (zoomRatio/1));
-    backgroundCoords.y = (background.top * (zoomRatio/1 ));
-    zoomed8Div.style.backgroundPosition = "-" + backgroundCoords.x + "px -" + backgroundCoords.y + "px";
-    console.log(" updated background position=%s", zoomed8Div.style.backgroundPosition);
 
-    // the 1280x800 image is displayed at 640x400, so double the left/top to get the pixel on the real image
+    // Display what the lens "sees" by positioning the image position in the background of the DIV
+    // console.log("previous background position=%s", zoomed8Div.style.backgroundPosition);
+    //In order to move 1 pixel at time, the zoomRatio needs to be halved since the background.x/y doubled
+    var backgroundCoords = {x: (background.left * zoomRatio/2), y: (background.top * zoomRatio/2)};
+    zoomed8Div.style.backgroundPosition = "-" + backgroundCoords.x + "px -" + backgroundCoords.y + "px";
+    // console.log(" updated background position=%s", zoomed8Div.style.backgroundPosition);
+
+    // the 1280x800 image is displayed at 640x400, which is what the background.left/top range is
     // The divide by 16 is to get 1/2 the width/height, and then divide by 8, which is the amount the image is zoomed
-    //NEW: removed multiplying the background.left/top by 2:
-    centerOfZoomed.x = (background.left*2) + (zoomed8Canvas.width/16);
-    centerOfZoomed.y = (background.top*2) + (zoomed8Canvas.height/16);
+    centerOfZoomed.x = background.left + (zoomed8Canvas.width/16);
+    centerOfZoomed.y = background.top + (zoomed8Canvas.height/16);
     current_x_y_element.innerText = `Current X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
   }
 
