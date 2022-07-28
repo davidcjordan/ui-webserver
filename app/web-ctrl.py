@@ -510,7 +510,9 @@ def cam_calib_done():
          # tell the bbase to regenerate correction vectors; the '1' in the value is not used and is there for completeness
          rc, code = send_msg(PUT_METHOD, FUNC_RSRC, {FUNC_GEN_CORRECTION_VECTORS: 1} )
          if not rc:
-            app.logger.error("PUT FUNC_GEN_CORRECTION_VECTORS failed, code: {}".format(code))
+            if not code:
+               code = "unknown"
+            app.logger.error("PUT FUNC_GEN_CORRECTION_VECTORS failed, code: {code}")
 
    page_js = []
    page_js.append(Markup('<script src="/static/js/timed-redirect.js"></script>'))

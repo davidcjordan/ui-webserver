@@ -2,8 +2,9 @@
 
 {% block selections %}
 <div class="img-zoom-container">
-  <div class="img_non_zoomed_class">
-    <img id="img_non_zoomed" src="{{court_pic}}" alt="Image from camera is missing" height="400">
+  <div id="div_not_zoomed" class="div_not_zoomed_class">
+    <canvas id="canvas_not_zoomed" width="640" height="400"></canvas>
+    <!-- <img id="img_not_zoomed" src="{{court_pic}}" alt="Image from camera is missing" height="400"> -->
   </div>
   <div id="div_zoomed_8" class="div_zoomed_8_class">
     <canvas id="canvas_id_zoomed_8" width="256" height="256" ></canvas>
@@ -18,7 +19,8 @@
         <input type="button" value="&#x21A6" onclick="move_right()">
         <input type="button" value="Set Intersection" onclick="set_point()">
         <br>
-        <input type="submit" value="Fini" class="submit-button">
+        <p id="current_x_y">Current X: ___ Y: ___</p>
+        <input type="submit" value="Submit" class="submit-button" disabled>
         <input type="hidden" id="fblx" name="fblx" value=0>
         <input type="hidden" id="fbly" name="fbly" value=0>
         <input type="hidden" id="fbrx" name="fbrx" value=0>
@@ -34,7 +36,6 @@
         <input type="hidden" id="nbrx" name="nbrx" value=0>
         <input type="hidden" id="nbry" name="nbry" value=0>
         <input type="hidden" id="cam_side" name="cam_side" value="{{cam_side}}">
-        <p id="current_x_y">Current X: ___ Y: ___</p>
       </div>
     </form>
     <hr style="height:2px;margin-top:2px;margin-bottom:2px">
@@ -52,15 +53,6 @@
       <p>B=Base Line; S=Service</p>
       <p>L=Left;R=Right;C=Center</p>
     </div>
-    <!-- <div>
-      <p id="fbl_x_y">Far Baseline Left   X: ___ Y: ___</p>
-      <p id="fbr_x_y">Far Baseline Right  X: ___ Y: ___</p>
-      <p id="nsl_x_y">Near Service Left   X: ___ Y: ___</p>
-      <p id="nsc_x_y">Near Service Center X: ___ Y: ___</p>
-      <p id="nsr_x_y">Near Service Right  X: ___ Y: ___</p>
-      <p id="nbl_x_y">Near Baseline Left  X: ___ Y: ___</p>
-      <p id="nbr_x_y">Near Baseline Right X: ___ Y: ___</p>
-    </div> -->
   </div>
 </div>
 
@@ -94,11 +86,21 @@
   position: relative;
   vertical-align: top;
 }
-.img_non_zoomed_class {
+/* 
+.img_not_zoomed_class {
   display: inline-block;
   border: 1px solid #d4d4d4;
   height: 400px;
   vertical-align: top;
+}
+ */
+.div_not_zoomed_class {
+  display: inline-block;
+  border: 1px solid #d4d4d4;
+  width: 640px;
+  height: 400px;
+  vertical-align: top;
+  image-rendering: pixelated;
 }
 .lens_class {
   position: absolute;
@@ -150,7 +152,8 @@
   window.addEventListener('load', (event) => {
     // console.log('The page has fully loaded');
     // console.log('Version 7');
-    imageZoom("img_non_zoomed", "div_zoomed_8");
+    // imageZoom("img_not_zoomed", "div_zoomed_8");
+    imageZoom("div_zoomed_8");
     zoomed8Canvas = document.getElementById("canvas_id_zoomed_8");
     zoomed8Context = zoomed8Canvas.getContext("2d");
     let camSide = document.getElementById("cam_side").value;
@@ -160,14 +163,31 @@
     drawCursorInZoom8();
   });
 
-  function imageZoom(sourceImageID, targetDivID) {
-   img = document.getElementById(sourceImageID);
+  // function imageZoom(sourceImageID, targetDivID) {
+  function imageZoom(targetDivID) {
+    // img = document.getElementById(sourceImageID);
+    image_source = "/static/" + document.getElementById("cam_side").value + "_court.png"
+
+    notZoomedDiv = document.getElementById("div_not_zoomed");
+    notZoomedCanvas = document.getElementById("canvas_not_zoomed");
+    notZoomedContext = notZoomedCanvas.getContext("2d");
+
+    notZoomedDivStyle = getComputedStyle(notZoomedDiv);
+    notZoomedDivBorderTotalWidth = (parseInt(notZoomedDivStyle.borderLeftWidth) || 0) * 2;
+    notZoomedDivWidth = notZoomedDiv.offsetWidth - notZoomedDivBorderTotalWidth
+    notZoomedDivHeight = notZoomedDiv.offsetHeight - notZoomedDivBorderTotalWidth
+
+    notZoomedDiv.style.backgroundImage = "url('" + image_source + "')";
+    notZoomedDiv.style.backgroundSize = (notZoomedDiv.offsetWidth-2) + "px " + (notZoomedDiv.offsetHeight-2) + "px";
+    console.log("notZoomedDiv: width=%d height=%d backgroundSize=%s", notZoomedDiv.offsetWidth, notZoomedDiv.offsetHeight, notZoomedDiv.style.backgroundSize);
+ 
     // Create & insert lens
     lensDiv = document.createElement("DIV");
     // lens_class defines the pixel height/width of the lens
     lensDiv.setAttribute("class", "lens_class");
     lensDiv.id = "LENS"
-    img.parentElement.insertBefore(lensDiv, img);
+    // img.parentElement.insertBefore(lensDiv, img);
+    notZoomedDiv.parentElement.insertBefore(lensDiv, div_not_zoomed);
 
     lensDivStyle = getComputedStyle(lensDiv);
     lensDivBorderTotalWidth = (parseInt(lensDivStyle.borderLeftWidth) || 0) * 2;
@@ -177,70 +197,35 @@
     let zoomed8DivBorderTotalWidth = (parseInt(zoomed8DivStyle.borderLeftWidth) || 0) *2;
     // console.log("lensDivBorderTotalWidth: %d   zoomed8DivBorderTotalWidth: %d", lensDivBorderTotalWidth, zoomed8DivBorderTotalWidth);
 
-    // zoomRatio is the ratio of the zoomed8Div and the lens
+    // zoomRatio is the ratio of the zoomed8Div and the lens; since the lens is square, only calculate based on width
     zoomRatio = (zoomed8Div.offsetWidth - zoomed8DivBorderTotalWidth) / (lensDiv.offsetWidth - lensDivBorderTotalWidth);
     // console.log("zoomed8Div.offsetWidth & Height: %d x %d   lensDiv.offsetWidth & Height: %d x %d",
     //   zoomed8Div.offsetWidth, zoomed8Div.offsetHeight, lensDiv.offsetWidth, lensDiv.offsetHeight);
     // console.log("zoomRatio=%d", zoomRatio);
 
     /* Set background properties for the zoomed8Div */
-    zoomed8Div.style.backgroundImage = "url('" + img.src + "')";
+    zoomed8Div.style.backgroundImage = "url('" + image_source + "')";
     // NOTE: the img.width and height is 1/2 the full size image, since the img height is set to 400 in the html
-    zoomed8Div.style.backgroundSize = (img.width * zoomRatio) + "px " + (img.height * zoomRatio) + "px";
+    zoomed8Div.style.backgroundSize = (notZoomedDivWidth * zoomRatio) + "px " + (notZoomedDivHeight * zoomRatio) + "px";
     // console.log("img: width=%d height=%d zoomed8Div.backgroundSize=%s", img.width, img.height, zoomed8Div.style.backgroundSize);
 
     //The max is doubled in order to be able to move the center pixel by pixel
     backgroundMax = {
-      left: 2*(img.width - lensDiv.offsetWidth + lensDivBorderTotalWidth),
-      top:  2*(img.height - lensDiv.offsetHeight + lensDivBorderTotalWidth)
+      left: 2*(notZoomedDivWidth - lensDiv.offsetWidth + lensDivBorderTotalWidth),
+      top:  2*(notZoomedDivHeight - lensDiv.offsetHeight + lensDivBorderTotalWidth)
     };
     // console.log("backgroundMax left=%d top=%s ", backgroundMax.left, backgroundMax.top);
 
     /* Execute a function when someone moves the cursor over the image: */
     lensDiv.addEventListener("mousedown", moveLensByTouch);
-    img.addEventListener("mousedown", moveLensByTouch);
+    notZoomedDiv.addEventListener("mousedown", moveLensByTouch);
     /* And also for touch screens: */
     lensDiv.addEventListener("touchmove", moveLensByTouch);
-    img.addEventListener("touchmove", moveLensByTouch);
+    notZoomedDiv.addEventListener("touchmove", moveLensByTouch);
   }
 
-  // verify all 7 points have been set, called when SUBMIT (Fini) is hit for the form
-  function check_coords() {
-    // alert("check_coords called; fblx=" + document.getElementById("fblx").value + "typeof: " + typeof(document.getElementById("fblx").value));
-    //only checking the X coordinate; if X is set, then Y should be set via the set_point script
-    if (!(Number(document.getElementById("fblx").value) !== 0)) {
-      alert("Please set Far Baseline Left point");
-      return false;
-    }
-    if (!(Number(document.getElementById("fbrx").value) !== 0)) {
-      alert("Please set Far Baseline Right point");
-      return false;
-    }
-    if (!(Number(document.getElementById("nslx").value) !== 0)) {
-      alert("Please set Near Service Line Left point");
-      return false;
-    }
-    if (!(Number(document.getElementById("nscx").value) !== 0)) {
-      alert("Please set Near Service Line Center point");
-      return false;
-    }
-    if (!(Number(document.getElementById("nslx").value) !== 0)) {
-      alert("Please set Near Service Line Right point");
-      return false;
-    }
-    if (!(Number(document.getElementById("nblx").value) !== 0)) {
-      alert("Please set Near Baseline Left point");
-      return false;
-    }
-    if (!(Number(document.getElementById("nbrx").value) !== 0)) {
-      alert("Please set Near Baseline Right point");
-      return false;
-    }
-    return true;
-  }
-
+ 
   function drawCursorInZoom8() {
-
     zoomed8Context.clearRect(0, 0, zoomed8Canvas.width, zoomed8Canvas.height);
     // zoomed8Context.beginPath();
     // // x, y, radius, starting angle, ending angle
@@ -351,6 +336,7 @@
         nbr_x_y.innerText = `NBR: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
         document.getElementById("nbrx").value = centerOfZoomed.x;
         document.getElementById("nbry").value = centerOfZoomed.y;
+        document.getElementById("disabled").disabled = false;
       }
     } else {
       console.log("centerOfZoomed.y: %d is out of bounds", centerOfZoomed.y)
@@ -424,11 +410,16 @@
     var a, x = 0, y = 0;
     e = e || window.event;
     /* Get the x and y positions of the image: */
-    a = img.getBoundingClientRect();
-    /* Calculate the cursor's x and y current_x_y, relative to the image: */
+    // a = img.getBoundingClientRect();
+    a = div_not_zoomed.getBoundingClientRect();
+
+    // console.log("getBoundingClientRect: %s", JSON.stringify(a));
+    // "{\"x\":16,\"y\":106,\"width\":642,\"height\":402,\"top\":106,\"right\":658,\"bottom\":508,\"left\":16}"
+    // console.log("e.page X=%d Y=%d  a left=%d top=%d  window.pageOffset X=%d Y=%d", e.pageX, e.pageY, a.left, a.top, window.pageXOffset, window.pageYOffset);
+    // Calculate the cursor's x and y current_x_y, relative to the image:
     x = e.pageX - a.left;
     y = e.pageY - a.top;
-    /* Consider any page scrolling: */
+    // Consider any page scrolling: for Boomer, these should always be zero
     x = x - window.pageXOffset;
     y = y - window.pageYOffset;
     return {x : x, y : y};
