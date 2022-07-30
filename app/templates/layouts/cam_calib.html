@@ -18,28 +18,33 @@
         <input type="button" value="&#x21A4" onclick="move_left()">
         <input type="button" value="&#x21A6" onclick="move_right()">
         <p id="current_x_y">Current X: ___ Y: ___</p>
-        <input type="button" value="Set Intersection" onclick="set_point()">
+        <input type="button" id="setButton" value="Set ___" onclick="setPoint()">
         <br>
-        <input type="submit" value="Submit" disabled>
+        <input type="submit" id="submitButton" value="Submit All Points">
         <input type="hidden" id="fblx" name="fblx" value=0 class="invisible">
-        <input type="hidden" id="fbly" name="fbly" value=0>
+        <input type="hidden" id="fbly" name="fbly" value=0 class="invisible">
         <input type="hidden" id="fbrx" name="fbrx" value=0 class="invisible">
-        <input type="hidden" id="fbry" name="fbry" value=0>
-        <input type="hidden" id="nslx" name="nslx" value=0>
-        <input type="hidden" id="nsly" name="nsly" value=0>
-        <input type="hidden" id="nscx" name="nscx" value=0>
-        <input type="hidden" id="nscy" name="nscy" value=0>
-        <input type="hidden" id="nsrx" name="nsrx" value=0>
-        <input type="hidden" id="nsry" name="nsry" value=0>
-        <input type="hidden" id="nblx" name="nblx" value=0>
-        <input type="hidden" id="nbly" name="nbly" value=0>
-        <input type="hidden" id="nbrx" name="nbrx" value=0>
-        <input type="hidden" id="nbry" name="nbry" value=0>
+        <input type="hidden" id="fbry" name="fbry" value=0 class="invisible">
+        <input type="hidden" id="nslx" name="nslx" value=0 class="invisible">
+        <input type="hidden" id="nsly" name="nsly" value=0 class="invisible">
+        <input type="hidden" id="nscx" name="nscx" value=0 class="invisible">
+        <input type="hidden" id="nscy" name="nscy" value=0 class="invisible">
+        <input type="hidden" id="nsrx" name="nsrx" value=0 class="invisible">
+        <input type="hidden" id="nsry" name="nsry" value=0 class="invisible">
+        <input type="hidden" id="nblx" name="nblx" value=0 class="invisible">
+        <input type="hidden" id="nbly" name="nbly" value=0 class="invisible">
+        <input type="hidden" id="nbrx" name="nbrx" value=0 class="invisible">
+        <input type="hidden" id="nbry" name="nbry" value=0 class="invisible">
         <input type="hidden" id="cam_side" name="cam_side" value="{{cam_side}}">
       </div>
     </form>
     <hr style="height:2px;margin-top:2px;margin-bottom:2px">
     <div>
+      <p>Key: </p>
+      <p>F=Far; N=Near</p>
+      <p>B=Base Line; S=Service</p>
+      <p>L=Left;R=Right;C=Center</p>
+      <hr style="height:2px;margin-block-start:0.1em;margin-block-end:0.1em">
       <p id="fbl_x_y">FBL X: ___ Y: ___</p>
       <p id="fbr_x_y">FBR X: ___ Y: ___</p>
       <p id="nsl_x_y">NSL X: ___ Y: ___</p>
@@ -47,17 +52,12 @@
       <p id="nsr_x_y">NSR X: ___ Y: ___</p>
       <p id="nbl_x_y">NBL X: ___ Y: ___</p>
       <p id="nbr_x_y">NBR X: ___ Y: ___</p>
-      <hr style="height:2px;margin-block-start:0.1em;margin-block-end:0.1em">
-      <p>Key: </p>
-      <p>F=Far; N=Near</p>
-      <p>B=Base Line; S=Service</p>
-      <p>L=Left;R=Right;C=Center</p>
     </div>
   </div>
 </div>
 
 <style media="all">
-  /* the following is used to faciltate: var court_points = document.getElementsByClassName('invisible'); */
+  /* the following is used to faciltate: var coordinateArray = document.getElementsByClassName('invisible'); */
 .invisible {visibility: hidden;}
 
 .calibration_controls {
@@ -132,9 +132,7 @@
   var zoomed8Div; //where the zoomed canvas is displayed; the canvas has the image zoomed as a background, plus a cursor
   var zoomed8Canvas;
   var zoomed8Context;
-  var isLeftCam;
-  var current_x_y_element;
-  let move_px = 8; //move 1 pixel, which is 8 pixels on the zoomed image
+  var currentCoordinate;
 
   var img;
   var lensDiv; //this is the square drawn on the image to indicate the zoomed area
@@ -153,20 +151,25 @@
     imageZoom("div_zoomed_8");
     zoomed8Canvas = document.getElementById("canvas_id_zoomed_8");
     zoomed8Context = zoomed8Canvas.getContext("2d");
-    let camSide = document.getElementById("cam_side").value;
-    isLeftCam = (camSide === "left") ? true : false;
-    // console.log("cam_side value=" + cam_side + "  isLeftCam=" + isLeftCam);
-    current_x_y_element = document.getElementById('current_x_y');
+
     drawCursorInZoom8();
 
-    court_points = document.getElementsByClassName('invisible');
-    console.log("court_points=%s", JSON.stringify(court_points))
-    console.log("court_point0", (court_points[0].name))
+    coordinateArray = document.getElementsByClassName('invisible');
+    currentCoordinate = 0;
+    setPointButtonLabel();
+    let submitButton = document.getElementById("submitButton");
+    submitButton.disabled = true;
   });
 
-  // function imageZoom(sourceImageID, targetDivID) {
+  function setPointButtonLabel() {
+    var coordinateId = coordinateArray[currentCoordinate].name
+    // console.log("coordinateId=%s", coordinateId)
+    let label = coordinateId.substring(0, 3).toUpperCase();
+    let setButton = document.getElementById("setButton");
+    setButton.value = `Set ${label}`;
+  }
+
   function imageZoom(targetDivID) {
-    // img = document.getElementById(sourceImageID);
     image_source = "/static/" + document.getElementById("cam_side").value + "_court.png"
 
     notZoomedDiv = document.getElementById("div_not_zoomed");
@@ -180,7 +183,7 @@
 
     notZoomedDiv.style.backgroundImage = "url('" + image_source + "')";
     notZoomedDiv.style.backgroundSize = (notZoomedDiv.offsetWidth-2) + "px " + (notZoomedDiv.offsetHeight-2) + "px";
-    console.log("notZoomedDiv: width=%d height=%d backgroundSize=%s", notZoomedDiv.offsetWidth, notZoomedDiv.offsetHeight, notZoomedDiv.style.backgroundSize);
+    // console.log("notZoomedDiv: width=%d height=%d backgroundSize=%s", notZoomedDiv.offsetWidth, notZoomedDiv.offsetHeight, notZoomedDiv.style.backgroundSize);
  
     // Create & insert lens
     lensDiv = document.createElement("DIV");
@@ -188,7 +191,7 @@
     lensDiv.setAttribute("class", "lens_class");
     lensDiv.id = "LENS"
     // img.parentElement.insertBefore(lensDiv, img);
-    notZoomedDiv.parentElement.insertBefore(lensDiv, div_not_zoomed);
+    notZoomedDiv.parentElement.insertBefore(lensDiv, notZoomedDiv);
 
     lensDivStyle = getComputedStyle(lensDiv);
     lensDivBorderTotalWidth = (parseInt(lensDivStyle.borderLeftWidth) || 0) * 2;
@@ -225,7 +228,6 @@
     notZoomedDiv.addEventListener("touchmove", moveLensByTouch);
   }
 
- 
   function drawCursorInZoom8() {
     zoomed8Context.clearRect(0, 0, zoomed8Canvas.width, zoomed8Canvas.height);
     // zoomed8Context.beginPath();
@@ -280,68 +282,29 @@
     moveLensBoundaryCheck();
   }
 
-  function set_point() {
+  function setPoint() {
     // the point's X/Y is equal to the center of the zoomed image which is set in moveLensBoundaryCheck()
     // console.log("background left=%d top=%d  centerOfZoomed x=%d y=%d  canvas.width=%d", 
     //   background.left, background.top, centerOfZoomed.x, centerOfZoomed.y, zoomed8Canvas.width);
-   
-    // the following define x/y areas for the 7 coordinates: Near/Far(y) Baseline isLeftCam/Right (x), and ServiceLine
-    var fb_y_max = 100;
-    var fb_x_max = isLeftCam ? 500 : 1000;
-    var ns_y_min = 220;
-    var ns_y_max = isLeftCam ? 425 : 375;
-    var nsl_x_max = isLeftCam ? 440 : 520;
-    var nsc_x_max = isLeftCam ? 730 : 800;
-    var nb_x_max = 500;
 
-    if (centerOfZoomed.y < fb_y_max) {
-      // set far base line left or right
-      if (centerOfZoomed.x < fb_x_max) {
-        var fbl_x_y = document.getElementById('fbl_x_y');
-        fbl_x_y.innerText = `FBL: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
-        document.getElementById("fblx").value = centerOfZoomed.x;
-        document.getElementById("fbly").value = centerOfZoomed.y;
-      } else {
-        var fbr_x_y = document.getElementById('fbr_x_y');
-        fbr_x_y.innerText = `FBR: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
-        document.getElementById("fbrx").value = centerOfZoomed.x;
-        document.getElementById("fbry").value = centerOfZoomed.y;
-      }
-    } else if (centerOfZoomed.y > ns_y_min && centerOfZoomed.y < ns_y_max) {
-      // set far near service line left, center or right
-      if (centerOfZoomed.x < nsl_x_max) {
-        var nsl_x_y = document.getElementById('nsl_x_y');
-        nsl_x_y.innerText = `NSL: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
-        document.getElementById("nslx").value = centerOfZoomed.x;
-        document.getElementById("nsly").value = centerOfZoomed.y;
-      } else if (centerOfZoomed.x > nsl_x_max && centerOfZoomed.x < nsc_x_max) {
-        var nsc_x_y = document.getElementById('nsc_x_y');
-        nsc_x_y.innerText = `NSC: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
-        document.getElementById("nscx").value = centerOfZoomed.x;
-        document.getElementById("nscy").value = centerOfZoomed.y;
-      } else {
-        var nsr_x_y = document.getElementById('nsr_x_y');
-        nsr_x_y.innerText = `NSR: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
-        document.getElementById("nsrx").value = centerOfZoomed.x;
-        document.getElementById("nsry").value = centerOfZoomed.y;
-      }
-    } else if (centerOfZoomed.y > ns_y_max) {
-      // set near base line left or right
-      if (centerOfZoomed.x < nb_x_max) {
-        var nbl_x_y = document.getElementById('nbl_x_y');
-        nbl_x_y.innerText = `NBL: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
-        document.getElementById("nblx").value = centerOfZoomed.x;
-        document.getElementById("nbly").value = centerOfZoomed.y;
-      } else {
-        var nbr_x_y = document.getElementById('nbr_x_y');
-        nbr_x_y.innerText = `NBR: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
-        document.getElementById("nbrx").value = centerOfZoomed.x;
-        document.getElementById("nbry").value = centerOfZoomed.y;
-        document.getElementById("disabled").disabled = false;
-      }
-    } else {
-      console.log("centerOfZoomed.y: %d is out of bounds", centerOfZoomed.y)
+    var coordinateId = coordinateArray[currentCoordinate].name
+    let courtPointElementId = coordinateId.substring(0,3) + "_x_y"
+    let courtPointElement = document.getElementById(courtPointElementId);
+    courtPointElement.innerText = `${coordinateId.substring(0,3).toUpperCase()}: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
+
+    document.getElementById(coordinateId).value = centerOfZoomed.x;
+    currentCoordinate++;
+    coordinateId = coordinateArray[currentCoordinate].name
+    document.getElementById(coordinateId).value = centerOfZoomed.y;
+    currentCoordinate++;
+    if (currentCoordinate >= coordinateArray.length) {
+      currentCoordinate = 0;
+      // all points are set, so enable submit button
+      let submitButton = document.getElementById("submitButton");
+      submitButton.disabled = false;
     }
+    // console.log(`currentCoordinate=${currentCoordinate} coordinateArray.length=${coordinateArray.length}` );
+    setPointButtonLabel();
   }
 
   // zoomed image (lens) displays the rectangle that has been touched
@@ -403,6 +366,7 @@
     // The divide by 16 is to get 1/2 the width/height, and then divide by 8, which is the amount the image is zoomed
     centerOfZoomed.x = background.left + (zoomed8Canvas.width/16);
     centerOfZoomed.y = background.top + (zoomed8Canvas.height/16);
+    let current_x_y_element = document.getElementById('current_x_y');
     current_x_y_element.innerText = `Current X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
   }
 
@@ -411,8 +375,7 @@
     var a, x = 0, y = 0;
     e = e || window.event;
     /* Get the x and y positions of the image: */
-    // a = img.getBoundingClientRect();
-    a = div_not_zoomed.getBoundingClientRect();
+    a = notZoomedDiv.getBoundingClientRect();
 
     // console.log("getBoundingClientRect: %s", JSON.stringify(a));
     // "{\"x\":16,\"y\":106,\"width\":642,\"height\":402,\"top\":106,\"right\":658,\"bottom\":508,\"left\":16}"
