@@ -10,20 +10,20 @@
     <canvas id="canvas_id_zoomed_8" width="256" height="256" ></canvas>
   </div>
   <div class="calibration_controls">
-    <form id="court_coordinates" action="/cam_calib_done" method="post" onsubmit="return check_coords();">
+    <form id="court_coordinates" action="/cam_calib_done" method="post">
       <div>
         <input type="button" value="&#x21A5" onclick="move_up()">
         <input type="button" value="&#x21A7" onclick="move_down()">
         <br>
         <input type="button" value="&#x21A4" onclick="move_left()">
         <input type="button" value="&#x21A6" onclick="move_right()">
+        <p id="current_x_y">Current X: ___ Y: ___</p>
         <input type="button" value="Set Intersection" onclick="set_point()">
         <br>
-        <p id="current_x_y">Current X: ___ Y: ___</p>
-        <input type="submit" value="Submit" class="submit-button" disabled>
-        <input type="hidden" id="fblx" name="fblx" value=0>
+        <input type="submit" value="Submit" disabled>
+        <input type="hidden" id="fblx" name="fblx" value=0 class="invisible">
         <input type="hidden" id="fbly" name="fbly" value=0>
-        <input type="hidden" id="fbrx" name="fbrx" value=0>
+        <input type="hidden" id="fbrx" name="fbrx" value=0 class="invisible">
         <input type="hidden" id="fbry" name="fbry" value=0>
         <input type="hidden" id="nslx" name="nslx" value=0>
         <input type="hidden" id="nsly" name="nsly" value=0>
@@ -57,6 +57,9 @@
 </div>
 
 <style media="all">
+  /* the following is used to faciltate: var court_points = document.getElementsByClassName('invisible'); */
+.invisible {visibility: hidden;}
+
 .calibration_controls {
   display: inline-block;
   border: 1px solid #d4d4d4;
@@ -70,8 +73,8 @@
   margin-top: 0;
   margin-bottom: 0;
  }
- .calibration_controls input[type="button"] {
-  width: 60px;
+ .calibration_controls input[type="button"], input[type="submit"] {
+  min-width: 80px;
   font-size: 32px;
   color: white;
   background: #555555;
@@ -79,21 +82,15 @@
   border: 2px solid #494949;
   display: inline-block;
 }
-/*
-  * {box-sizing: border-box;}
-*/
+
+.calibration_controls input[type="submit"]:disabled, submit[disabled] {
+  background-color: #333333;
+  color: #555555;
+}
 .img-zoom-container {
   position: relative;
   vertical-align: top;
 }
-/* 
-.img_not_zoomed_class {
-  display: inline-block;
-  border: 1px solid #d4d4d4;
-  height: 400px;
-  vertical-align: top;
-}
- */
 .div_not_zoomed_class {
   display: inline-block;
   border: 1px solid #d4d4d4;
@@ -161,6 +158,10 @@
     // console.log("cam_side value=" + cam_side + "  isLeftCam=" + isLeftCam);
     current_x_y_element = document.getElementById('current_x_y');
     drawCursorInZoom8();
+
+    court_points = document.getElementsByClassName('invisible');
+    console.log("court_points=%s", JSON.stringify(court_points))
+    console.log("court_point0", (court_points[0].name))
   });
 
   // function imageZoom(sourceImageID, targetDivID) {
