@@ -1,10 +1,9 @@
 {% extends "layouts/base.html" %}
 
-{% block selections %}
+{%- block selections %}
 <div class="img-zoom-container">
   <div id="div_not_zoomed" class="div_not_zoomed_class">
     <canvas id="canvas_not_zoomed" width="640" height="400"></canvas>
-    <!-- <img id="img_not_zoomed" src="{{court_pic}}" alt="Image from camera is missing" height="400"> -->
   </div>
   <div id="div_zoomed_8" class="div_zoomed_8_class">
     <canvas id="canvas_id_zoomed_8" width="256" height="256" ></canvas>
@@ -21,21 +20,10 @@
         <input type="button" id="setButton" value="Set ___" onclick="setPoint()">
         <br>
         <input type="submit" id="submitButton" value="Submit All Points">
-        <input type="hidden" id="fblx" name="fblx" value=0 class="invisible">
-        <input type="hidden" id="fbly" name="fbly" value=0 class="invisible">
-        <input type="hidden" id="fbrx" name="fbrx" value=0 class="invisible">
-        <input type="hidden" id="fbry" name="fbry" value=0 class="invisible">
-        <input type="hidden" id="nslx" name="nslx" value=0 class="invisible">
-        <input type="hidden" id="nsly" name="nsly" value=0 class="invisible">
-        <input type="hidden" id="nscx" name="nscx" value=0 class="invisible">
-        <input type="hidden" id="nscy" name="nscy" value=0 class="invisible">
-        <input type="hidden" id="nsrx" name="nsrx" value=0 class="invisible">
-        <input type="hidden" id="nsry" name="nsry" value=0 class="invisible">
-        <input type="hidden" id="nblx" name="nblx" value=0 class="invisible">
-        <input type="hidden" id="nbly" name="nbly" value=0 class="invisible">
-        <input type="hidden" id="nbrx" name="nbrx" value=0 class="invisible">
-        <input type="hidden" id="nbry" name="nbry" value=0 class="invisible">
-        <input type="hidden" id="cam_side" name="cam_side" value="{{cam_side}}">
+        {%- for coord in court_point_coords %}
+        <input type="hidden" id="{{coord}}" value=0 class="invisible">
+        {%- endfor %}
+        <input type="hidden" id="image_path" value="{{image_path}}">
       </div>
     </form>
     <hr style="height:2px;margin-top:2px;margin-bottom:2px">
@@ -119,14 +107,13 @@
   /* cursor: url('static/cursor-close.png'), auto; */
 }
 </style>
-{% endblock %}
+{%- endblock %}
 
 
-{% block control %}
+{%- block control %}
+{%- endblock %}
 
-{% endblock %}
-
-{% block page_specific_js %} 
+{%- block page_specific_js %} 
 <script>
   // modified from: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_image_zoom
   var zoomed8Div; //where the zoomed canvas is displayed; the canvas has the image zoomed as a background, plus a cursor
@@ -170,7 +157,7 @@
   }
 
   function imageZoom(targetDivID) {
-    image_source = "/static/" + document.getElementById("cam_side").value + "_court.png"
+    image_source = document.getElementById("image_path").value
 
     notZoomedDiv = document.getElementById("div_not_zoomed");
     notZoomedCanvas = document.getElementById("canvas_not_zoomed");
@@ -287,14 +274,14 @@
     // console.log("background left=%d top=%d  centerOfZoomed x=%d y=%d  canvas.width=%d", 
     //   background.left, background.top, centerOfZoomed.x, centerOfZoomed.y, zoomed8Canvas.width);
 
-    var coordinateId = coordinateArray[currentCoordinate].name
+    var coordinateId = coordinateArray[currentCoordinate].id
     let courtPointElementId = coordinateId.substring(0,3) + "_x_y"
     let courtPointElement = document.getElementById(courtPointElementId);
     courtPointElement.innerText = `${coordinateId.substring(0,3).toUpperCase()}: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
-
     document.getElementById(coordinateId).value = centerOfZoomed.x;
+    // now set y value
     currentCoordinate++;
-    coordinateId = coordinateArray[currentCoordinate].name
+    coordinateId = coordinateArray[currentCoordinate].id
     document.getElementById(coordinateId).value = centerOfZoomed.y;
     currentCoordinate++;
     if (currentCoordinate >= coordinateArray.length) {
@@ -389,4 +376,4 @@
     return {x : x, y : y};
   }
 </script>
-{% endblock %} 
+{%- endblock %} 

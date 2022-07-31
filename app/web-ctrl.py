@@ -186,6 +186,15 @@ COURT_POINT_KEYS = ['FBL','FBR', 'NSL', 'NSC', 'NSR', 'NBL', 'NBR']
 court_points_dict = {}
 for key in COURT_POINT_KEYS:
    court_points_dict[key] = [0,0]
+
+COURT_POINT_KEYS_W_AXIS = []
+for court_point_id in COURT_POINT_KEYS:
+   for axis in Axis:
+      if (axis.name == 'z'):
+         continue
+      else:
+         COURT_POINT_KEYS_W_AXIS.append(f"{court_point_id}{axis.name}".lower())
+
 # unit_lengths are the measurements (A,B,Z) converted to feet, inches and quarter inches
 unit_lengths = [[0 for _ in range(len(Measurement))] for _ in range(len(Units))]
 
@@ -434,25 +443,25 @@ def cam_calib():
       else:
          app.logger.debug(f"No change in {cam_side} cam measurements, not updating cam_measurements or cam_location")
 
-   mode_str = f"Court Points"
-   cam_lower = cam_side.lower()
    # copy the lastest PNG from the camera to the base
-   DO_SCP_FOR_CALIBRATION = True #False
-   if DO_SCP_FOR_CALIBRATION:
-      p = Popen(["scp", f"{cam_lower}:/run/shm/frame_even.png", f"/home/pi/boomer/{cam_lower}_court.png"])
-   else:
-      p = Popen(["cp", "/run/shm/frame.png", f"/home/pi/boomer/{cam_lower}_court.png"])
+   cam_lower = cam_side.lower()
+   destination_png = cam_lower + "_court.png"
+   source_path = f"{cam_lower}:/run/shm/frame_even.png"
+   destination_path = f"{user_dir}/{boomer_dir}/{destination_png}"
+
+   p = Popen(["scp", source_path, destination_png])
    stdoutdata, stderrdata = p.communicate()
    if p.returncode != 0:
       app.logger.error(f"scp of camera's frame.png to court.png failed: {p.returncode}")
    # status = os.waitpid(p.pid, 0)
 
+   mode_str = f"Court Points"
    return render_template(CAM_CALIBRATION_TEMPLATE, \
-      court_pic = "static/" + cam_lower + "_court.png", \
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
-      cam_side = cam_lower, \
+      image_path = "/static/" + destination_png, \
+      court_point_coords = COURT_POINT_KEYS_W_AXIS, \
       footer_center = "Mode: " + mode_str)
 
 
@@ -477,19 +486,11 @@ def cam_calib_done():
          app.logger.debug(f"POST to CALIB_DONE request.form: {request.form}")
          # example: ImmutableMultiDict
          # coord_args = ""
-         for court_point_id in COURT_POINT_KEYS:
-            for axis in Axis:
-               if (axis.name == 'z'):
-                  continue
-               else:
-                  form_key = f"{court_point_id}{axis.name}".lower()
-                  if form_key in request.form:
-                     court_points_dict[court_point_id][axis.value] = int(request.form[form_key])
-                     # coord_args = coord_args + f"--{form_key} {court_points_dict[court_point_id][axis.value]} "
-                  else:
-                     app.logger.error(f"Missing key in cam_calib_done post: {form_key}")
-            # coord_args = coord_args + \
-            # f" --camx {new_cam_location_mm[Axis.x.value]} --camy {new_cam_location_mm[Axis.y.value]} --camz {new_cam_location_mm[Axis.z.value]}"
+         for coordinate_id in COURT_POINT_KEYS_W_AXIS:
+            if coordinate_id in request.form:
+               court_points_dict[court_point_id][axis.value] = int(request.form[coordinate_id])
+            else:
+               app.logger.error(f"Missing {coordinate_id} in cam_calib_done post.")
 
          if cam_side == None:
             # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
