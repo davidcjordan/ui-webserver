@@ -148,7 +148,7 @@
   });
 
   function setPointButtonLabel() {
-    var coordinateId = coordinateArray[currentCoordinate].name
+    var coordinateId = coordinateArray[currentCoordinate].id
     // console.log("coordinateId=%s", coordinateId)
     let label = coordinateId.substring(0, 3).toUpperCase();
     let setButton = document.getElementById("setButton");
@@ -290,6 +290,74 @@
     }
     // console.log(`currentCoordinate=${currentCoordinate} coordinateArray.length=${coordinateArray.length}` );
     setPointButtonLabel();
+
+    notZoomedContext.strokeStyle = "Chartreuse";
+    notZoomedContext.lineWidth = 1;
+    // draw lines along court line in non-zoomed canvas
+    if (currentCoordinate == 2) {
+      notZoomedContext.clearRect(0, 0, notZoomedCanvas.width, notZoomedCanvas.height);
+    }
+    else if (currentCoordinate == 4) {
+      notZoomedContext.beginPath(); // FBR to FBL
+      notZoomedContext.moveTo(document.getElementById(coordinateArray[0].id).value/2, 
+                              document.getElementById(coordinateArray[1].id).value/2);
+      notZoomedContext.lineTo(document.getElementById(coordinateArray[2].id).value/2,
+                              document.getElementById(coordinateArray[3].id).value/2);
+      notZoomedContext.stroke();   
+    }
+    else if (currentCoordinate == 6) {
+      notZoomedContext.beginPath();  // FBL to NSL
+      notZoomedContext.moveTo(document.getElementById(coordinateArray[0].id).value/2, 
+                              document.getElementById(coordinateArray[1].id).value/2);
+      notZoomedContext.lineTo(document.getElementById(coordinateArray[4].id).value/2,
+                              document.getElementById(coordinateArray[5].id).value/2);
+      notZoomedContext.stroke();   
+    }
+    else if (currentCoordinate == 8) {
+      notZoomedContext.beginPath();  // NSL to NSC
+      notZoomedContext.moveTo(document.getElementById(coordinateArray[4].id).value/2, 
+                              document.getElementById(coordinateArray[5].id).value/2);
+      notZoomedContext.lineTo(document.getElementById(coordinateArray[6].id).value/2,
+                              document.getElementById(coordinateArray[7].id).value/2);
+      notZoomedContext.stroke();   
+    }
+    else if (currentCoordinate == 10) { 
+      notZoomedContext.beginPath(); // NSC to NSR
+      notZoomedContext.moveTo(document.getElementById(coordinateArray[6].id).value/2, 
+                              document.getElementById(coordinateArray[7].id).value/2);
+      notZoomedContext.lineTo(document.getElementById(coordinateArray[8].id).value/2,
+                              document.getElementById(coordinateArray[9].id).value/2);
+      notZoomedContext.stroke();   
+      notZoomedContext.beginPath(); // FBL to NSR
+      notZoomedContext.moveTo(document.getElementById(coordinateArray[2].id).value/2, 
+                              document.getElementById(coordinateArray[3].id).value/2);
+      notZoomedContext.lineTo(document.getElementById(coordinateArray[8].id).value/2,
+                              document.getElementById(coordinateArray[9].id).value/2);
+      notZoomedContext.stroke();   
+    }
+    else if (currentCoordinate == 12) { 
+      notZoomedContext.beginPath(); // NSL to NBL
+      notZoomedContext.moveTo(document.getElementById(coordinateArray[4].id).value/2, 
+                              document.getElementById(coordinateArray[5].id).value/2);
+      notZoomedContext.lineTo(document.getElementById(coordinateArray[10].id).value/2,
+                              document.getElementById(coordinateArray[11].id).value/2);
+      notZoomedContext.stroke();   
+    }
+    else if (currentCoordinate == 0) { 
+      notZoomedContext.beginPath(); // NBL to NBR
+      notZoomedContext.moveTo(document.getElementById(coordinateArray[10].id).value/2, 
+                              document.getElementById(coordinateArray[11].id).value/2);
+      notZoomedContext.lineTo(document.getElementById(coordinateArray[12].id).value/2,
+                              document.getElementById(coordinateArray[13].id).value/2);
+      notZoomedContext.stroke();   
+      notZoomedContext.beginPath(); // NSR to NBR
+      notZoomedContext.moveTo(document.getElementById(coordinateArray[8].id).value/2, 
+                              document.getElementById(coordinateArray[9].id).value/2);
+      notZoomedContext.lineTo(document.getElementById(coordinateArray[12].id).value/2,
+                              document.getElementById(coordinateArray[13].id).value/2);
+      notZoomedContext.stroke();   
+    }
+
   }
 
   // zoomed image (lens) displays the rectangle that has been touched
