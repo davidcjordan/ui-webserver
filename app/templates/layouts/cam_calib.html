@@ -117,11 +117,10 @@
 <script>
   // modified from: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_image_zoom
   var zoomed8Div; //where the zoomed canvas is displayed; the canvas has the image zoomed as a background, plus a cursor
-  var zoomed8Canvas;
-  var zoomed8Context;
+  var zoomed8Canvas;   //used in moveLensBoundaryCheck()
+  var zoomed8Context;  //used in drawCursorInZoom8()
   var currentCoordinate;
 
-  var img;
   var lensDiv; //this is the square drawn on the image to indicate the zoomed area
   var lensDivBorderTotalWidth;  //set in imageZoom(), used in moveLensByTouch() to not have the lens go outside the image
 
@@ -177,7 +176,6 @@
     // lens_class defines the pixel height/width of the lens
     lensDiv.setAttribute("class", "lens_class");
     lensDiv.id = "LENS"
-    // img.parentElement.insertBefore(lensDiv, img);
     notZoomedDiv.parentElement.insertBefore(lensDiv, notZoomedDiv);
 
     lensDivStyle = getComputedStyle(lensDiv);
@@ -196,9 +194,9 @@
 
     /* Set background properties for the zoomed8Div */
     zoomed8Div.style.backgroundImage = "url('" + image_source + "')";
-    // NOTE: the img.width and height is 1/2 the full size image, since the img height is set to 400 in the html
+    // NOTE: the notZoomedDivWidth.width (image.width) and height is 1/2 the full size image, since the div height is set to 400 in the html
     zoomed8Div.style.backgroundSize = (notZoomedDivWidth * zoomRatio) + "px " + (notZoomedDivHeight * zoomRatio) + "px";
-    // console.log("img: width=%d height=%d zoomed8Div.backgroundSize=%s", img.width, img.height, zoomed8Div.style.backgroundSize);
+    // console.log("img: width=%d height=%d zoomed8Div.backgroundSize=%s", notZoomedDivWidth, notZoomedDivHeight, zoomed8Div.style.backgroundSize);
 
     //The max is doubled in order to be able to move the center pixel by pixel
     backgroundMax = {
