@@ -35,45 +35,40 @@
         <div class="footer-right" id="company">© tennisrobot.com</div>
       </div>
     </div>
-    <!--  if javascript was in header, then the javascripts didnt work.  Reconmendation is they should be here -->
-    <!-- 
-      https://flask-socketio.readthedocs.io/en/latest/intro.html
-     -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
-    <script type="text/javascript" charset="utf-8"> var socket = io(); </script>
-    <!-- The following will be used when socket.io.js is installed locally, which needs to be done: -->
-    <!-- <script src="/socket.io/socket.io.js"></script> -->
-    <script type="text/javascript">
-      var socket = io.connect('http://' + document.domain + ':' + location.port);
-      console.log("Sending client_connected")
-      socket.on('connect', function() {
-        socket.emit('client_connected', {data: 'New client!'});
-      });
-    </script>  
-    <script src="/static/js/state_update.js"></script>
-    <script type="text/javascript" charset="utf-8">
-      var data_get_update = {};
-      data_get_update["page"] = window.location.pathname.split("/").pop();
-      // console.log("json: " + data_get_update + " page: " + page );
+  </body>
+  
+  <script src="/static/js/socket.io.js"></script>
+  <script type="text/javascript" charset="utf-8"> var socket = io(); </script>
+  <script type="text/javascript">
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+    console.log("Sending client_connected")
+    socket.on('connect', function() {
+      socket.emit('client_connected', {data: 'New client!'});
+    });
+  </script>  
+  <script src="/static/js/state_update.js"></script>
+  <script type="text/javascript" charset="utf-8">
+    var data_get_update = {};
+    data_get_update["page"] = window.location.pathname.split("/").pop();
+    // console.log("json: " + data_get_update + " page: " + page );
 
-      var pollingVar = setInterval(pollingTimer, 350);
-      function pollingTimer() {
-        socket.emit("get_updates", JSON.stringify(data_get_update));
-      }
-      socket.onclose = function (event) {  
-        console.log("socket onclose occurred; event.code: " + event.code);  
-        if (event.code != 1000) {
-          // Error code 1000 means that the connection was closed normally; Try to reconnect.
-          if (!navigator.onLine) {
-              alert("You are offline. Please connect to the Internet and try again.");
-          }
+    var pollingVar = setInterval(pollingTimer, 350);
+    function pollingTimer() {
+      socket.emit("get_updates", JSON.stringify(data_get_update));
+    }
+    socket.onclose = function (event) {  
+      console.log("socket onclose occurred; event.code: " + event.code);  
+      if (event.code != 1000) {
+        // Error code 1000 means that the connection was closed normally; Try to reconnect.
+        if (!navigator.onLine) {
+            alert("You are offline. Please connect to the Internet and try again.");
         }
       }
-    </script>
-    {%- block page_specific_js %} 
-      {%- for line in page_specific_js %}
-        {{line}}
-      {%- endfor %}
-    {%- endblock %} 
-  </body>
+    }
+  </script>
+  {%- block page_specific_js %} 
+    {%- for line in page_specific_js %}
+      {{line}}
+    {%- endfor %}
+  {%- endblock %} 
 </html>

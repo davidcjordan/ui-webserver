@@ -30,6 +30,30 @@ jquery.js is already installed on Raspbian, but a symbolic link needs to be made
 ```
 ./make_links.sh
 ```
+
+For more info:  https://flask-socketio.readthedocs.io/en/latest/intro.html
+
+The socket.io client needs to be installed in order to run not connected to the net.
+For development, I used:
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script> -->
+
+Couldn't get the following to work, so instead installed socket.io client using npm and copied to repository
+    <script src="/socket.io/socket.io.js"></script>
+So now it's:
+   <script src="/static/js/socket.io.js"></script>
+ 
+To install the client, the following was done:
+```
+sudo apt update
+sudo apt install nodejs npm
+cd ~/repos/ui-webserver/app/static/js
+cp /home/pi/node_modules/socket.io-client/dist/socket.io.js .
+cp /home/pi/node_modules/socket.io-client/dist/socket.io.js.map .
+```
+
+Note: the javascript <scripts> were in (or after) the html body - they didn't work when in the header.
+
+
 # Other dependencies:
 
 git clone https://github.com/davidcjordan/drills to ~/boomer should have already been performed. The file *ui_drill_selection_lists.py* in the drills directory is used by the UI to present a subset of drills to select.
