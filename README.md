@@ -7,6 +7,7 @@ The components in the diagram are:
 * Boomer base: controls the ball throwing motors and performs ball tracking.  A real-time program written in C
 * Web server: serves HTML pages including javascript and css files.  It uses [Flask](https://en.wikipedia.org/wiki/Flask_\(web_framework\)) to serve the pages.  The framework and pages served is written in Python.  The web-server also uses [Flask-SocketIO](https://flask-socketio.readthedocs.io/en/latest/) to send scoring updates to the browser and receive events, like level changes, from the browser.
 * The Chromium browser that comes pre-installed with Raspbian.  It is launched on startup and configured to run full-screen so that browser controls (address bar, back button, refresh) are not visible.
+   * Refer to after_boot.sh in the boomer_supporting_files for how Chromium is launched on startup
 
 A mouse and keyboard will not be available - the only input will be the touchscreen.  This is significant for the following reasons:
 * numeric entry is not simple - a touchscreen style keypad would have to be implemented.  Hence numeric controls (like tennis skill level) should use +/- buttons instead of number input
@@ -103,6 +104,14 @@ When a filter_list is provided, and the drill_list includes filter_values, the s
 data-Type="Development"
 ```
 
+## Disabling the context pop-up in kiosk mode
+refer to https://stackoverflow.com/questions/28222548/how-to-disable-context-menu-on-right-click-long-touch-in-a-kiosk-mode-of-chrome
+```
+  <script type="text/javascript" charset="utf-8">
+    // disable the context memu that occurs if the screen is touched too long
+    window.addEventListener("contextmenu", function(e) { e.preventDefault(); })
+  </script>
+```
 # Locating Court Points web-page notes:
 
 * the PNG of the right or left camera is shown in 1/4 size: 640x400

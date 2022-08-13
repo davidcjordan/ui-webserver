@@ -121,6 +121,7 @@ FAULTS_URL = '/faults'
 THROWER_CALIB_SELECTION_URL = '/thrower_calibration'
 CREEP_CALIB_URL = '/creep_calib'
 BEEP_SELECTION_URL = '/beep_selection'
+CAM_VERIF_URL = '/cam_verif'
 
 # Flask looks for following in the 'templates' directory
 MAIN_TEMPLATE = 'index.html'
@@ -131,6 +132,7 @@ SELECT_TEMPLATE = '/layouts' + SELECT_URL + '.html'
 DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
 CAM_CALIBRATION_TEMPLATE = '/layouts' + CAM_CALIB_URL + '.html'
 CAM_LOCATION_TEMPLATE = '/layouts' + CAM_LOCATION_URL + '.html'
+CAM_VERIFICATION_TEMPLATE = '/layouts' + CAM_VERIF_URL + '.html'
 FAULTS_TEMPLATE = '/layouts' + FAULTS_URL + '.html'
 
 # base process status strings:
@@ -251,6 +253,21 @@ app.config['SECRET_KEY'] = 'secret!'
 # socketio = SocketIO(app, cors_allowed_origins="http://localhost")
 # socketio = SocketIO(app, cors_allowed_origins="http://127.0.0.1")
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+def scp_court_png(frame='even'):
+   global cam_side
+   if cam_side is None:
+      cam_side = 'Left'
+   source_path = f"{cam_side.lower()}:/run/shm/frame_{frame}.png"
+   destination_path = f"{user_dir}/{boomer_dir}/{cam_side.lower()}_court.png"
+   # the q is for quiet
+   p = Popen(["scp", "-q", source_path, destination_path])
+   stdoutdata, stderrdata = p.communicate()
+   if p.returncode != 0:
+      app.logger.error(f"FAILED: scp {source_path} {destination_path}; error_code={p.returncode}")
+   else:
+      app.logger.info(f"OK: scp {source_path} {destination_path}")
+
 
 @app.route(CAM_LOCATION_URL, methods=DEFAULT_METHODS)
 def cam_location():
@@ -444,23 +461,14 @@ def cam_calib():
          app.logger.debug(f"No change in {cam_side} cam measurements, not updating cam_measurements or cam_location")
 
    # copy the lastest PNG from the camera to the base
-   cam_lower = cam_side.lower()
-   destination_png = cam_lower + "_court.png"
-   source_path = f"{cam_lower}:/run/shm/frame_even.png"
-   destination_path = f"{user_dir}/{boomer_dir}/{destination_png}"
-
-   p = Popen(["scp", source_path, destination_png])
-   stdoutdata, stderrdata = p.communicate()
-   if p.returncode != 0:
-      app.logger.error(f"scp of camera's frame.png to court.png failed: {p.returncode}")
-   # status = os.waitpid(p.pid, 0)
+   scp_court_png()
 
    mode_str = f"Court Points"
    return render_template(CAM_CALIBRATION_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
-      image_path = "/static/" + destination_png, \
+      image_path = "/static/" + cam_side.lower() + "_court.png", \
       court_point_coords = COURT_POINT_KEYS_W_AXIS, \
       footer_center = "Mode: " + mode_str)
 
@@ -494,7 +502,7 @@ def cam_calib_done():
 
          if cam_side == None:
             # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
-            cam_side == "Left"
+            cam_side = "Left"
             app.logger.warning("cam_side was None in cam_calib_done")
 
          #persist values for base to use to generate correction vectors
@@ -527,6 +535,33 @@ def cam_calib_done():
       page_specific_js = page_js, \
       # onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL}], \
       footer_center = "Mode: " + button_label)
+
+@app.route(CAM_VERIF_URL, methods=DEFAULT_METHODS)
+def cam_verif():
+   global cam_side
+
+   app.logger.debug(f"CAM_VERIF_URL request_form: {request.form}")
+   app.logger.debug(f"CAM_VERIF_URL request_args: {request.args}")
+
+   if cam_side == None:
+      # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
+      cam_side = "Left"
+      app.logger.warning("cam_side was None in cam_calib_done")
+
+   if 'side' in request.args:
+      app.logger.info(f"request.args['side']= {request.args['side']}")
+      if int(request.args['side']) == 1:
+         cam_side = 'Right'
+
+   scp_court_png()
+
+   return render_template(CAM_VERIFICATION_TEMPLATE, \
+      home_button = my_home_button, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
+      image_path = "/static/" + cam_side.lower() + "_court.png", \
+      court_point_coords = COURT_POINT_KEYS_W_AXIS, \
+      footer_center = "Mode: " + "Check Camera")
 
  
 @app.route(MAIN_URL, methods=DEFAULT_METHODS)
@@ -851,22 +886,23 @@ def drill():
       #request_form: ImmutableMultiDict([('beep_options.Type', '2'), ('beep_options.Stroke', '5'), ('beep_options.Difficulty', '2')])
       # for key in request.form:
       #    app.logger.info(f"Beep choice {key} = {request.form[key]}")
-      id = BEEP_DRILL_NUMBER_START
-      #BEEP_DRILL_NUMBER_END = 949
       #mini-tennis: 900-904; volley: 905-909; 910-914 flat, 915-919 loop, 920-924 chip, 925-929 topspin, 930-934 random
+      stroke_type_offset = 0
+      difficulty_offset = 3
       if 'beep_options.Difficulty' in request.form:
          difficulty_offset = int(request.form['beep_options.Difficulty'])
-         app.logger.info(f"beep_type={beep_type(beep_type_value).name}; Increasing id by {difficulty_offset}, e.g. {beep_difficulty(difficulty_offset).name}")
-         id += difficulty_offset
+         # app.logger.info(f"beep_type={beep_type(beep_type_value).name}; Increasing id by {difficulty_offset}, e.g. {beep_difficulty(difficulty_offset).name}")
       else:
          app.logger.warning(f"beep_options.Difficulty not in request.form")
       if beep_type_value is beep_type.Volley.value:
-         app.logger.info(f"Increasing id by 5, since Volley beep_type")
-         id += 5
+         stroke_type_offset = 5
       if beep_type_value is beep_type.Ground.value:
-         stroke_type_offset = int(request.form['beep_options.Stroke'])
-         id = BEEP_DRILL_NUMBER_START + 10 + (stroke_type_offset * 5)
-         app.logger.info(f"drill_id={id} using stroke_type={beep_stroke(stroke_type_offset).name}, offset=({stroke_type_offset} * 5) + 10")
+         stroke_type = int(request.form['beep_options.Stroke'])
+         stroke_type_offset = (stroke_type * 5) + 10
+         app.logger.info(f"Ground beep type, so using stroke_type={beep_stroke(stroke_type).name}")
+
+      id = BEEP_DRILL_NUMBER_START + difficulty_offset + stroke_type_offset
+      app.logger.info(f"drill_id={id}: {beep_type(beep_type_value).name}, difficulty_offset={difficulty_offset}, stroke_type_offset={stroke_type_offset}")
    else:
       app.logger.error("DRILL_URL - no drill or workout id!")
       mode_string = f"ERROR: no drill selected"
@@ -1036,6 +1072,11 @@ def handle_pause_resume():
    if not rc:
       app.logger.error("PUT PAUSE failed, code: {}".format(code))
 
+@socketio.on('refresh_image')
+def handle_refresh_image():
+   global cam_side
+   app.logger.info('received refresh_image.')
+   scp_court_png()
 
 @socketio.on('get_updates')
 def handle_get_updates(data):

@@ -1,0 +1,169 @@
+{% extends "layouts/base.html" %}
+
+{%- block selections %}
+<div class="img-zoom-container">
+  <div id="div_not_zoomed" class="div_not_zoomed_class">
+    <canvas id="canvas_not_zoomed" width="640" height="400"></canvas>
+  </div>
+  <div>
+    <form>
+      <input type="button" value="Reload Page" onclick="refreshImage()">
+      <input type="submit" id="submitButton" value="Next" onclick="window.location.href='/cam_verif?side=1';">
+    </form>
+    {%- for coord in court_point_coords %}
+    <input type="hidden" id="{{coord}}" value={{coord_value}} class="invisible">
+    {%- endfor %}
+    <input type="hidden" id="image_path" value="{{image_path}}">
+  </div>
+</div>
+
+<style media="all">
+  /* the following is used to faciltate: var coordinateArray = document.getElementsByClassName('invisible'); */
+.invisible {visibility: hidden;}
+
+input[type="button"], input[type="submit"] {
+  min-width: 80px;
+  font-size: 32px;
+  color: white;
+  background: #555555;
+  padding: 1px;
+  border: 2px solid #494949;
+  display: inline-block;
+}
+.div_not_zoomed_class {
+  display: inline-block;
+  border: 1px solid #d4d4d4;
+  width: 640px;
+  height: 400px;
+  vertical-align: top;
+  image-rendering: pixelated;
+}
+</style>
+{%- endblock %}
+
+{%- block control %}
+{%- endblock %}
+
+{%- block page_specific_js %} 
+<script> 
+  var notZoomedDiv;
+  var image_source;
+
+  // initialize:
+  window.addEventListener('load', (event) => {
+    // console.log('The page has fully loaded');
+    // console.log('Version 7');
+    // imageZoom("img_not_zoomed", "div_zoomed_8");
+    image_source = document.getElementById("image_path").value
+
+    notZoomedDiv = document.getElementById("div_not_zoomed");
+    notZoomedCanvas = document.getElementById("canvas_not_zoomed");
+    notZoomedContext = notZoomedCanvas.getContext("2d");
+
+    notZoomedDivStyle = getComputedStyle(notZoomedDiv);
+    notZoomedDivBorderTotalWidth = (parseInt(notZoomedDivStyle.borderLeftWidth) || 0) * 2;
+    notZoomedDivWidth = notZoomedDiv.offsetWidth - notZoomedDivBorderTotalWidth
+    notZoomedDivHeight = notZoomedDiv.offsetHeight - notZoomedDivBorderTotalWidth
+
+    // add timestamp to not have the browser use the cached image
+    var timestamp = new Date().getTime();
+    notZoomedDiv.style.backgroundImage = "url('" + image_source + "?t=" + timestamp + "')";
+    notZoomedDiv.style.backgroundSize = (notZoomedDiv.offsetWidth-2) + "px " + (notZoomedDiv.offsetHeight-2) + "px";
+
+    coordinateArray = document.getElementsByClassName('invisible');
+  });
+
+  function refreshImageOriginal(imgElement, imgURL){    
+    var timestamp = new Date().getTime();  
+    var el = document.getElementById(imgElement);  
+    var queryString = "?t=" + timestamp;    
+    el.src = imgURL + queryString;    
+  }
+  async function refreshImage(){    
+    socket.emit("refresh_image");
+    let sleep_ms = 500
+    console.log(`Waiting ${sleep_ms} milliseconds...`);
+    await new Promise(r => setTimeout(r, sleep_ms));
+    var timestamp = new Date().getTime();
+    notZoomedDiv.style.backgroundImage = "url('" + image_source + "?t=" + timestamp + "')";
+}
+
+  // var requestImageRefreshTimer = setInterval(pollingTimer, 3000); //3 seconds
+  // async function pollingTimer() {
+  //   socket.emit("refresh_image");
+  //   let sleep_ms = 500
+  //   console.log(`Waiting ${sleep_ms} milliseconds...`);
+  //   await new Promise(r => setTimeout(r, sleep_ms));
+  //   var timestamp = new Date().getTime();
+  //   notZoomedDiv.style.backgroundImage = "url('" + image_source + "?t=" + timestamp + "')";
+  // }
+
+  function drawCourtLines() {
+    // the point's X/Y is equal to the center of the zoomed image which is set in moveLensBoundaryCheck()
+    // console.log("background left=%d top=%d  centerOfZoomed x=%d y=%d  canvas.width=%d", 
+    //   background.left, background.top, centerOfZoomed.x, centerOfZoomed.y, zoomed8Canvas.width);
+
+    notZoomedContext.strokeStyle = "Chartreuse";
+    notZoomedContext.lineWidth = 1;
+    // draw lines along court line in non-zoomed canvas
+    notZoomedContext.clearRect(0, 0, notZoomedCanvas.width, notZoomedCanvas.height);
+
+    notZoomedContext.beginPath(); // FBR to FBL
+    notZoomedContext.moveTo(document.getElementById(coordinateArray[0].id).value/2, 
+                            document.getElementById(coordinateArray[1].id).value/2);
+    notZoomedContext.lineTo(document.getElementById(coordinateArray[2].id).value/2,
+                            document.getElementById(coordinateArray[3].id).value/2);
+    notZoomedContext.stroke();   
+
+    notZoomedContext.beginPath();  // FBL to NSL
+    notZoomedContext.moveTo(document.getElementById(coordinateArray[0].id).value/2, 
+                            document.getElementById(coordinateArray[1].id).value/2);
+    notZoomedContext.lineTo(document.getElementById(coordinateArray[4].id).value/2,
+                            document.getElementById(coordinateArray[5].id).value/2);
+    notZoomedContext.stroke();   
+
+    notZoomedContext.beginPath();  // NSL to NSC
+    notZoomedContext.moveTo(document.getElementById(coordinateArray[4].id).value/2, 
+                            document.getElementById(coordinateArray[5].id).value/2);
+    notZoomedContext.lineTo(document.getElementById(coordinateArray[6].id).value/2,
+                            document.getElementById(coordinateArray[7].id).value/2);
+    notZoomedContext.stroke();   
+ 
+    notZoomedContext.beginPath(); // NSC to NSR
+    notZoomedContext.moveTo(document.getElementById(coordinateArray[6].id).value/2, 
+                            document.getElementById(coordinateArray[7].id).value/2);
+    notZoomedContext.lineTo(document.getElementById(coordinateArray[8].id).value/2,
+                            document.getElementById(coordinateArray[9].id).value/2);
+    notZoomedContext.stroke();   
+    
+    notZoomedContext.beginPath(); // FBL to NSR
+    notZoomedContext.moveTo(document.getElementById(coordinateArray[2].id).value/2, 
+                            document.getElementById(coordinateArray[3].id).value/2);
+    notZoomedContext.lineTo(document.getElementById(coordinateArray[8].id).value/2,
+                            document.getElementById(coordinateArray[9].id).value/2);
+    notZoomedContext.stroke();   
+
+    notZoomedContext.beginPath(); // NSL to NBL
+    notZoomedContext.moveTo(document.getElementById(coordinateArray[4].id).value/2, 
+                            document.getElementById(coordinateArray[5].id).value/2);
+    notZoomedContext.lineTo(document.getElementById(coordinateArray[10].id).value/2,
+                            document.getElementById(coordinateArray[11].id).value/2);
+    notZoomedContext.stroke();   
+
+    notZoomedContext.beginPath(); // NBL to NBR
+    notZoomedContext.moveTo(document.getElementById(coordinateArray[10].id).value/2, 
+                            document.getElementById(coordinateArray[11].id).value/2);
+    notZoomedContext.lineTo(document.getElementById(coordinateArray[12].id).value/2,
+                            document.getElementById(coordinateArray[13].id).value/2);
+    notZoomedContext.stroke();   
+
+    notZoomedContext.beginPath(); // NSR to NBR
+    notZoomedContext.moveTo(document.getElementById(coordinateArray[8].id).value/2, 
+                            document.getElementById(coordinateArray[9].id).value/2);
+    notZoomedContext.lineTo(document.getElementById(coordinateArray[12].id).value/2,
+                            document.getElementById(coordinateArray[13].id).value/2);
+    notZoomedContext.stroke();   
+  }
+
+</script>
+{%- endblock %} 

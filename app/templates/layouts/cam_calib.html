@@ -167,7 +167,9 @@
     notZoomedDivWidth = notZoomedDiv.offsetWidth - notZoomedDivBorderTotalWidth
     notZoomedDivHeight = notZoomedDiv.offsetHeight - notZoomedDivBorderTotalWidth
 
-    notZoomedDiv.style.backgroundImage = "url('" + image_source + "')";
+    // add timestamp to not have the browser use the cached image
+    var timestamp = new Date().getTime();
+    notZoomedDiv.style.backgroundImage = "url('" + image_source + "?t=" + timestamp + "')";
     notZoomedDiv.style.backgroundSize = (notZoomedDiv.offsetWidth-2) + "px " + (notZoomedDiv.offsetHeight-2) + "px";
     // console.log("notZoomedDiv: width=%d height=%d backgroundSize=%s", notZoomedDiv.offsetWidth, notZoomedDiv.offsetHeight, notZoomedDiv.style.backgroundSize);
  
