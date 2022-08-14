@@ -2,7 +2,7 @@
 
 {% block selections %} 
 <!-- The following is not necessary: state_updates send fault table
-<script type="text/javascript" charset="utf-8">
+<script>
    document.addEventListener('DOMContentLoaded',() => {
       // console.log("faults onload")
       socket.emit("fault_request");
@@ -28,14 +28,14 @@
 {% endblock %} 
 
 {% block page_specific_js %} 
-<!-- <script type="text/javascript" charset="utf-8">
+<!-- <script">
    document.getElementById("test").addEventListener("click", function (e) {
       socket.emit("fault_request");
       // console.log("emitted fault_request")
    }, false);
 </script> -->
 
-<script type="text/javascript" charset="utf-8">
+<script>
    socket.on('faults_update', function(faults) {
       // console.log("received faults: " + faults)
       let table = document.getElementById("fault_table");

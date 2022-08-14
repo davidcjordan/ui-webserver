@@ -1,0 +1,61 @@
+/* the following is used to faciltate: var coordinateArray = document.getElementsByClassName('invisible'); */
+/* .invisible {visibility: hidden;} */
+
+.calibration_controls {
+  display: inline-block;
+  border: 1px solid #d4d4d4;
+}
+.calibration_controls p, label, input[type="number"] {
+  font-size: 24px;
+  color: white;
+  background: #555555;
+  padding: 1px;
+  border: 2px solid #494949;
+  margin-top: 0;
+  margin-bottom: 0;
+ }
+ .calibration_controls input[type="button"], input[type="submit"] {
+  min-width: 80px;
+  font-size: 32px;
+  color: white;
+  background: #555555;
+  padding: 1px;
+  border: 2px solid #494949;
+  display: inline-block;
+}
+
+.calibration_controls input[type="submit"]:disabled, submit[disabled] {
+  background-color: #333333;
+  color: #555555;
+}
+.img-zoom-container {
+  position: relative;
+  vertical-align: top;
+}
+.div_not_zoomed_class {
+  display: inline-block;
+  border: 1px solid #d4d4d4;
+  width: 640px;
+  height: 400px;
+  vertical-align: top;
+  image-rendering: pixelated;
+}
+.lens_class {
+  position: absolute;
+  /* border: 1px solid #d4d4d4; */
+  border: 2px solid #702727;
+  /*set the size of the lens:*/
+  width: 16px;
+  height: 16px;
+}
+.div_zoomed_8_class {
+  vertical-align: top;
+  display: inline-block;
+  border: 1px solid #d4d4d4;
+  width: 256px;
+  height: 256px;
+  cursor: None;
+  image-rendering: pixelated;
+  /* cursor: crosshair; */
+  /* cursor: url('static/cursor-close.png'), auto; */
+}

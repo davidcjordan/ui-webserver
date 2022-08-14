@@ -9,23 +9,23 @@
     <canvas id="canvas_id_zoomed_8" width="256" height="256" ></canvas>
   </div>
   <div class="calibration_controls">
-    <form id="court_coordinates" action="/cam_calib_done" method="post">
-      <div>
-        <input type="button" value="&#x21A5" onclick="move_up()">
-        <input type="button" value="&#x21A7" onclick="move_down()">
-        <br>
-        <input type="button" value="&#x21A4" onclick="move_left()">
-        <input type="button" value="&#x21A6" onclick="move_right()">
-        <p id="current_x_y">Current X: ___ Y: ___</p>
-        <input type="button" id="setButton" value="Set ___" onclick="setPoint()">
-        <br>
-        <input type="submit" id="submitButton" value="Submit All Points">
+    <div>
+      <input type="button" value="&#x21A5;" onclick="move_up()">
+      <input type="button" value="&#x21A7;" onclick="move_down()">
+      <br>
+      <input type="button" value="&#x21A4;" onclick="move_left()">
+      <input type="button" value="&#x21A6;" onclick="move_right()">
+      <p id="current_x_y">Current X: ___ Y: ___</p>
+      <input type="button" id="setButton" value="Set ___" onclick="setPoint()">
+      <br>
+      <form id="court_coordinates" action="/cam_calib_done" method="POST">
         {%- for coord in court_point_coords %}
-        <input type="hidden" id="{{coord}}" value=0 class="invisible">
+        <input type="hidden" id="{{coord}}" value=0>
         {%- endfor %}
-        <input type="hidden" id="image_path" value="{{image_path}}">
-      </div>
-    </form>
+        <input type="submit" id="submitButton" value="Submit All Points" disabled>
+      </form>
+      <input type="hidden" id="image_path" value="{{image_path}}">
+    </div>
     <hr style="height:2px;margin-top:2px;margin-bottom:2px">
     <div>
       <p>Key: </p>
@@ -44,76 +44,13 @@
   </div>
 </div>
 
-<style media="all">
-  /* the following is used to faciltate: var coordinateArray = document.getElementsByClassName('invisible'); */
-.invisible {visibility: hidden;}
-
-.calibration_controls {
-  display: inline-block;
-  border: 1px solid #d4d4d4;
-}
-.calibration_controls p, label, input[type="number"] {
-  font-size: 24px;
-  color: white;
-  background: #555555;
-  padding: 1px;
-  border: 2px solid #494949;
-  margin-top: 0;
-  margin-bottom: 0;
- }
- .calibration_controls input[type="button"], input[type="submit"] {
-  min-width: 80px;
-  font-size: 32px;
-  color: white;
-  background: #555555;
-  padding: 1px;
-  border: 2px solid #494949;
-  display: inline-block;
-}
-
-.calibration_controls input[type="submit"]:disabled, submit[disabled] {
-  background-color: #333333;
-  color: #555555;
-}
-.img-zoom-container {
-  position: relative;
-  vertical-align: top;
-}
-.div_not_zoomed_class {
-  display: inline-block;
-  border: 1px solid #d4d4d4;
-  width: 640px;
-  height: 400px;
-  vertical-align: top;
-  image-rendering: pixelated;
-}
-.lens_class {
-  position: absolute;
-  /* border: 1px solid #d4d4d4; */
-  border: 2px solid #702727;
-  /*set the size of the lens:*/
-  width: 16px;
-  height: 16px;
-}
-.div_zoomed_8_class {
-  vertical-align: top;
-  display: inline-block;
-  border: 1px solid #d4d4d4;
-  width: 256px;
-  height: 256px;
-  cursor: None;
-  image-rendering: pixelated;
-  /* cursor: crosshair; */
-  /* cursor: url('static/cursor-close.png'), auto; */
-}
-</style>
 {%- endblock %}
-
 
 {%- block control %}
 {%- endblock %}
 
 {%- block page_specific_js %} 
+
 <script>
   // modified from: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_image_zoom
   var zoomed8Div; //where the zoomed canvas is displayed; the canvas has the image zoomed as a background, plus a cursor
@@ -140,15 +77,15 @@
 
     drawCursorInZoom8();
 
-    coordinateArray = document.getElementsByClassName('invisible');
+    // coordinateArray = document.getElementsByClassName('invisible');
+    coordinateArray = document.getElementById("court_coordinates").elements;
+    // console.dir(coordinateArray, {'maxArrayLength': null});
     currentCoordinate = 0;
     setPointButtonLabel();
-    let submitButton = document.getElementById("submitButton");
-    submitButton.disabled = true;
   });
 
   function setPointButtonLabel() {
-    var coordinateId = coordinateArray[currentCoordinate].id
+    let coordinateId = coordinateArray[currentCoordinate].id
     // console.log("coordinateId=%s", coordinateId)
     let label = coordinateId.substring(0, 3).toUpperCase();
     let setButton = document.getElementById("setButton");
@@ -279,12 +216,17 @@
     let courtPointElement = document.getElementById(courtPointElementId);
     courtPointElement.innerText = `${coordinateId.substring(0,3).toUpperCase()}: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
     document.getElementById(coordinateId).value = centerOfZoomed.x;
+    var coord = {[coordinateId]: centerOfZoomed.x};
+    socket.emit("coord", coord);
     // now set y value
     currentCoordinate++;
     coordinateId = coordinateArray[currentCoordinate].id
     document.getElementById(coordinateId).value = centerOfZoomed.y;
+    coord = {[coordinateId]: centerOfZoomed.y};
+    socket.emit("coord", coord);
+
     currentCoordinate++;
-    if (currentCoordinate >= coordinateArray.length) {
+    if (currentCoordinate >= 13) {
       currentCoordinate = 0;
       // all points are set, so enable submit button
       let submitButton = document.getElementById("submitButton");
@@ -293,6 +235,8 @@
     // console.log(`currentCoordinate=${currentCoordinate} coordinateArray.length=${coordinateArray.length}` );
     setPointButtonLabel();
 
+    // console.dir(coordinateArray, {'maxArrayLength': null});
+  
     notZoomedContext.strokeStyle = "Chartreuse";
     notZoomedContext.lineWidth = 1;
     // draw lines along court line in non-zoomed canvas

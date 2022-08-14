@@ -9,6 +9,11 @@
     <link rel="stylesheet" href="/static/css/number-picker-2.css">
     <link rel="stylesheet" href="/static/css/radio-slider.css">
     <link rel="stylesheet" href="/static/css/tables.css">
+    {%- block page_specific_styles %} 
+      {%- for line in page_specific_styles %}
+        {{line}}
+      {%- endfor %}
+    {%- endblock %} 
   </head>
   <body>
     <div class="container">
@@ -20,7 +25,7 @@
           <p>{{ installation_title }}</p>
         </div>
         <div class="header-icon">
-          <img src="{{ installation_icon }}" style="height:64px;">
+          <img src="{{ installation_icon }}" style="height:64px;" alt="Icon">
         </div>
       </div>     
       <div class="section">
@@ -38,8 +43,8 @@
   </body>
   
   <script src="/static/js/socket.io.js"></script>
-  <script type="text/javascript" charset="utf-8"> var socket = io(); </script>
-  <script type="text/javascript">
+  <script> var socket = io(); </script>
+  <script>
     var socket = io.connect('http://' + document.domain + ':' + location.port);
     console.log("Sending client_connected")
     socket.on('connect', function() {
@@ -47,7 +52,7 @@
     });
   </script>  
   <script src="/static/js/state_update.js"></script>
-  <script type="text/javascript" charset="utf-8">
+  <script>
     var data_get_update = {};
     data_get_update["page"] = window.location.pathname.split("/").pop();
     // console.log("json: " + data_get_update + " page: " + page );

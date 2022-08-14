@@ -88,7 +88,7 @@ except:
    customization_dict = {"title": "Welcome to Boomer", "icon": "/static/favicon.ico"}
 
 my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
-         <img src="/static/home.png" style="height:64px;"> \
+         <img src="/static/home.png" style="height:64px;" alt="Home"> \
          </button>')
 
 try:
@@ -463,8 +463,12 @@ def cam_calib():
    # copy the lastest PNG from the camera to the base
    scp_court_png()
 
+   page_styles = []
+   page_styles.append(Markup('<link rel="stylesheet" href="/static/css/cam-calib.css">'))
+
    mode_str = f"Court Points"
    return render_template(CAM_CALIBRATION_TEMPLATE, \
+      page_specific_styles = page_styles, \
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
@@ -476,6 +480,9 @@ def cam_calib():
 @app.route(CAM_CALIB_DONE_URL, methods=DEFAULT_METHODS)
 def cam_calib_done():
    global cam_side, new_cam_location_mm
+
+   # app.logger.debug(f"POST to CALIB_DONE request: {request}")
+   # app.logger.debug(f"POST to CALIB_DONE request.content_type: {request.content_type}")
 
    if request.method=='POST':
       if (request.content_type.startswith('application/json')):
@@ -494,34 +501,47 @@ def cam_calib_done():
          app.logger.debug(f"POST to CALIB_DONE request.form: {request.form}")
          # example: ImmutableMultiDict
          # coord_args = ""
-         for coordinate_id in COURT_POINT_KEYS_W_AXIS:
-            if coordinate_id in request.form:
-               court_points_dict[court_point_id][axis.value] = int(request.form[coordinate_id])
-            else:
-               app.logger.error(f"Missing {coordinate_id} in cam_calib_done post.")
+         # for some unknown reason, the court_points are not in POST request.form, so using socket.io emit instead
+         if len(request.form) > 0:
+            for coordinate_id in COURT_POINT_KEYS_W_AXIS:
+               if coordinate_id in request.form:
+                  court_points_dict[court_point_id][axis.value] = int(request.form[coordinate_id])
+               else:
+                  app.logger.error(f"Missing {coordinate_id} in cam_calib_done post.")
+         else:
+            app.logger.debug("POST to CALIB_DONE request.form is zero length; using emit data instead")
 
          if cam_side == None:
             # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
             cam_side = "Left"
             app.logger.warning("cam_side was None in cam_calib_done")
 
-         #persist values for base to use to generate correction vectors
-         dt = datetime.datetime.now()
-         dt_str = dt.strftime("%Y-%m-%d_%H-%M")
-         output_line = json.dumps(court_points_dict) + " " +  dt_str + "\n"
-         with open(f'{settings_dir}/{cam_side.lower()}_court_points.json', 'r+') as outfile:
-            lines = outfile.readlines() # read old content
-            outfile.seek(0) # go back to the beginning of the file
-            outfile.write(output_line) # write new content at the beginning
-            for line in lines: # write old content after new
-               outfile.write(line)
+         # do some sanity checking:
+         if court_points_dict["NBR"][1] < 1:
+            app.logger.error(f"Invalid court_point values: {court_points_dict}")
+            status = f"FAILED: {cam_side} camera court points are invalid."
+         else:
+            #persist values for base to use to generate correction vectors
+            dt = datetime.datetime.now()
+            dt_str = dt.strftime("%Y-%m-%d_%H-%M")
+            output_line = json.dumps(court_points_dict) + " " +  dt_str + "\n"
+            with open(f'{settings_dir}/{cam_side.lower()}_court_points.json', 'r+') as outfile:
+               lines = outfile.readlines() # read old content
+               outfile.seek(0) # go back to the beginning of the file
+               outfile.write(output_line) # write new content at the beginning
+               for line in lines: # write old content after new
+                  outfile.write(line)
 
-         # tell the bbase to regenerate correction vectors; the '1' in the value is not used and is there for completeness
-         rc, code = send_msg(PUT_METHOD, FUNC_RSRC, {FUNC_GEN_CORRECTION_VECTORS: 1} )
-         if not rc:
-            if not code:
-               code = "unknown"
-            app.logger.error("PUT FUNC_GEN_CORRECTION_VECTORS failed, code: {code}")
+            # tell the bbase to regenerate correction vectors; the '1' in the value is not used and is there for completeness
+            rc, code = send_msg(PUT_METHOD, FUNC_RSRC, {FUNC_GEN_CORRECTION_VECTORS: 1} )
+            if not rc:
+               if not code:
+                  code = "unknown"
+               app.logger.error("PUT FUNC_GEN_CORRECTION_VECTORS failed, code: {code}")
+               status = f"FAILED: {cam_side} camera correction vector generation failed."
+            else:
+               status = f"{cam_side} camera calibration finished."
+
 
    page_js = []
    page_js.append(Markup('<script src="/static/js/timed-redirect.js"></script>'))
@@ -531,7 +551,7 @@ def cam_calib_done():
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
-      message = f"{cam_side} camera calibration finished.", \
+      message = status, \
       page_specific_js = page_js, \
       # onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL}], \
       footer_center = "Mode: " + button_label)
@@ -550,8 +570,10 @@ def cam_verif():
 
    if 'side' in request.args:
       app.logger.info(f"request.args['side']= {request.args['side']}")
-      if int(request.args['side']) == 1:
+      if int(request.args['side']) == 1 or 'ight' in request.args['side']:
          cam_side = 'Right'
+      else:
+         cam_side = 'Left'
 
    scp_court_png()
 
@@ -1077,6 +1099,24 @@ def handle_refresh_image():
    global cam_side
    app.logger.info('received refresh_image.')
    scp_court_png()
+
+@socketio.on('coord')
+def handle_coord_array(data):
+   global court_points_dict
+   # app.logger.info(f"received coord_array: {data}")
+   point_id_w_axis = list(data.keys())[0]
+   value = int(data[point_id_w_axis])
+   court_point_id = str(point_id_w_axis)[:3].upper()
+   axis_letter = str(point_id_w_axis)[3]
+   if axis_letter is 'x':
+      axis = 0
+   elif axis_letter is 'y':
+      axis = 1
+   else:
+      app.logger.error(f"unknown axis in court coord: {axis_letter}")
+   app.logger.info(f"court_point_id={court_point_id} axis={axis} value={value}")
+   court_points_dict[court_point_id][axis] = value
+   # app.logger.info(f"court_point_dict={court_points_dict}")
 
 @socketio.on('get_updates')
 def handle_get_updates(data):

@@ -107,7 +107,7 @@ data-Type="Development"
 ## Disabling the context pop-up in kiosk mode
 refer to https://stackoverflow.com/questions/28222548/how-to-disable-context-menu-on-right-click-long-touch-in-a-kiosk-mode-of-chrome
 ```
-  <script type="text/javascript" charset="utf-8">
+  <script type="text/javascript">
     // disable the context memu that occurs if the screen is touched too long
     window.addEventListener("contextmenu", function(e) { e.preventDefault(); })
   </script>
