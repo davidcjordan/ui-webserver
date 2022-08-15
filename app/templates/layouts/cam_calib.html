@@ -131,8 +131,9 @@
     //   zoomed8Div.offsetWidth, zoomed8Div.offsetHeight, lensDiv.offsetWidth, lensDiv.offsetHeight);
     // console.log("zoomRatio=%d", zoomRatio);
 
-    /* Set background properties for the zoomed8Div */
-    zoomed8Div.style.backgroundImage = "url('" + image_source + "')";
+    // Set background properties for the zoomed8Div !! add timestamp to not have the browser use the cached image
+    var timestamp = new Date().getTime();
+    zoomed8Div.style.backgroundImage = "url('" + ßurce + "?t=" + timestamp + "')";
     // NOTE: the notZoomedDivWidth.width (image.width) and height is 1/2 the full size image, since the div height is set to 400 in the html
     zoomed8Div.style.backgroundSize = (notZoomedDivWidth * zoomRatio) + "px " + (notZoomedDivHeight * zoomRatio) + "px";
     // console.log("img: width=%d height=%d zoomed8Div.backgroundSize=%s", notZoomedDivWidth, notZoomedDivHeight, zoomed8Div.style.backgroundSize);
