@@ -10,8 +10,9 @@
       <input type="button" value="Reload Page" onclick="refreshImage()">
       <input type="submit" id="submitButton" value="Next" onclick="window.location.href='/cam_verif?side=1';">
     </form>
-    {%- for coord in court_point_coords %}
-    <input type="hidden" id="{{coord}}" value={{coord_value}} class="invisible">
+    {%- for coord, value in court_point_coords.items() %}
+    <input type="hidden" id="{{coord}}X" value={{value[0]}}>
+    <input type="hidden" id="{{coord}}Y" value={{value[1]}}>
     {%- endfor %}
     <input type="hidden" id="image_path" value="{{image_path}}">
   </div>
@@ -70,15 +71,15 @@ input[type="button"], input[type="submit"] {
     notZoomedDiv.style.backgroundImage = "url('" + image_source + "?t=" + timestamp + "')";
     notZoomedDiv.style.backgroundSize = (notZoomedDiv.offsetWidth-2) + "px " + (notZoomedDiv.offsetHeight-2) + "px";
 
-    coordinateArray = document.getElementsByClassName('invisible');
+    drawCourtLines();
   });
 
-  function refreshImageOriginal(imgElement, imgURL){    
-    var timestamp = new Date().getTime();  
-    var el = document.getElementById(imgElement);  
-    var queryString = "?t=" + timestamp;    
-    el.src = imgURL + queryString;    
-  }
+  // function refreshImageOriginal(imgElement, imgURL){    
+  //   var timestamp = new Date().getTime();  
+  //   var el = document.getElementById(imgElement);  
+  //   var queryString = "?t=" + timestamp;    
+  //   el.src = imgURL + queryString;    
+  // }
   async function refreshImage(){    
     socket.emit("refresh_image");
     let sleep_ms = 500
@@ -86,6 +87,7 @@ input[type="button"], input[type="submit"] {
     await new Promise(r => setTimeout(r, sleep_ms));
     var timestamp = new Date().getTime();
     notZoomedDiv.style.backgroundImage = "url('" + image_source + "?t=" + timestamp + "')";
+    drawCourtLines();
 }
 
   // var requestImageRefreshTimer = setInterval(pollingTimer, 3000); //3 seconds
@@ -108,60 +110,30 @@ input[type="button"], input[type="submit"] {
     // draw lines along court line in non-zoomed canvas
     notZoomedContext.clearRect(0, 0, notZoomedCanvas.width, notZoomedCanvas.height);
 
-    notZoomedContext.beginPath(); // FBR to FBL
-    notZoomedContext.moveTo(document.getElementById(coordinateArray[0].id).value/2, 
-                            document.getElementById(coordinateArray[1].id).value/2);
-    notZoomedContext.lineTo(document.getElementById(coordinateArray[2].id).value/2,
-                            document.getElementById(coordinateArray[3].id).value/2);
+    notZoomedContext.beginPath();
+    notZoomedContext.moveTo(document.getElementById("FBLX").value/2, 
+                            document.getElementById("FBLY").value/2);
+    notZoomedContext.lineTo(document.getElementById("FBRX").value/2,
+                            document.getElementById("FBRY").value/2);
+    notZoomedContext.lineTo(document.getElementById("NSRX").value/2,
+                            document.getElementById("NSRY").value/2);
+    notZoomedContext.lineTo(document.getElementById("NBRX").value/2,
+                            document.getElementById("NBRY").value/2);
+    notZoomedContext.lineTo(document.getElementById("NBLX").value/2,
+                            document.getElementById("NBLY").value/2);
+    notZoomedContext.lineTo(document.getElementById("NSLX").value/2,
+                            document.getElementById("NSLY").value/2);
+    notZoomedContext.lineTo(document.getElementById("FBLX").value/2, 
+                            document.getElementById("FBLY").value/2);
     notZoomedContext.stroke();   
 
-    notZoomedContext.beginPath();  // FBL to NSL
-    notZoomedContext.moveTo(document.getElementById(coordinateArray[0].id).value/2, 
-                            document.getElementById(coordinateArray[1].id).value/2);
-    notZoomedContext.lineTo(document.getElementById(coordinateArray[4].id).value/2,
-                            document.getElementById(coordinateArray[5].id).value/2);
-    notZoomedContext.stroke();   
-
-    notZoomedContext.beginPath();  // NSL to NSC
-    notZoomedContext.moveTo(document.getElementById(coordinateArray[4].id).value/2, 
-                            document.getElementById(coordinateArray[5].id).value/2);
-    notZoomedContext.lineTo(document.getElementById(coordinateArray[6].id).value/2,
-                            document.getElementById(coordinateArray[7].id).value/2);
-    notZoomedContext.stroke();   
- 
-    notZoomedContext.beginPath(); // NSC to NSR
-    notZoomedContext.moveTo(document.getElementById(coordinateArray[6].id).value/2, 
-                            document.getElementById(coordinateArray[7].id).value/2);
-    notZoomedContext.lineTo(document.getElementById(coordinateArray[8].id).value/2,
-                            document.getElementById(coordinateArray[9].id).value/2);
-    notZoomedContext.stroke();   
-    
-    notZoomedContext.beginPath(); // FBL to NSR
-    notZoomedContext.moveTo(document.getElementById(coordinateArray[2].id).value/2, 
-                            document.getElementById(coordinateArray[3].id).value/2);
-    notZoomedContext.lineTo(document.getElementById(coordinateArray[8].id).value/2,
-                            document.getElementById(coordinateArray[9].id).value/2);
-    notZoomedContext.stroke();   
-
-    notZoomedContext.beginPath(); // NSL to NBL
-    notZoomedContext.moveTo(document.getElementById(coordinateArray[4].id).value/2, 
-                            document.getElementById(coordinateArray[5].id).value/2);
-    notZoomedContext.lineTo(document.getElementById(coordinateArray[10].id).value/2,
-                            document.getElementById(coordinateArray[11].id).value/2);
-    notZoomedContext.stroke();   
-
-    notZoomedContext.beginPath(); // NBL to NBR
-    notZoomedContext.moveTo(document.getElementById(coordinateArray[10].id).value/2, 
-                            document.getElementById(coordinateArray[11].id).value/2);
-    notZoomedContext.lineTo(document.getElementById(coordinateArray[12].id).value/2,
-                            document.getElementById(coordinateArray[13].id).value/2);
-    notZoomedContext.stroke();   
-
-    notZoomedContext.beginPath(); // NSR to NBR
-    notZoomedContext.moveTo(document.getElementById(coordinateArray[8].id).value/2, 
-                            document.getElementById(coordinateArray[9].id).value/2);
-    notZoomedContext.lineTo(document.getElementById(coordinateArray[12].id).value/2,
-                            document.getElementById(coordinateArray[13].id).value/2);
+    notZoomedContext.beginPath();
+    notZoomedContext.moveTo(document.getElementById("NSRX").value/2,
+                            document.getElementById("NSRY").value/2);
+    notZoomedContext.lineTo(document.getElementById("NSCX").value/2,
+                            document.getElementById("NSCY").value/2);
+    notZoomedContext.lineTo(document.getElementById("NSLX").value/2,
+                            document.getElementById("NSLY").value/2);
     notZoomedContext.stroke();   
   }
 
