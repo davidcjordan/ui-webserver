@@ -531,8 +531,30 @@ def cam_calib_done():
 def cam_verif():
    global cam_side
 
+   read_settings_from_file()
+
+   app.logger.debug(f"CAM_VERIF_URL request_args: {request.args}")
+
+   if cam_side == None:
+      # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
+      cam_side = "Left"
+      app.logger.warning("cam_side was None in cam_calib_done")
+
+   cam_side = 'Left'
+   if 'side' in request.args:
+      app.logger.info(f"request.args['side']={request.args['side']}")
+      try:
+         side_int = int(request.args['side'])
+         if side_int == 1:
+            cam_side = 'Right'
+      except:
+         pass
+
+      if 'ight' in request.args['side']:
+         cam_side = 'Right'
+
    try:
-      with open(f'{settings_dir}/left_court_points.json') as f:
+      with open(f'{settings_dir}/{cam_side.lower()}_court_points.json') as f:
          file_lines = f.readlines()
          first_line_json = file_lines[0].split("}")[0] + "}"
          # app.logger.debug(f"first_line_json={first_line_json}")
@@ -541,31 +563,16 @@ def cam_verif():
    except:
       app.logger.warning(f"court_points_dict load failed")
 
-   # app.logger.debug(f"CAM_VERIF_URL request_form: {request.form}")
-   # app.logger.debug(f"CAM_VERIF_URL request_args: {request.args}")
-
-   if cam_side == None:
-      # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
-      cam_side = "Left"
-      app.logger.warning("cam_side was None in cam_calib_done")
-
-   if 'side' in request.args:
-      app.logger.info(f"request.args['side']= {request.args['side']}")
-      if int(request.args['side']) == 1 or 'ight' in request.args['side']:
-         cam_side = 'Right'
-      else:
-         cam_side = 'Left'
-
    scp_court_png()
 
-   # CAM_VERIF_EDIT
+   #TODO: handle scp or court_points failure
 
    return render_template(CAM_VERIFICATION_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
       image_path = "/static/" + cam_side.lower() + "_court.png", \
-      court_point_coords = COURT_POINT_KEYS_W_AXIS, \
+      court_point_coords = court_points_dict, \
       footer_center = "Mode: " + "Check Camera")
 
  
