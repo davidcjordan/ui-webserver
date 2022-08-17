@@ -29,34 +29,34 @@ import time
 from random import randint # for score updates - will be deleted
 import sys # for sys.path to search
 
-user_dir = '/home/pi'
-boomer_dir = 'boomer'
 @app.before_first_request
 def before_first_request():
-    log_level = logging.DEBUG
+   log_level = logging.DEBUG
 
-    for handler in app.logger.handlers:
+   for handler in app.logger.handlers:
       app.logger.removeHandler(handler)
-      # https://betterstack.com/community/guides/logging/how-to-start-logging-with-flask/
+   # https://betterstack.com/community/guides/logging/how-to-start-logging-with-flask/
       #  root = os.path.dirname(os.path.abspath(__file__))
       #  logdir = os.path.join(root, 'logs')
       #  if not os.path.exists(logdir):
       #      os.mkdir(logdir)
       #  log_file = os.path.join(logdir, 'app.log')
-      handler = logging.FileHandler('/run/shm/ui.log')
-      defaultFormatter = logging.Formatter('[%(asctime)s]%(levelname)s: %(message)s')
-      handler.setFormatter(defaultFormatter)
-      handler.setLevel(log_level)
-      app.logger.addHandler(handler)
-      app.logger.setLevel(log_level)
-
-site_data_dir = 'this_boomers_data'
-settings_dir = f'{user_dir}/{boomer_dir}/{site_data_dir}'
-settings_filename = "drill_game_settings.json"
-execs_dir = f"{user_dir}/{boomer_dir}/execs"
+   handler = logging.FileHandler('/run/shm/ui.log')
+   defaultFormatter = logging.Formatter('[%(asctime)s]%(levelname)s: %(message)s')
+   handler.setFormatter(defaultFormatter)
+   handler.setLevel(log_level)
+   app.logger.addHandler(handler)
+   app.logger.setLevel(log_level)
 
 # the following requires: export PYTHONPATH='/Users/tom/Documents/Projects/Boomer/control_ipc_utils'
+user_dir = '/home/pi'
+boomer_dir = 'boomer'
 repos_dir = 'repos'
+site_data_dir = 'this_boomers_data'
+settings_dir = f'{user_dir}/{boomer_dir}/{site_data_dir}'
+execs_dir = f"{user_dir}/{boomer_dir}/execs"
+settings_filename = "drill_game_settings.json"
+
 sys.path.append(f'{user_dir}/{repos_dir}/control_ipc_utils')
 # print(sys.path)
 try:
@@ -73,34 +73,19 @@ except:
    app.logger.error("Missing 'ui_drill_selection_lists' modules, please run: git clone https://github.com/davidcjordon/drills")
    exit()
 
+customization_dict = None
+settings_dict = None
+
 base_state = None
 previous_base_state = None
 client_state = False
 bbase_down_timestamp = None
 printout_counter = 0
-
 workout_select = False
-
-try:
-   with open(f'{settings_dir}/ui_customization.json') as f:
-      customization_dict = json.load(f)
-except:
-   customization_dict = {"title": "Welcome to Boomer", "icon": "/static/favicon.ico"}
 
 my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
          <img src="/static/home.png" style="height:64px;" alt="Home"> \
          </button>')
-
-try:
-   with open(f'{settings_dir}/{settings_filename}') as f:
-      settings_dict = json.load(f)
-      app.logger.debug("Settings restored: {settings_dict}")
-except:
-   settings_dict = {GRUNTS_PARAM: 0, TRASHT_PARAM: 0, LEVEL_PARAM: LEVEL_DEFAULT, \
-         SERVE_MODE_PARAM: 1, TIEBREAKER_PARAM: 0, \
-         SPEED_MOD_PARAM: SPEED_MOD_DEFAULT, DELAY_MOD_PARAM: DELAY_MOD_DEFAULT, \
-         ELEVATION_MOD_PARAM: ELEVATION_ANGLE_MOD_DEFAULT}
-
 
 IP_PORT = 1111 # picked what is hopefully an unused port  (can't use 44)
 DEFAULT_METHODS = ['POST', 'GET']
@@ -253,20 +238,6 @@ app.config['SECRET_KEY'] = 'secret!'
 # socketio = SocketIO(app, cors_allowed_origins="http://localhost")
 # socketio = SocketIO(app, cors_allowed_origins="http://127.0.0.1")
 socketio = SocketIO(app, cors_allowed_origins="*")
-
-def scp_court_png(frame='even'):
-   global cam_side
-   if cam_side is None:
-      cam_side = 'Left'
-   source_path = f"{cam_side.lower()}:/run/shm/frame_{frame}.png"
-   destination_path = f"{user_dir}/{boomer_dir}/{cam_side.lower()}_court.png"
-   # the q is for quiet
-   p = Popen(["scp", "-q", source_path, destination_path])
-   stdoutdata, stderrdata = p.communicate()
-   if p.returncode != 0:
-      app.logger.error(f"FAILED: scp {source_path} {destination_path}; error_code={p.returncode}")
-   else:
-      app.logger.info(f"OK: scp {source_path} {destination_path}")
 
 
 @app.route(CAM_LOCATION_URL, methods=DEFAULT_METHODS)
@@ -560,8 +531,18 @@ def cam_calib_done():
 def cam_verif():
    global cam_side
 
-   app.logger.debug(f"CAM_VERIF_URL request_form: {request.form}")
-   app.logger.debug(f"CAM_VERIF_URL request_args: {request.args}")
+   try:
+      with open(f'{settings_dir}/left_court_points.json') as f:
+         file_lines = f.readlines()
+         first_line_json = file_lines[0].split("}")[0] + "}"
+         # app.logger.debug(f"first_line_json={first_line_json}")
+         court_points_dict = json.loads(first_line_json)
+         app.logger.debug(f"court_points_dict={court_points_dict}")
+   except:
+      app.logger.warning(f"court_points_dict load failed")
+
+   # app.logger.debug(f"CAM_VERIF_URL request_form: {request.form}")
+   # app.logger.debug(f"CAM_VERIF_URL request_args: {request.args}")
 
    if cam_side == None:
       # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
@@ -576,6 +557,8 @@ def cam_verif():
          cam_side = 'Left'
 
    scp_court_png()
+
+   # CAM_VERIF_EDIT
 
    return render_template(CAM_VERIFICATION_TEMPLATE, \
       home_button = my_home_button, \
@@ -595,6 +578,8 @@ def index():
    rc, code = send_msg(PUT_METHOD, STOP_RSRC)
    if not rc:
       app.logger.error("PUT STOP failed, code: {}".format(code))
+
+   read_settings_from_file()
 
    # example of setting button disabled and a button ID
    # TODO: fix disable CSS
@@ -721,7 +706,7 @@ def game_options():
    if not rc:
       app.logger.error("PUT STOP failed, code: {}".format(code))
 
-   restore_settings() #restore level, delay, speed, etc
+   send_settings_to_base() #restore level, delay, speed, etc
 
    game_radio_options = { \
       SERVE_MODE_PARAM:{"legend":"Serves", "buttons":[{"label":"Alternate", "value":0},\
@@ -820,7 +805,7 @@ def select():
 
    app.logger.debug(f"select [drill/workout] request: {request}")
 
-   restore_settings() #restore level, delay, speed, etc
+   send_settings_to_base() #restore level, delay, speed, etc
 
    #enter this page from drill categories (player, instructor), or from Main (workflows)
    # a parameter (mode) indicates the if workflow or drills should be selected
@@ -974,7 +959,7 @@ def drill():
 def beep_selection():
    global beep_mode_choices
 
-   restore_settings() #restore level, delay, speed, etc
+   send_settings_to_base() #restore level, delay, speed, etc
 
    beep_radio_options = {}
    # in the for loop - options is the list of radio buttons and choice is the legend
@@ -1004,6 +989,7 @@ def beep_selection():
 def faults():
    global back_url, previous_url
    back_url = previous_url
+   read_settings_from_file()
 
    return render_template(FAULTS_TEMPLATE, \
       installation_title = customization_dict['title'], \
@@ -1212,7 +1198,7 @@ def check_base():
       previous_base_state = base_state
    # end while loop
 
-def restore_settings():
+def send_settings_to_base():
    rc, code = send_msg(PUT_METHOD, BCFG_RSRC, \
       {LEVEL_PARAM: settings_dict[LEVEL_PARAM], \
          GRUNTS_PARAM: settings_dict[GRUNTS_PARAM], \
@@ -1228,16 +1214,40 @@ def restore_settings():
          TIEBREAKER_PARAM: settings_dict[TIEBREAKER_PARAM]})
          # POINTS_DELAY_PARAM: settings_dict[POINTS_DELAY_PARAM]})
 
+def read_settings_from_file():
+   global customization_dict, settings_dict
+   try:
+      with open(f'{settings_dir}/ui_customization.json') as f:
+         customization_dict = json.load(f)
+   except:
+      customization_dict = {"title": "Welcome to Boomer", "icon": "/static/favicon.ico"}
 
-def print_base_status(iterations = 20):
-   global base_state
-   while iterations > 0:
-      print(f"{base_state}")
-      time.sleep(1)
-      iterations -=1
+   try:
+      with open(f'{settings_dir}/{settings_filename}') as f:
+         settings_dict = json.load(f)
+         app.logger.debug("Settings restored: {settings_dict}")
+   except:
+      settings_dict = {GRUNTS_PARAM: 0, TRASHT_PARAM: 0, LEVEL_PARAM: LEVEL_DEFAULT, \
+            SERVE_MODE_PARAM: 1, TIEBREAKER_PARAM: 0, \
+            SPEED_MOD_PARAM: SPEED_MOD_DEFAULT, DELAY_MOD_PARAM: DELAY_MOD_DEFAULT, \
+            ELEVATION_MOD_PARAM: ELEVATION_ANGLE_MOD_DEFAULT}
+
+def scp_court_png(frame='even'):
+   global cam_side
+   if cam_side is None:
+      cam_side = 'Left'
+   source_path = f"{cam_side.lower()}:/run/shm/frame_{frame}.png"
+   destination_path = f"{user_dir}/{boomer_dir}/{cam_side.lower()}_court.png"
+   # the q is for quiet
+   p = Popen(["scp", "-q", source_path, destination_path])
+   stdoutdata, stderrdata = p.communicate()
+   if p.returncode != 0:
+      app.logger.error(f"FAILED: scp {source_path} {destination_path}; error_code={p.returncode}")
+   else:
+      app.logger.info(f"OK: scp {source_path} {destination_path}")
+
 
 if __name__ == '__main__':
-   global customized_header, original_footer
 
    do_threaded_base_checks = False
    if do_threaded_base_checks:
