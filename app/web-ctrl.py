@@ -533,6 +533,7 @@ def cam_verif():
 
    read_settings_from_file()
 
+   app.logger.debug(f"POST to CAM_VERIF_URL request.form: {request.form}")
    app.logger.debug(f"CAM_VERIF_URL request_args: {request.args}")
 
    if cam_side == None:

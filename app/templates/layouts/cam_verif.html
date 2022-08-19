@@ -3,24 +3,22 @@
 {%- block selections %}
 <div class="img-zoom-container">
   <div id="div_not_zoomed" class="div_not_zoomed_class">
-    <canvas id="canvas_not_zoomed" width="640" height="400"></canvas>
+    <canvas id="canvas_not_zoomed"></canvas>
   </div>
-  <div>
+  <div style="width:220px; display: inline-block;">
     <form>
-      <input type="button" value="Reload Page" onclick="refreshImage()">
+      <input type="button" value="Reload" onclick="refreshImage()">
       <input type="submit" id="submitButton" value="Next" onclick="window.location.href='/cam_verif?side=1';">
+      <input type="hidden" id="image_path" value="{{image_path}}">
     </form>
     {%- for coord, value in court_point_coords.items() %}
     <input type="hidden" id="{{coord}}X" value={{value[0]}}>
     <input type="hidden" id="{{coord}}Y" value={{value[1]}}>
     {%- endfor %}
-    <input type="hidden" id="image_path" value="{{image_path}}">
   </div>
 </div>
 
 <style media="all">
-  /* the following is used to faciltate: var coordinateArray = document.getElementsByClassName('invisible'); */
-.invisible {visibility: hidden;}
 
 input[type="button"], input[type="submit"] {
   min-width: 80px;
@@ -29,13 +27,10 @@ input[type="button"], input[type="submit"] {
   background: #555555;
   padding: 1px;
   border: 2px solid #494949;
-  display: inline-block;
 }
 .div_not_zoomed_class {
   display: inline-block;
   border: 1px solid #d4d4d4;
-  width: 640px;
-  height: 400px;
   vertical-align: top;
   image-rendering: pixelated;
 }
@@ -48,92 +43,87 @@ input[type="button"], input[type="submit"] {
 {%- block page_specific_js %} 
 <script> 
   var notZoomedDiv;
-  var image_source;
+  var imgFilename;
 
   // initialize:
   window.addEventListener('load', (event) => {
     // console.log('The page has fully loaded');
     // console.log('Version 7');
-    // imageZoom("img_not_zoomed", "div_zoomed_8");
-    image_source = document.getElementById("image_path").value
-
+    imgFilename = document.getElementById("image_path").value;
+  
     notZoomedDiv = document.getElementById("div_not_zoomed");
-    notZoomedCanvas = document.getElementById("canvas_not_zoomed");
-    notZoomedContext = notZoomedCanvas.getContext("2d");
-
+    notZoomedDiv.setAttribute("style","width:960px; height:600px");
     notZoomedDivStyle = getComputedStyle(notZoomedDiv);
     notZoomedDivBorderTotalWidth = (parseInt(notZoomedDivStyle.borderLeftWidth) || 0) * 2;
+    // console.log("notZoomedDivBorderTotalWidth=%d", notZoomedDivBorderTotalWidth);
     notZoomedDivWidth = notZoomedDiv.offsetWidth - notZoomedDivBorderTotalWidth
     notZoomedDivHeight = notZoomedDiv.offsetHeight - notZoomedDivBorderTotalWidth
 
     // add timestamp to not have the browser use the cached image
     var timestamp = new Date().getTime();
-    notZoomedDiv.style.backgroundImage = "url('" + image_source + "?t=" + timestamp + "')";
-    notZoomedDiv.style.backgroundSize = (notZoomedDiv.offsetWidth-2) + "px " + (notZoomedDiv.offsetHeight-2) + "px";
+    notZoomedDiv.style.backgroundImage = "url('" + imgFilename + "?t=" + timestamp + "')";
+    notZoomedDiv.style.backgroundSize = (notZoomedDivWidth) + "px " + (notZoomedDivHeight) + "px";
+
+    notZoomedCanvas = document.getElementById("canvas_not_zoomed");
+    notZoomedCanvas.width = notZoomedDivWidth;
+    notZoomedCanvas.height = notZoomedDivHeight;
+    notZoomedContext = notZoomedCanvas.getContext("2d");
 
     drawCourtLines();
   });
 
-  // function refreshImageOriginal(imgElement, imgURL){    
-  //   var timestamp = new Date().getTime();  
-  //   var el = document.getElementById(imgElement);  
-  //   var queryString = "?t=" + timestamp;    
-  //   el.src = imgURL + queryString;    
-  // }
   async function refreshImage(){    
     socket.emit("refresh_image");
     let sleep_ms = 500
     console.log(`Waiting ${sleep_ms} milliseconds...`);
     await new Promise(r => setTimeout(r, sleep_ms));
     var timestamp = new Date().getTime();
-    notZoomedDiv.style.backgroundImage = "url('" + image_source + "?t=" + timestamp + "')";
+    notZoomedDiv.style.backgroundImage = "url('" + imgFilename + "?t=" + timestamp + "')";
     drawCourtLines();
-}
-
-  // var requestImageRefreshTimer = setInterval(pollingTimer, 3000); //3 seconds
-  // async function pollingTimer() {
-  //   socket.emit("refresh_image");
-  //   let sleep_ms = 500
-  //   console.log(`Waiting ${sleep_ms} milliseconds...`);
-  //   await new Promise(r => setTimeout(r, sleep_ms));
-  //   var timestamp = new Date().getTime();
-  //   notZoomedDiv.style.backgroundImage = "url('" + image_source + "?t=" + timestamp + "')";
-  // }
+  }
 
   function drawCourtLines() {
-    // the point's X/Y is equal to the center of the zoomed image which is set in moveLensBoundaryCheck()
-    // console.log("background left=%d top=%d  centerOfZoomed x=%d y=%d  canvas.width=%d", 
-    //   background.left, background.top, centerOfZoomed.x, centerOfZoomed.y, zoomed8Canvas.width);
-
     notZoomedContext.strokeStyle = "Chartreuse";
     notZoomedContext.lineWidth = 1;
-    // draw lines along court line in non-zoomed canvas
+
     notZoomedContext.clearRect(0, 0, notZoomedCanvas.width, notZoomedCanvas.height);
 
+    /*  Couldn't get the following to work to get the image width
+    https://duckduckgo.com/?q=javascript+get+width+of+background+image&t=osx&ia=web
+    var imageSrc = notZoomedDiv.style.backgroundImage.replace(/url\(|\)$/ig, '');
+    console.log("imageSrc=%s", imageSrc);
+    var image = new Image();
+    image.src = imageSrc;
+    console.log("imageSrc=%s; imgWidth=%d", imageSrc, image.naturalWidth);
+    canvasDivisor = img.naturalWidth/notZoomedDivWidth;
+    */
+    canvasDivisor = 1280/notZoomedDivWidth;
+    // console.log("canvasDivisor=%f", canvasDivisor);
+
     notZoomedContext.beginPath();
-    notZoomedContext.moveTo(document.getElementById("FBLX").value/2, 
-                            document.getElementById("FBLY").value/2);
-    notZoomedContext.lineTo(document.getElementById("FBRX").value/2,
-                            document.getElementById("FBRY").value/2);
-    notZoomedContext.lineTo(document.getElementById("NSRX").value/2,
-                            document.getElementById("NSRY").value/2);
-    notZoomedContext.lineTo(document.getElementById("NBRX").value/2,
-                            document.getElementById("NBRY").value/2);
-    notZoomedContext.lineTo(document.getElementById("NBLX").value/2,
-                            document.getElementById("NBLY").value/2);
-    notZoomedContext.lineTo(document.getElementById("NSLX").value/2,
-                            document.getElementById("NSLY").value/2);
-    notZoomedContext.lineTo(document.getElementById("FBLX").value/2, 
-                            document.getElementById("FBLY").value/2);
+    notZoomedContext.moveTo(parseInt(document.getElementById("FBLX").value/canvasDivisor), 
+                            parseInt(document.getElementById("FBLY").value/canvasDivisor));
+    notZoomedContext.lineTo(parseInt(document.getElementById("FBRX").value/canvasDivisor),
+                            parseInt(document.getElementById("FBRY").value/canvasDivisor));
+    notZoomedContext.lineTo(parseInt(document.getElementById("NSRX").value/canvasDivisor),
+                            parseInt(document.getElementById("NSRY").value/canvasDivisor));
+    notZoomedContext.lineTo(parseInt(document.getElementById("NBRX").value/canvasDivisor),
+                            parseInt(document.getElementById("NBRY").value/canvasDivisor));
+    notZoomedContext.lineTo(parseInt(document.getElementById("NBLX").value/canvasDivisor),
+                            parseInt(document.getElementById("NBLY").value/canvasDivisor));
+    notZoomedContext.lineTo(parseInt(document.getElementById("NSLX").value/canvasDivisor),
+                            parseInt(document.getElementById("NSLY").value/canvasDivisor));
+    notZoomedContext.lineTo(parseInt(document.getElementById("FBLX").value/canvasDivisor), 
+                            parseInt(document.getElementById("FBLY").value/canvasDivisor));
     notZoomedContext.stroke();   
 
     notZoomedContext.beginPath();
-    notZoomedContext.moveTo(document.getElementById("NSRX").value/2,
-                            document.getElementById("NSRY").value/2);
-    notZoomedContext.lineTo(document.getElementById("NSCX").value/2,
-                            document.getElementById("NSCY").value/2);
-    notZoomedContext.lineTo(document.getElementById("NSLX").value/2,
-                            document.getElementById("NSLY").value/2);
+    notZoomedContext.moveTo(parseInt(document.getElementById("NSRX").value/canvasDivisor),
+                            parseInt(document.getElementById("NSRY").value/canvasDivisor));
+    notZoomedContext.lineTo(parseInt(document.getElementById("NSCX").value/canvasDivisor),
+                            parseInt(document.getElementById("NSCY").value/canvasDivisor));
+    notZoomedContext.lineTo(parseInt(document.getElementById("NSLX").value/canvasDivisor),
+                            parseInt(document.getElementById("NSLY").value/canvasDivisor));
     notZoomedContext.stroke();   
   }
 
