@@ -19,8 +19,9 @@
       <input type="button" id="setButton" value="Set ___" onclick="setPoint()">
       <br>
       <form id="court_coordinates" action="/cam_calib_done" method="POST">
-        {%- for coord in court_point_coords %}
-        <input type="hidden" id="{{coord}}" value=0>
+        {%- for coord, value in court_point_coords.items() %}
+        <input type="hidden" id="{{coord}}X" name="{{coord}}X" value={{value[0]}}>
+        <input type="hidden" id="{{coord}}Y" name="{{coord}}Y" value={{value[1]}}>
         {%- endfor %}
         <input type="submit" id="submitButton" value="Submit All Points" disabled>
       </form>
@@ -33,13 +34,13 @@
       <p>B=Base Line; S=Service</p>
       <p>L=Left;R=Right;C=Center</p>
       <hr style="height:2px;margin-block-start:0.1em;margin-block-end:0.1em">
-      <p id="fbl_x_y">FBL X: ___ Y: ___</p>
-      <p id="fbr_x_y">FBR X: ___ Y: ___</p>
-      <p id="nsl_x_y">NSL X: ___ Y: ___</p>
-      <p id="nsc_x_y">NSC X: ___ Y: ___</p>
-      <p id="nsr_x_y">NSR X: ___ Y: ___</p>
-      <p id="nbl_x_y">NBL X: ___ Y: ___</p>
-      <p id="nbr_x_y">NBR X: ___ Y: ___</p>
+      <p id="FBL_X_Y">FBL X: ___ Y: ___</p>
+      <p id="FBR_X_Y">FBR X: ___ Y: ___</p>
+      <p id="NSL_X_Y">NSL X: ___ Y: ___</p>
+      <p id="NSC_X_Y">NSC X: ___ Y: ___</p>
+      <p id="NSR_X_Y">NSR X: ___ Y: ___</p>
+      <p id="NBL_X_Y">NBL X: ___ Y: ___</p>
+      <p id="NBR_X_Y">NBR X: ___ Y: ___</p>
     </div>
   </div>
 </div>
@@ -57,6 +58,7 @@
   var zoomed8Canvas;   //used in moveLensBoundaryCheck()
   var zoomed8Context;  //used in drawCursorInZoom8()
   var currentCoordinate;
+  var coordinateArray;
 
   var lensDiv; //this is the square drawn on the image to indicate the zoomed area
   var lensDivBorderTotalWidth;  //set in imageZoom(), used in moveLensByTouch() to not have the lens go outside the image
@@ -133,7 +135,7 @@
 
     // Set background properties for the zoomed8Div !! add timestamp to not have the browser use the cached image
     var timestamp = new Date().getTime();
-    zoomed8Div.style.backgroundImage = "url('" + ßurce + "?t=" + timestamp + "')";
+    zoomed8Div.style.backgroundImage = "url('" + image_source + "?t=" + timestamp + "')";
     // NOTE: the notZoomedDivWidth.width (image.width) and height is 1/2 the full size image, since the div height is set to 400 in the html
     zoomed8Div.style.backgroundSize = (notZoomedDivWidth * zoomRatio) + "px " + (notZoomedDivHeight * zoomRatio) + "px";
     // console.log("img: width=%d height=%d zoomed8Div.backgroundSize=%s", notZoomedDivWidth, notZoomedDivHeight, zoomed8Div.style.backgroundSize);
@@ -212,19 +214,20 @@
     // console.log("background left=%d top=%d  centerOfZoomed x=%d y=%d  canvas.width=%d", 
     //   background.left, background.top, centerOfZoomed.x, centerOfZoomed.y, zoomed8Canvas.width);
 
+    // console.dir(coordinateArray, {'maxArrayLength': null});
     var coordinateId = coordinateArray[currentCoordinate].id
-    let courtPointElementId = coordinateId.substring(0,3) + "_x_y"
+    let courtPointElementId = coordinateId.substring(0,3) + "_X_Y"
     let courtPointElement = document.getElementById(courtPointElementId);
     courtPointElement.innerText = `${coordinateId.substring(0,3).toUpperCase()}: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
     document.getElementById(coordinateId).value = centerOfZoomed.x;
-    var coord = {[coordinateId]: centerOfZoomed.x};
-    socket.emit("coord", coord);
+    // var coord = {[coordinateId]: centerOfZoomed.x};
+    // socket.emit("coord", coord);
     // now set y value
     currentCoordinate++;
     coordinateId = coordinateArray[currentCoordinate].id
     document.getElementById(coordinateId).value = centerOfZoomed.y;
-    coord = {[coordinateId]: centerOfZoomed.y};
-    socket.emit("coord", coord);
+    // coord = {[coordinateId]: centerOfZoomed.y};
+    // socket.emit("coord", coord);
 
     currentCoordinate++;
     if (currentCoordinate >= 13) {

@@ -6,28 +6,27 @@
     <canvas id="canvas_not_zoomed"></canvas>
   </div>
   <div style="width:220px; display: inline-block;">
-    <form>
-      <input type="button" value="Reload" onclick="refreshImage()">
-      <input type="submit" id="submitButton" value="Next" onclick="window.location.href='/cam_verif?side=1';">
-      <input type="hidden" id="image_path" value="{{image_path}}">
+    <form method="post" action="{{ url_for('cam_verif') }}">
+      <button type="button" class="submit-button" onclick="refreshImage()">Reload</button>
+      <button type="submit" class="submit-button">Next</button>
+      <input type="hidden" name="image_path" id="image_path" value="{{image_path}}">
     </form>
     {%- for coord, value in court_point_coords.items() %}
-    <input type="hidden" id="{{coord}}X" value={{value[0]}}>
-    <input type="hidden" id="{{coord}}Y" value={{value[1]}}>
+    <input type="hidden" id="{{coord}}X" name="{{coord}}X" value={{value[0]}}>
+    <input type="hidden" id="{{coord}}Y" name="{{coord}}Y" value={{value[1]}}>
     {%- endfor %}
   </div>
 </div>
 
 <style media="all">
-
-input[type="button"], input[type="submit"] {
+/* input[type="button"], input[type="submit"] {
   min-width: 80px;
   font-size: 32px;
   color: white;
   background: #555555;
   padding: 1px;
   border: 2px solid #494949;
-}
+} */
 .div_not_zoomed_class {
   display: inline-block;
   border: 1px solid #d4d4d4;
@@ -41,12 +40,13 @@ input[type="button"], input[type="submit"] {
 {%- endblock %}
 
 {%- block page_specific_js %} 
-<script> 
+<script defer> 
+  // refer to: https://stackoverflow.com/questions/807878/how-to-make-javascript-execute-after-page-load
   var notZoomedDiv;
   var imgFilename;
 
   // initialize:
-  window.addEventListener('load', (event) => {
+  function init() {
     // console.log('The page has fully loaded');
     // console.log('Version 7');
     imgFilename = document.getElementById("image_path").value;
@@ -70,7 +70,9 @@ input[type="button"], input[type="submit"] {
     notZoomedContext = notZoomedCanvas.getContext("2d");
 
     drawCourtLines();
-  });
+  };
+
+  init();
 
   async function refreshImage(){    
     socket.emit("refresh_image");

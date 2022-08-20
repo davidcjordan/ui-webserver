@@ -170,9 +170,10 @@ INCHES_TO_MM = 25.4
 # COURT_POINT_KEYS = ['fblx','fbly','fbrx','fbry', \
 #    'nslx', 'nsly', 'nscx', 'nscy', 'nsrx', 'nsry', 'nblx', 'nbly', 'nbrx', 'nbry']
 COURT_POINT_KEYS = ['FBL','FBR', 'NSL', 'NSC', 'NSR', 'NBL', 'NBR']
-court_points_dict = {}
+court_points_dict_list = [{}, {}]
 for key in COURT_POINT_KEYS:
-   court_points_dict[key] = [0,0]
+   court_points_dict_list[0][key] = [0,0]
+   court_points_dict_list[1][key] = [0,0]
 
 COURT_POINT_KEYS_W_AXIS = []
 for court_point_id in COURT_POINT_KEYS:
@@ -180,7 +181,7 @@ for court_point_id in COURT_POINT_KEYS:
       if (axis.name == 'z'):
          continue
       else:
-         COURT_POINT_KEYS_W_AXIS.append(f"{court_point_id}{axis.name}".lower())
+         COURT_POINT_KEYS_W_AXIS.append(f"{court_point_id}{axis.name.upper()}")
 
 # unit_lengths are the measurements (A,B,Z) converted to feet, inches and quarter inches
 unit_lengths = [[0 for _ in range(len(Measurement))] for _ in range(len(Units))]
@@ -431,11 +432,16 @@ def cam_calib():
       else:
          app.logger.debug(f"No change in {cam_side} cam measurements, not updating cam_measurements or cam_location")
 
+
    # copy the lastest PNG from the camera to the base
-   scp_court_png()
+   scp_court_png(side = cam_side.lower())
 
    page_styles = []
    page_styles.append(Markup('<link rel="stylesheet" href="/static/css/cam-calib.css">'))
+
+   court_point_dict_index = 0
+   if cam_side is cam_side_right_label:
+      court_point_dict_index = 1
 
    mode_str = f"Court Points"
    return render_template(CAM_CALIBRATION_TEMPLATE, \
@@ -444,7 +450,8 @@ def cam_calib():
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
       image_path = "/static/" + cam_side.lower() + "_court.png", \
-      court_point_coords = COURT_POINT_KEYS_W_AXIS, \
+      court_point_coords = court_points_dict_list[court_point_dict_index], \
+      # court_point_coords = COURT_POINT_KEYS_W_AXIS, \
       footer_center = "Mode: " + mode_str)
 
 
@@ -456,6 +463,12 @@ def cam_calib_done():
    # app.logger.debug(f"POST to CALIB_DONE request.content_type: {request.content_type}")
 
    if request.method=='POST':
+
+      if cam_side == None:
+         # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
+         cam_side = "Left"
+         app.logger.warning("cam_side was None in cam_calib_done")
+
       if (request.content_type.startswith('application/json')):
          # >> not supporting a javascript POST of json; left for reference
          # print(f"request to calib: {request.json}")
@@ -470,32 +483,32 @@ def cam_calib_done():
             f" --camx {new_cam_location_mm[Axis.x.value]} --camy {new_cam_location_mm[Axis.y.value]} --camz {new_cam_location_mm[Axis.z.value]}" )
       else:
          app.logger.debug(f"POST to CALIB_DONE request.form: {request.form}")
-         # example: ImmutableMultiDict
-         # coord_args = ""
-         # for some unknown reason, the court_points are not in POST request.form, so using socket.io emit instead
+         # example: ImmutableMultiDict([('FBLX', '322'), ('FBLY', '72'), ('FBRX', '612'), ('FBRY', '54'), ('NSLX', '248'), ('NSLY', '328'), ('NSCX', '602'), ('NSCY', '292'), ('NSRX', '904'), ('NSRY', '262'), ('NBLX', '146'), ('NBLY', '686'), ('NBRX', '1244'), ('NBRY', '482')])
+         court_point_dict_index = 0
+         if cam_side is cam_side_right_label:
+            court_point_dict_index = 1
+
          if len(request.form) > 0:
             for coordinate_id in COURT_POINT_KEYS_W_AXIS:
                if coordinate_id in request.form:
-                  court_points_dict[court_point_id][axis.value] = int(request.form[coordinate_id])
+                  this_coord_point = coordinate_id[0:3]
+                  this_coord_axis = Axis[coordinate_id[3:4].lower()].value
+                  # app.logger.info(f"Before: court_point_dict_index={court_point_dict_index} this_coord_point={this_coord_point} this_coord_axis={this_coord_axis}")
+                  court_points_dict_list[court_point_dict_index][this_coord_point][this_coord_axis] = int(request.form[coordinate_id])
                else:
                   app.logger.error(f"Missing {coordinate_id} in cam_calib_done post.")
          else:
             app.logger.debug("POST to CALIB_DONE request.form is zero length; using emit data instead")
 
-         if cam_side == None:
-            # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
-            cam_side = "Left"
-            app.logger.warning("cam_side was None in cam_calib_done")
-
          # do some sanity checking:
-         if court_points_dict["NBR"][1] < 1:
-            app.logger.error(f"Invalid court_point values: {court_points_dict}")
+         if court_points_dict_list[court_point_dict_index]["NBR"][1] < 1:
+            app.logger.error(f"Invalid court_point values: {court_points_dict_list[court_point_dict_index]}")
             status = f"FAILED: {cam_side} camera court points are invalid."
          else:
             #persist values for base to use to generate correction vectors
             dt = datetime.datetime.now()
             dt_str = dt.strftime("%Y-%m-%d_%H-%M")
-            output_line = json.dumps(court_points_dict) + " " +  dt_str + "\n"
+            output_line = json.dumps(court_points_dict_list[court_point_dict_index]) + " " +  dt_str + "\n"
             with open(f'{settings_dir}/{cam_side.lower()}_court_points.json', 'r+') as outfile:
                lines = outfile.readlines() # read old content
                outfile.seek(0) # go back to the beginning of the file
@@ -529,42 +542,30 @@ def cam_calib_done():
 
 @app.route(CAM_VERIF_URL, methods=DEFAULT_METHODS)
 def cam_verif():
-   global cam_side
 
+   court_point_dict_index = None
    read_settings_from_file()
 
-   app.logger.debug(f"POST to CAM_VERIF_URL request.form: {request.form}")
-   app.logger.debug(f"CAM_VERIF_URL request_args: {request.args}")
+   if request.method=='POST':
+      app.logger.debug(f"POST to CAM_VERIF_URL request.form: {request.form}")
+      # POST to CAM_LOCATION request.form: ImmutableMultiDict([('choice', 'Left Cam Calib')])
+      if ('image_path' in request.form) and 'right' in request.form['image_path']:
+         court_point_dict_index = 0
+         cam_name = 'left'
+      else:
+         court_point_dict_index = 1
+         cam_name = 'right'
+ 
 
-   if cam_side == None:
+   if court_point_dict_index == None:
       # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
-      cam_side = "Left"
-      app.logger.warning("cam_side was None in cam_calib_done")
+      court_point_dict_index = 0
+      cam_name = 'left'
+      app.logger.warning("cam_side was None in cam_verif")
 
-   cam_side = 'Left'
-   if 'side' in request.args:
-      app.logger.info(f"request.args['side']={request.args['side']}")
-      try:
-         side_int = int(request.args['side'])
-         if side_int == 1:
-            cam_side = 'Right'
-      except:
-         pass
+   read_court_point_files()
 
-      if 'ight' in request.args['side']:
-         cam_side = 'Right'
-
-   try:
-      with open(f'{settings_dir}/{cam_side.lower()}_court_points.json') as f:
-         file_lines = f.readlines()
-         first_line_json = file_lines[0].split("}")[0] + "}"
-         # app.logger.debug(f"first_line_json={first_line_json}")
-         court_points_dict = json.loads(first_line_json)
-         app.logger.debug(f"court_points_dict={court_points_dict}")
-   except:
-      app.logger.warning(f"court_points_dict load failed")
-
-   scp_court_png()
+   scp_court_png(side = cam_name)
 
    #TODO: handle scp or court_points failure
 
@@ -572,8 +573,8 @@ def cam_verif():
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
-      image_path = "/static/" + cam_side.lower() + "_court.png", \
-      court_point_coords = court_points_dict, \
+      image_path = "/static/" + cam_name + "_court.png", \
+      court_point_coords = court_points_dict_list[court_point_dict_index], \
       footer_center = "Mode: " + "Check Camera")
 
  
@@ -639,6 +640,8 @@ def settings():
    GRUNTS_PARAM:{"legend":"Grunts", "buttons":[{"label":"Off", "value":0},{"label":"On","value":1}]}, \
    TRASHT_PARAM:{"legend":"Trash Talking", "buttons":[{"label":"Off", "value":0},{"label":"On"}]}, \
    }
+
+   read_settings_from_file()
    # the following adds checked to  param[buttons][index]
    settings_radio_options[GRUNTS_PARAM]["buttons"][settings_dict[GRUNTS_PARAM]]["checked"] = 1
    settings_radio_options[TRASHT_PARAM]["buttons"][settings_dict[TRASHT_PARAM]]["checked"] = 1
@@ -1090,10 +1093,10 @@ def handle_pause_resume():
 
 @socketio.on('refresh_image')
 def handle_refresh_image():
-   global cam_side
    app.logger.info('received refresh_image.')
    scp_court_png()
 
+'''
 @socketio.on('coord')
 def handle_coord_array(data):
    global court_points_dict
@@ -1111,6 +1114,7 @@ def handle_coord_array(data):
    app.logger.info(f"court_point_id={court_point_id} axis={axis} value={value}")
    court_points_dict[court_point_id][axis] = value
    # app.logger.info(f"court_point_dict={court_points_dict}")
+'''
 
 @socketio.on('get_updates')
 def handle_get_updates(data):
@@ -1233,19 +1237,17 @@ def read_settings_from_file():
    try:
       with open(f'{settings_dir}/{settings_filename}') as f:
          settings_dict = json.load(f)
-         app.logger.debug("Settings restored: {settings_dict}")
+         # app.logger.debug(f"Settings restored: {settings_dict}")
    except:
       settings_dict = {GRUNTS_PARAM: 0, TRASHT_PARAM: 0, LEVEL_PARAM: LEVEL_DEFAULT, \
             SERVE_MODE_PARAM: 1, TIEBREAKER_PARAM: 0, \
             SPEED_MOD_PARAM: SPEED_MOD_DEFAULT, DELAY_MOD_PARAM: DELAY_MOD_DEFAULT, \
             ELEVATION_MOD_PARAM: ELEVATION_ANGLE_MOD_DEFAULT}
 
-def scp_court_png(frame='even'):
-   global cam_side
-   if cam_side is None:
-      cam_side = 'Left'
-   source_path = f"{cam_side.lower()}:/run/shm/frame_{frame}.png"
-   destination_path = f"{user_dir}/{boomer_dir}/{cam_side.lower()}_court.png"
+def scp_court_png(side='Left', frame='even'):
+
+   source_path = f"{side.lower()}:/run/shm/frame_{frame}.png"
+   destination_path = f"{user_dir}/{boomer_dir}/{side.lower()}_court.png"
    # the q is for quiet
    p = Popen(["scp", "-q", source_path, destination_path])
    stdoutdata, stderrdata = p.communicate()
@@ -1253,6 +1255,23 @@ def scp_court_png(frame='even'):
       app.logger.error(f"FAILED: scp {source_path} {destination_path}; error_code={p.returncode}")
    else:
       app.logger.info(f"OK: scp {source_path} {destination_path}")
+
+def read_court_point_files():
+   global court_point_dict_list
+   for side in range(2):
+      if side == 0:
+         side_name = 'left'
+      else:
+         side_name = 'right'
+      try:
+         with open(f'{settings_dir}/{side_name}_court_points.json') as f:
+            file_lines = f.readlines()
+            first_line_json = file_lines[0].split("}")[0] + "}"
+            # app.logger.debug(f"first_line_json={first_line_json}")
+            court_points_dict_list[side] = json.loads(first_line_json)
+            app.logger.debug(f"court_points_dict_list[{side_name}]={court_points_dict_list[side]}")
+      except:
+         app.logger.warning(f"court_points_dict_list[{side_name}] load failed")
 
 
 if __name__ == '__main__':
