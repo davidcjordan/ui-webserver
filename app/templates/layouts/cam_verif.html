@@ -8,9 +8,10 @@
   <div style="width:220px; display: inline-block;">
     <form method="post" action="{{ url_for('cam_verif') }}">
       <button type="button" class="submit-button" onclick="refreshImage()">Reload</button>
-      <button type="submit" class="submit-button">Next</button>
+      <button type="submit" class="submit-button">Other Side</button>
       <input type="hidden" name="image_path" id="image_path" value="{{image_path}}">
     </form>
+    <button type="submit" onclick="window.location.href='/';" class="submit-button">Done</button>
     {%- for coord, value in court_point_coords.items() %}
     <input type="hidden" id="{{coord}}X" name="{{coord}}X" value={{value[0]}}>
     <input type="hidden" id="{{coord}}Y" name="{{coord}}Y" value={{value[1]}}>

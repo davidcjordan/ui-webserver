@@ -542,27 +542,16 @@ def cam_calib_done():
 
 @app.route(CAM_VERIF_URL, methods=DEFAULT_METHODS)
 def cam_verif():
-
-   court_point_dict_index = None
-   read_settings_from_file()
+   court_point_dict_index = 0
+   cam_name = 'left'
 
    if request.method=='POST':
       app.logger.debug(f"POST to CAM_VERIF_URL request.form: {request.form}")
       # POST to CAM_LOCATION request.form: ImmutableMultiDict([('choice', 'Left Cam Calib')])
-      if ('image_path' in request.form) and 'right' in request.form['image_path']:
-         court_point_dict_index = 0
-         cam_name = 'left'
-      else:
+      if ('image_path' in request.form) and 'left' in request.form['image_path']:
          court_point_dict_index = 1
          cam_name = 'right'
  
-
-   if court_point_dict_index == None:
-      # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
-      court_point_dict_index = 0
-      cam_name = 'left'
-      app.logger.warning("cam_side was None in cam_verif")
-
    read_court_point_files()
 
    scp_court_png(side = cam_name)
@@ -629,6 +618,7 @@ def settings():
 
    # value is the label of the button
    onclick_choice_list = [\
+      {"value": "Check Camera", "onclick_url": CAM_VERIF_URL}, \
       {"value": "Thrower Calibration", "onclick_url": THROWER_CALIB_SELECTION_URL}
    ]
    form_choice_list = [\
