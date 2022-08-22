@@ -7,8 +7,9 @@
   </div>
   <div style="width:220px; display: inline-block;">
     <form method="post" action="{{ url_for('cam_verif') }}">
-      <button type="button" class="submit-button" onclick="refreshImage()">Reload</button>
       <button type="submit" class="submit-button">Other Side</button>
+      <button type="button" class="submit-button" onclick="refreshImage('even')">Reload Even</button>
+      <button type="button" class="submit-button" onclick="refreshImage('odd')">Reload Odd</button>
       <input type="hidden" name="image_path" id="image_path" value="{{image_path}}">
     </form>
     <button type="submit" onclick="window.location.href='/';" class="submit-button">Done</button>
@@ -75,8 +76,13 @@
 
   init();
 
-  async function refreshImage(){    
-    socket.emit("refresh_image");
+  async function refreshImage(evenOdd) {
+    var frame = evenOdd || "even"; //handle frame as an option
+    var side = 'left';
+    if (imgFilename.indexOf('ight') !== -1) {
+      side = 'right';
+    }
+    socket.emit("refresh_image", {'side': side, 'frame': frame});
     let sleep_ms = 500
     console.log(`Waiting ${sleep_ms} milliseconds...`);
     await new Promise(r => setTimeout(r, sleep_ms));

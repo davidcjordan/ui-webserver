@@ -1082,9 +1082,9 @@ def handle_pause_resume():
       app.logger.error("PUT PAUSE failed, code: {}".format(code))
 
 @socketio.on('refresh_image')
-def handle_refresh_image():
-   app.logger.info('received refresh_image.')
-   scp_court_png()
+def handle_refresh_image(data):
+   # app.logger.info(f'received refresh_image: {data}')
+   scp_court_png(data['side'], data['frame'])
 
 '''
 @socketio.on('coord')
