@@ -107,6 +107,7 @@ THROWER_CALIB_SELECTION_URL = '/thrower_calibration'
 CREEP_CALIB_URL = '/creep_calib'
 BEEP_SELECTION_URL = '/beep_selection'
 CAM_VERIF_URL = '/cam_verif'
+DONE_URL = '/done'
 
 # Flask looks for following in the 'templates' directory
 MAIN_TEMPLATE = 'index.html'
@@ -998,6 +999,23 @@ def faults():
       footer_center = "Mode: " + "--")
 
 
+@app.route(DONE_URL, methods=DEFAULT_METHODS)
+def done():
+
+   page_js = []
+   page_js.append(Markup('<script src="/static/js/timed-redirect.js"></script>'))
+
+   status = f"Drill/Game finished."
+ 
+   return render_template(CHOICE_INPUTS_TEMPLATE, \
+      home_button = my_home_button, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
+      message = status, \
+      page_specific_js = page_js, \
+      footer_center = "Mode: " + "Finished")
+
+
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
@@ -1110,7 +1128,7 @@ def handle_coord_array(data):
 def handle_get_updates(data):
    global base_state
    json_data = json.loads(data)
-   # app.logger.info(f"json_data: {json_data}")
+   # app.logger.info(f"get_update data= {json_data}")
    if ("page" in json_data):
       if (json_data["page"] == "game"):
          msg_ok, game_state = send_msg(GET_METHOD, SCOR_RSRC)

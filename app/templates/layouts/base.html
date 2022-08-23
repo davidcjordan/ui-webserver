@@ -54,8 +54,9 @@
   <script src="/static/js/state_update.js"></script>
   <script>
     var data_get_update = {};
+    // pop takes the last element of an array/
     data_get_update["page"] = window.location.pathname.split("/").pop();
-    // console.log("json: " + data_get_update + " page: " + page );
+    // console.log("data_get_update=" + data_get_update);
 
     var pollingVar = setInterval(pollingTimer, 350);
     function pollingTimer() {
