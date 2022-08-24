@@ -4,12 +4,16 @@
 // var socket = io();
 socket.on('state_update', function(data) {
   // console.log("Data:" + JSON.stringify(data, null, 1))
-  console.log("window.location.href=" + window.location.href);
+  // console.log("window.location.href=" + window.location.href);
   page_id = window.location.pathname.split("/").pop();
 
   var game_state = {};
   Object.keys(data).forEach(function(key) {
     // console.log('Key : ' + key + ', Value : ' + data[key])
+    if (key == "new_url") {
+      console.log("changing page to: " + key)
+      location.href = data[key];
+    }
     if (key === 'base_state') {
       var IdToUpdate = document.getElementById(key);
       if (IdToUpdate) {
@@ -19,15 +23,15 @@ socket.on('state_update', function(data) {
         } else if ((data[key] !== 'Faulted') && window.location.href.includes("faults")) {
           console.log("NON-Faulted status detected; switching to /")
           location.href = '/';
-        } else if ((page_id === 'game') && (data[key] === 'Idle')) {
-          console.log("game done; switching to /done")
-          location.href = '/done';
-        } else if ((page_id ===  'drill') && (data[key] === 'Idle')) {
-          console.log("drill done; switching to /done")
-          location.href = '/done';
-        } else if (window.location.href.includes("creep") && (data[key] !== 'Active')) {
-          console.log("creep calibration done; switching to /done")
-          location.href = '/done';
+        // } else if ((page_id === 'game') && (data[key] === 'Idle')) {
+        //   console.log("game done; switching to /done")
+        //   location.href = '/done';
+        // } else if ((page_id ===  'drill') && (data[key] === 'Idle')) {
+        //   console.log("drill done; switching to /done")
+        //   location.href = '/done';
+        // } else if (window.location.href.includes("creep") && (data[key] !== 'Active')) {
+        //   console.log("creep calibration done; switching to /done")
+        //   location.href = '/done';
         } else {
           IdToUpdate.innerHTML = "Status: " + data[key];
           // set pause/resume icon on game/drill/workout active pages

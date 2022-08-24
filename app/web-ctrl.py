@@ -76,8 +76,8 @@ except:
 customization_dict = None
 settings_dict = None
 
-base_state = None
-previous_base_state = None
+base_state = base_state_e.BASE_STATE_NONE
+previous_base_state = base_state_e.BASE_STATE_NONE
 client_state = False
 bbase_down_timestamp = None
 printout_counter = 0
@@ -573,10 +573,12 @@ def index():
    global back_url, previous_url
    back_url = previous_url = "/"
 
+   # app.logger.debug(f"Test of printing function name: in function: {sys._getframe(0).f_code.co_name}")
+
    # clicking stop on the drill_url goes to main/home/index, so issue stop.
    rc, code = send_msg(PUT_METHOD, STOP_RSRC)
    if not rc:
-      app.logger.error("PUT STOP failed, code: {}".format(code))
+      app.logger.error(f"function '{sys._getframe(0).f_code.co_name}': PUT STOP failed, code: {code}")
 
    read_settings_from_file()
 
@@ -683,11 +685,16 @@ def creep_calib():
 
    if creep_type is None:
       app.logger.error(f"request for creep; type is None")
+      #TODO: do a redirect to an error page
+
+   rc, code = send_msg(PUT_METHOD, MODE_RSRC, {MODE_PARAM: base_mode_e.CREEP_CALIBRATION.value})
+   if not rc:
+      app.logger.error(f"function '{sys._getframe(0).f_code.co_name}': PUT Mode failed, code: {code}")
    else:
       app.logger.debug(f"sending FUNC_CREEP to bbase")
       rc, code = send_msg(PUT_METHOD, FUNC_RSRC, {FUNC_CREEP: creep_type})
       if not rc:
-         app.logger.error("PUT Function Creep failed, code: {}".format(code))
+         app.logger.error(f"function '{sys._getframe(0).f_code.co_name}': PUT Function failed, code: {code}")
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
@@ -741,6 +748,9 @@ def game_options():
 def game():
    global back_url, previous_url
    back_url = previous_url
+
+   read_settings_from_file()
+   send_settings_to_base() #restore settings
 
    rc, code = send_msg(PUT_METHOD, MODE_RSRC, {MODE_PARAM: base_mode_e.GAME.value})
    if not rc:
@@ -859,6 +869,9 @@ def drill():
    global back_url, previous_url
    global workout_select
    back_url = previous_url
+
+   read_settings_from_file()
+   send_settings_to_base() #restore settings
 
    '''
    There are multiple ways of getting to this page
@@ -1002,17 +1015,22 @@ def faults():
 @app.route(DONE_URL, methods=DEFAULT_METHODS)
 def done():
 
-   page_js = []
-   page_js.append(Markup('<script src="/static/js/timed-redirect.js"></script>'))
-
-   status = f"Drill/Game finished."
+   msg_ok, base_mode_register = send_msg(GET_METHOD, MODE_RSRC)
+   if not msg_ok:
+      app.logger.error(f"function '{sys._getframe(0).f_code.co_name}': GET STOP MODE_RSRC failed")
+      status = "Error occurred on obtaining Boomer mode"
+   else:
+      status = f"{base_mode_e(base_mode_register[MODE_PARAM]).name.title()} Finished."
  
+      # page_js = []
+      # page_js.append(Markup('<script src="/static/js/timed-redirect.js"></script>'))
+
    return render_template(CHOICE_INPUTS_TEMPLATE, \
-      home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
       message = status, \
-      page_specific_js = page_js, \
+      onclick_choices = [{"value": "OK", "onclick_url": MAIN_URL}], \
+      # page_specific_js = page_js, \
       footer_center = "Mode: " + "Finished")
 
 
@@ -1126,25 +1144,45 @@ def handle_coord_array(data):
 
 @socketio.on('get_updates')
 def handle_get_updates(data):
-   global base_state
    json_data = json.loads(data)
    # app.logger.info(f"get_update data= {json_data}")
+   global base_state
+   # local_previous_base_state = base_state
+   check_base()
+   base_state_text = base_state_e(base_state).name.title() #title changes it from uppercase to capital for 1st char
+   update_dict = {"base_state": base_state_text}
+
    if ("page" in json_data):
-      if (json_data["page"] == "game"):
+      current_page = '/' + json_data["page"]
+      # app.logger.debug(f"current_page={current_page}; base_state={base_state_e(base_state).name}")
+ 
+      if (current_page is FAULTS_URL):
+         #TODO: if (len(faults_table) != len(previous_faults_table)):
+         emit('faults_update', json.dumps(textify_faults_table()))
+
+      # if (current_page == GAME_URL):
+      #    app.logger.debug("current_page is GAME_URL")
+
+      # if (base_state is base_state_e.IDLE.value):
+      #    app.logger.debug("base_state is IDLE")
+      # else:
+      #   app.logger.debug(f"base_state is not IDLE; its={base_state}")
+ 
+      if (((current_page == GAME_URL) or (current_page == DRILL_URL) or (current_page == CREEP_CALIB_URL)) and
+         (base_state == base_state_e.IDLE.value)):
+         update_dict['new_url'] = DONE_URL
+         app.logger.info(f"Changing URL from '{current_page}' to {update_dict['new_url']} since base_state={base_state_e(base_state).name}")
+
+      elif (current_page is GAME_URL):
          msg_ok, game_state = send_msg(GET_METHOD, SCOR_RSRC)
          if not msg_ok:
             app.logger.error("GET GAME SCORE failed, score= {}".format(game_state))
          else:
             # app.logger.info(f"score= {game_state}")
             # score= {'time': 36611, 'server': 'b', 'b_sets': 0, 'p_sets': 0, 'b_games': 0, 'p_games': 0, 'b_pts': 0, 'p_pts': 0, 'b_t_pts': 0, 'p_t_pts': 0}
-            emit('state_update', {"base_state": base_state, "game_state": game_state})
+            update_dict["game_state"] = game_state
 
-      if (json_data["page"] == "faults"):
-         #TODO: if (len(faults_table) != len(previous_faults_table)):
-         emit('faults_update', json.dumps(textify_faults_table()))
-
-   check_base()
-   emit('state_update', {"base_state": base_state})
+   emit('state_update', update_dict)
 
 
 def set_base_state_on_failure(fault_code = fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED):
@@ -1152,7 +1190,7 @@ def set_base_state_on_failure(fault_code = fault_e.CONTROL_PROGRAM_GET_STATUS_FA
    global faults_table
    global bbase_down_timestamp
 
-   base_state = base_state_e.FAULTED.name.title()
+   base_state = base_state_e.FAULTED
    if bbase_down_timestamp is None:
       bbase_down_timestamp = time.time()
    faults_table = [{FLT_CODE_PARAM: fault_code, FLT_LOCATION_PARAM: net_device_e.BASE, FLT_TIMESTAMP_PARAM: bbase_down_timestamp}]
@@ -1180,7 +1218,7 @@ def check_base():
             if (status_msg is not None):
                if (STATUS_PARAM in status_msg):
                   bbase_down_timestamp = None
-                  base_state = base_state_e(status_msg[STATUS_PARAM]).name.title()
+                  base_state = status_msg[STATUS_PARAM]
                else:
                   set_base_state_on_failure(fault_e.CONTROL_PROGRAM_FAILED)
                if (HARD_FAULT_PARAM in status_msg and status_msg[HARD_FAULT_PARAM] > 0):
@@ -1198,8 +1236,9 @@ def check_base():
          set_base_state_on_failure(fault_e.CONTROL_PROGRAM_NOT_RUNNING)
 
       if base_state != previous_base_state:
-         app.logger.info(f"Base state change: {previous_base_state} -> {base_state}")
-             
+         app.logger.info(f"Base state change: {base_state_e(previous_base_state).name} -> {base_state_e(base_state).name}")
+         # app.logger.info(f"Base state change: {previous_base_state} -> {base_state}")
+          
       if threaded:
          # the following didn't work when in a seperate thread: the emit didn't get to the client
          printout_counter += 1
@@ -1247,6 +1286,7 @@ def read_settings_from_file():
          settings_dict = json.load(f)
          # app.logger.debug(f"Settings restored: {settings_dict}")
    except:
+      app.logger.warning(f"Settings file read failed; using defaults.")
       settings_dict = {GRUNTS_PARAM: 0, TRASHT_PARAM: 0, LEVEL_PARAM: LEVEL_DEFAULT, \
             SERVE_MODE_PARAM: 1, TIEBREAKER_PARAM: 0, \
             SPEED_MOD_PARAM: SPEED_MOD_DEFAULT, DELAY_MOD_PARAM: DELAY_MOD_DEFAULT, \
