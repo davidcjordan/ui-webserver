@@ -1155,23 +1155,26 @@ def handle_get_updates(data):
    if ("page" in json_data):
       current_page = '/' + json_data["page"]
       # app.logger.debug(f"current_page={current_page}; base_state={base_state_e(base_state).name}")
+      # if (current_page == MAIN_URL):
+      #    app.logger.debug("current_page is MAIN_URL")
+      # if (base_state == base_state_e.FAULTED):
+      #    app.logger.debug("base_state is FAULTED")
+      # else:
+      #   app.logger.debug(f"base_state is not FAULTED; its={base_state}")
  
-      if (current_page is FAULTS_URL):
+      if ((base_state == base_state_e.FAULTED) and (current_page != FAULTS_URL)):
+         update_dict['new_url'] = FAULTS_URL
+
+      if ((base_state != base_state_e.FAULTED) and (current_page == FAULTS_URL)):
+         update_dict['new_url'] = MAIN_URL
+ 
+      if (current_page == FAULTS_URL):
          #TODO: if (len(faults_table) != len(previous_faults_table)):
          emit('faults_update', json.dumps(textify_faults_table()))
 
-      # if (current_page == GAME_URL):
-      #    app.logger.debug("current_page is GAME_URL")
-
-      # if (base_state is base_state_e.IDLE.value):
-      #    app.logger.debug("base_state is IDLE")
-      # else:
-      #   app.logger.debug(f"base_state is not IDLE; its={base_state}")
- 
       if (((current_page == GAME_URL) or (current_page == DRILL_URL) or (current_page == CREEP_CALIB_URL)) and
-         (base_state == base_state_e.IDLE.value)):
+         (base_state == base_state_e.IDLE)):
          update_dict['new_url'] = DONE_URL
-         app.logger.info(f"Changing URL from '{current_page}' to {update_dict['new_url']} since base_state={base_state_e(base_state).name}")
 
       elif (current_page is GAME_URL):
          msg_ok, game_state = send_msg(GET_METHOD, SCOR_RSRC)
@@ -1181,6 +1184,9 @@ def handle_get_updates(data):
             # app.logger.info(f"score= {game_state}")
             # score= {'time': 36611, 'server': 'b', 'b_sets': 0, 'p_sets': 0, 'b_games': 0, 'p_games': 0, 'b_pts': 0, 'p_pts': 0, 'b_t_pts': 0, 'p_t_pts': 0}
             update_dict["game_state"] = game_state
+
+   if ("new_url" in update_dict):
+      app.logger.info(f"Changing URL from '{current_page}' to {update_dict['new_url']} since base_state={base_state_e(base_state).name}")
 
    emit('state_update', update_dict)
 
@@ -1218,7 +1224,7 @@ def check_base():
             if (status_msg is not None):
                if (STATUS_PARAM in status_msg):
                   bbase_down_timestamp = None
-                  base_state = status_msg[STATUS_PARAM]
+                  base_state = base_state_e(status_msg[STATUS_PARAM])
                else:
                   set_base_state_on_failure(fault_e.CONTROL_PROGRAM_FAILED)
                if (HARD_FAULT_PARAM in status_msg and status_msg[HARD_FAULT_PARAM] > 0):

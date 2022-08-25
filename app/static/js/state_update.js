@@ -16,43 +16,29 @@ socket.on('state_update', function(data) {
     }
     if (key === 'base_state') {
       var IdToUpdate = document.getElementById(key);
-      if (IdToUpdate) {
-        if ((data[key] === 'Faulted') && !window.location.href.includes("faults")) {
-          console.log("Faulted status detected; switching to /faults")
-          location.href = '/faults';
-        } else if ((data[key] !== 'Faulted') && window.location.href.includes("faults")) {
-          console.log("NON-Faulted status detected; switching to /")
-          location.href = '/';
-        // } else if ((page_id === 'game') && (data[key] === 'Idle')) {
-        //   console.log("game done; switching to /done")
-        //   location.href = '/done';
-        // } else if ((page_id ===  'drill') && (data[key] === 'Idle')) {
-        //   console.log("drill done; switching to /done")
-        //   location.href = '/done';
-        // } else if (window.location.href.includes("creep") && (data[key] !== 'Active')) {
-        //   console.log("creep calibration done; switching to /done")
-        //   location.href = '/done';
-        } else {
-          IdToUpdate.innerHTML = "Status: " + data[key];
-          // set pause/resume icon on game/drill/workout active pages
-          var IdPauseResume = document.getElementById("pause-resume");
-          if (IdPauseResume != null)
-          {
-            var classPauseResume = document.getElementById("pause-resume").className;
-            // console.log('classPauseResume:' + classPauseResume)
-            if (data[key] == 'Paused') {
-              if (classPauseResume.endsWith("pause")) {
-                IdPauseResume.classList.toggle("pause") //removes paused
-                IdPauseResume.classList.toggle("resume") //adds resume
-              }
-            } else {
-              if (classPauseResume.endsWith("resume")) {
-                IdPauseResume.classList.toggle("resume")
-                IdPauseResume.classList.toggle("pause")
-              }
+
+      if (IdToUpdate == null) {
+        console.log("error: element=" + key + " was not found on page")
+      } else {
+        IdToUpdate.innerHTML = "Status: " + data[key];
+        // set pause/resume icon on game/drill/workout active pages
+        var IdPauseResume = document.getElementById("pause-resume");
+        if (IdPauseResume != null)
+        {
+          var classPauseResume = document.getElementById("pause-resume").className;
+          // console.log('classPauseResume:' + classPauseResume)
+          if (data[key] == 'Paused') {
+            if (classPauseResume.endsWith("pause")) {
+              IdPauseResume.classList.toggle("pause") //removes paused
+              IdPauseResume.classList.toggle("resume") //adds resume
             }
-          } //IdPauseResume not null
-        }
+          } else {
+            if (classPauseResume.endsWith("resume")) {
+              IdPauseResume.classList.toggle("resume")
+              IdPauseResume.classList.toggle("pause")
+            }
+          }
+        } //IdPauseResume not null
       } //IdToUpdaet
     } else if (key === 'game_state') {
       game_state = data[key];
