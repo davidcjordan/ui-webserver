@@ -11,10 +11,10 @@ socket.on('state_update', function(data) {
   Object.keys(data).forEach(function(key) {
     // console.log('Key : ' + key + ', Value : ' + data[key])
     if (key == "new_url") {
-      console.log("changing page to: " + key)
+      console.log("changing page to: " + data[key])
       location.href = data[key];
     }
-    if (key === 'base_state') {
+    else if (key === 'base_state') {
       var IdToUpdate = document.getElementById(key);
 
       if (IdToUpdate == null) {
