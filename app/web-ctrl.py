@@ -78,6 +78,7 @@ settings_dict = None
 
 base_state = base_state_e.BASE_STATE_NONE
 previous_base_state = base_state_e.BASE_STATE_NONE
+soft_fault_status = soft_fault_e.SOFT_FAULT_NONE
 client_state = False
 bbase_down_timestamp = None
 printout_counter = 0
@@ -587,7 +588,7 @@ def index():
    # onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL, "disabled": 1, "id": "Done"}], \
 
    onclick_choice_list = [\
-      {"value": "Game Mode", "onclick_url": GAME_URL},\
+      {"value": "Game Mode", "onclick_url": GAME_URL, "id": "game_button"},\
       {"value": "Drills", "onclick_url": DRILL_SELECT_TYPE_URL},\
       {"value": "Beep Drills", "onclick_url": BEEP_SELECTION_URL },\
       {"value": "Workouts", "onclick_url": SELECT_URL, \
@@ -1185,6 +1186,8 @@ def handle_get_updates(data):
             # score= {'time': 36611, 'server': 'b', 'b_sets': 0, 'p_sets': 0, 'b_games': 0, 'p_games': 0, 'b_pts': 0, 'p_pts': 0, 'b_t_pts': 0, 'p_t_pts': 0}
             update_dict["game_state"] = game_state
 
+   update_dict['soft_fault'] = soft_fault_e(soft_fault_status).value
+
    if ("new_url" in update_dict):
       app.logger.info(f"Changing URL from '{current_page}' to {update_dict['new_url']} since base_state={base_state_e(base_state).name}")
 
@@ -1210,6 +1213,7 @@ def check_base():
    global printout_counter
    global faults_table, previous_fault_table
    global bbase_down_timestamp
+   global soft_fault_status
    done = False
    while not done:
       base_pid = os.popen(f"pgrep {process_name}").read()
@@ -1227,6 +1231,7 @@ def check_base():
                   base_state = base_state_e(status_msg[STATUS_PARAM])
                else:
                   set_base_state_on_failure(fault_e.CONTROL_PROGRAM_FAILED)
+
                if (HARD_FAULT_PARAM in status_msg and status_msg[HARD_FAULT_PARAM] > 0):
                   previous_fault_table = copy.deepcopy(faults_table)
                   # app.logger.info("Getting fault table")
@@ -1234,6 +1239,10 @@ def check_base():
                   if not msg_ok:
                      app.logger.error("msg status not OK when getting fault table")
                      set_base_state_on_failure(fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED)
+
+               if (SOFT_FAULT_PARAM in status_msg):
+                  soft_fault_status = soft_fault_e(status_msg[SOFT_FAULT_PARAM])
+
                # app.logger.info(f"faults: {faults_table[0]}")
             else:
                app.logger.error("received None as status message")

@@ -61,6 +61,21 @@ socket.on('state_update', function(data) {
           }
         }
       })
+    } else if (key === 'soft_fault') {
+      // disable GAME mode button on main screen if tracking is faulted
+      // console.log("soft_fault=" + data[key] + "; page_id=" + page_id)
+      if (page_id.length === 0) {
+        var IdToUpdate = document.getElementById("game_button");
+        if (IdToUpdate) {
+          if (data[key] == 1) {
+            IdToUpdate.disabled = true;
+          } else {
+            IdToUpdate.disabled = false;
+          }
+        } else {
+          console.log("No element with ID: game_button")
+        }
+      }
     } else {
       console.log("No element with ID: " + key)
     }

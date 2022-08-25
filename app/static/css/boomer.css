@@ -164,13 +164,19 @@ body {
 .block_b {
   width: 30vw;
   font-size: 4vw;
-  color: white;
-  background: #555555;
   padding: 1vw;
   border: 1vw solid #494949;
   border-radius: 8px;
   display: inline-block;
   transition: all 0.3s ease 0s;
+}
+.block_b:enabled {
+  color: white;
+  background: #555555;
+}
+.block_b:disabled {
+  color: #555555;
+  background-color: #333333;
 }
 
 /* for drill and workout selection */
