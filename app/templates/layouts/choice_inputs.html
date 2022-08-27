@@ -3,11 +3,14 @@
 {% block selections %}
 <div>
   {%- for choice in onclick_choices %}
+    {%-if choice['html_before'] %}
+    {{choice['html_before']}}{%- endif %}
     <input class="block_b" type="submit" name="choice" value="{{choice['value']}}"
+      onclick="window.location.href='{{choice['onclick_url']}}
+      {%- if choice['param_name'] %}?{{choice['param_name']}}={{choice['param_value']}}{%- endif %}';"
       {%- if choice['disabled'] %} disabled {%- endif %} 
       {%- if choice['id'] %} id="{{choice['id']}}"{%- endif %}
-      onclick="window.location.href='{{choice['onclick_url']}}
-      {%- if choice['param_name'] %}?{{choice['param_name']}}={{choice['param_value']}}{%- endif %}';">
+      >{%- if choice['html_after'] %}{{choice['html_after']}}{%- endif %}
   {%- endfor %}
 
   {%- if radio_options is defined %}

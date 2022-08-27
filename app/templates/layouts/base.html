@@ -46,18 +46,18 @@
   <script> var socket = io(); </script>
   <script>
     var socket = io.connect('http://' + document.domain + ':' + location.port);
-    console.log("Sending client_connected")
-    socket.on('connect', function() {
-      socket.emit('client_connected', {data: 'New client!'});
-    });
-  </script>  
-  <script src="/static/js/state_update.js"></script>
-  <script>
     var data_get_update = {};
     // pop takes the last element of an array/
     data_get_update["page"] = window.location.pathname.split("/").pop();
     // console.log("data_get_update=" + data_get_update);
 
+    // console.log("Sending client_connected")
+    socket.on('connect', function() {
+      socket.emit('client_connected', JSON.stringify(data_get_update));
+    });
+  </script>  
+  <script src="/static/js/state_update.js"></script>
+  <script>
     var pollingVar = setInterval(pollingTimer, 350);
     function pollingTimer() {
       socket.emit("get_updates", JSON.stringify(data_get_update));

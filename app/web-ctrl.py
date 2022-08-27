@@ -576,7 +576,7 @@ def index():
 
    # app.logger.debug(f"Test of printing function name: in function: {sys._getframe(0).f_code.co_name}")
 
-   # clicking stop on the drill_url goes to main/home/index, so issue stop.
+   # clicking stop on the game_url & drill_url goes to main/home/index, so issue stop.
    rc, code = send_msg(PUT_METHOD, STOP_RSRC)
    if not rc:
       app.logger.error(f"function '{sys._getframe(0).f_code.co_name}': PUT STOP failed, code: {code}")
@@ -587,12 +587,15 @@ def index():
    # TODO: fix disable CSS
    # onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL, "disabled": 1, "id": "Done"}], \
 
+   html_horizontal_rule =  Markup('<hr>')
+
    onclick_choice_list = [\
-      {"value": "Game Mode", "onclick_url": GAME_URL, "id": "game_button"},\
-      {"value": "Drills", "onclick_url": DRILL_SELECT_TYPE_URL},\
-      {"value": "Beep Drills", "onclick_url": BEEP_SELECTION_URL },\
+      {"html_before": "Game:", "value": "Play", "onclick_url": GAME_URL, "id": "game_button"},\
+      {"value": "Options", "onclick_url": GAME_OPTIONS_URL, "id": "game_button", "html_after": html_horizontal_rule},\
+      {"html_before": "Drill:", "value": "Drills", "onclick_url": DRILL_SELECT_TYPE_URL},\
+      {"value": "Beep Drills", "onclick_url": BEEP_SELECTION_URL, "html_after": html_horizontal_rule},\
       {"value": "Workouts", "onclick_url": SELECT_URL, \
-         "param_name": ONCLICK_MODE_KEY, "param_value": ONCLICK_MODE_WORKOUT_VALUE}, \
+         "param_name": ONCLICK_MODE_KEY, "param_value": ONCLICK_MODE_WORKOUT_VALUE, "disabled": 1, "html_after": html_horizontal_rule}, \
       {"value": "Settings", "onclick_url": SETTINGS_URL}
    ]
 
@@ -737,18 +740,23 @@ def game_options():
       url_for_post = GAME_URL, \
       # optional_form_begin = Markup('<form action ="' + GAME_URL + '" method="post">'), \
       # optional_form_end = Markup('</form>'), \
+
       radio_options = game_radio_options, \
       # point_delay_dflt = GAME_POINT_DELAY_DEFAULT, \
       # point_delay_min = GAME_POINT_DELAY_MIN, \
       # point_delay_max = GAME_POINT_DELAY_MAX, \
       # point_delay_step = GAME_POINT_DELAY_STEP, \
       page_specific_js = page_js, \
-      footer_center = "Mode: " + MODE_GAME)
+      footer_center = "Mode: " + "Game Options")
 
 @app.route(GAME_URL, methods=DEFAULT_METHODS)
 def game():
    global back_url, previous_url
    back_url = previous_url
+
+   # ignore the POST data: wServes & tiebreaker are set using emit(change_params)
+   # app.logger.debug(f"GAME_URL request_form: {request.form}")
+   #ImmutableMultiDict([('wServes', '0'), ('tiebreaker', '0')])
 
    read_settings_from_file()
    send_settings_to_base() #restore settings
@@ -763,17 +771,7 @@ def game():
 
    # print("{} on {}, data: {}".format(request.method, inspect.currentframe().f_code.co_name, request.data))
    # Using emit on radio buttons instead of taking the post data
-   '''
-   if request.method=='POST':
-      if SERVE_MODE_PARAM in request.form:
-         print("serve_mode: {}".format(request.form[SERVE_MODE_PARAM]))
-      if TIEBREAKER_PARAM in request.form:
-         print("scoring: {}".format(request.form[TIEBREAKER_PARAM]))
-      if 'running' in request.form:
-         print("running: {}".format(request.form['running']))
-      if 'point_delay' in request.form:
-         print("point_delay: {}".format(request.form['point_delay']))
-   '''
+
    return render_template(GAME_TEMPLATE, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
@@ -1120,7 +1118,7 @@ def handle_pause_resume():
 
 @socketio.on('refresh_image')
 def handle_refresh_image(data):
-   # app.logger.info(f'received refresh_image: {data}')
+   app.logger.info(f'received refresh_image: {data}')
    scp_court_png(data['side'], data['frame'])
 
 '''
