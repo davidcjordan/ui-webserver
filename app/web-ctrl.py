@@ -54,8 +54,10 @@ boomer_dir = 'boomer'
 repos_dir = 'repos'
 site_data_dir = 'this_boomers_data'
 settings_dir = f'{user_dir}/{boomer_dir}/{site_data_dir}'
+drills_dir = f'{user_dir}/{boomer_dir}/drills'
 execs_dir = f"{user_dir}/{boomer_dir}/execs"
 settings_filename = "drill_game_settings.json"
+recents_filename = "recents.json"
 
 sys.path.append(f'{user_dir}/{repos_dir}/control_ipc_utils')
 # print(sys.path)
@@ -109,6 +111,7 @@ CREEP_CALIB_URL = '/creep_calib'
 BEEP_SELECTION_URL = '/beep_selection'
 CAM_VERIF_URL = '/cam_verif'
 DONE_URL = '/done'
+RECENTS_URL = '/recent_drills'
 
 # Flask looks for following in the 'templates' directory
 MAIN_TEMPLATE = 'index.html'
@@ -217,6 +220,8 @@ beep_mode_choices = {\
    beep_options.Difficulty: [beep_difficulty.Very_Easy, beep_difficulty.Easy, \
       beep_difficulty.Medium, beep_difficulty.Hard, beep_difficulty.Very_Hard] \
 }
+
+recent_drills = []
 
 faults_table = {}
 #TODO: generate the dict by parsing the name in the drill description in the file
@@ -592,8 +597,9 @@ def index():
    onclick_choice_list = [\
       {"html_before": "Game:", "value": "Play", "onclick_url": GAME_URL, "id": "game_button"},\
       {"value": "Options", "onclick_url": GAME_OPTIONS_URL, "id": "game_button", "html_after": html_horizontal_rule},\
-      {"html_before": "Drill:", "value": "Drills", "onclick_url": DRILL_SELECT_TYPE_URL},\
-      {"value": "Beep Drills", "onclick_url": BEEP_SELECTION_URL, "html_after": html_horizontal_rule},\
+      {"html_before": "Drill:", "value": "Recents", "onclick_url": RECENTS_URL},\
+      {"value": "Select", "onclick_url": DRILL_SELECT_TYPE_URL},\
+      {"value": "Beep", "onclick_url": BEEP_SELECTION_URL, "html_after": html_horizontal_rule},\
       {"value": "Workouts", "onclick_url": SELECT_URL, \
          "param_name": ONCLICK_MODE_KEY, "param_value": ONCLICK_MODE_WORKOUT_VALUE, "disabled": 1, "html_after": html_horizontal_rule}, \
       {"value": "Settings", "onclick_url": SETTINGS_URL}
@@ -807,6 +813,40 @@ def drill_select_type():
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
 
+@app.route(RECENTS_URL, methods=DEFAULT_METHODS)
+def favorites():
+
+   global recent_drills
+   selection_list = []
+
+   try:
+      with open(f'{settings_dir}/{recents_filename}') as f:
+         recent_drills = json.load(f)
+   except:
+      app.logger.error(f"Error reading '{settings_dir}/{recents_filename}'; using defaults")
+      #TODO: read a factory defaults from drill directory
+      recent_drills = [100, 101, 102]
+
+   for drill_id in recent_drills:
+      # drill filename format: DRL123.csv
+      try:
+         with open(f'{drills_dir}/DRL{drill_id:03}.csv') as f:
+            lines = f.readlines()
+      except:
+         pass
+
+      selection_list.append({'id': f"{drill_id:03}", 'title': lines[0]})
+
+   return render_template(SELECT_TEMPLATE, \
+      home_button = my_home_button, \
+      installation_title = customization_dict['title'], \
+      installation_icon = customization_dict['icon'], \
+      footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED, \
+      url_for_post = DRILL_URL, \
+      choices = selection_list
+   )
+
+
 @app.route(SELECT_URL, methods=DEFAULT_METHODS)
 def select():
    global back_url, previous_url
@@ -867,6 +907,7 @@ def drill():
    global beep_mode_choices
    global back_url, previous_url
    global workout_select
+   global recent_drills
    back_url = previous_url
 
    read_settings_from_file()
@@ -888,6 +929,7 @@ def drill():
    # for key, value in request.form.items():
    #    print(key, '->', value)
    id = None
+   beep_type_value = None
    if 'choice_id' in request.form:
       #INFO:flask.app:DRILL_URL request_form: ImmutableMultiDict([('choice_id', '100')])
       id = int(request.form['choice_id'])
@@ -930,10 +972,23 @@ def drill():
 
    drill_stepper_options = {}
    if id is not None:
+      if not workout_select and beep_type_value is None and id != recent_drills[0]:
+         # re-write recents file putting drill at top
+         recent_drills.insert(0, id)
+         recent_drills = recent_drills[:-1] #remove oldest drill_id
+         try:
+            with open(f'{settings_dir}/{recents_filename}', 'w') as f:
+               json.dump(recent_drills, f)
+         except:
+            app.logger.error(f"Error writing '{settings_dir}/{recents_filename}'")
+
       if workout_select:
          mode = {MODE_PARAM: base_mode_e.WORKOUT.value, ID_PARAM: id}
          mode_string = f"{MODE_WORKOUT_SELECTED}{id}"
          workout_select = False
+      #TODO: test BEEP enum: currently beep drills are using the DRILL enum
+      # elif beep_type_value is not None:
+      #    mode = {MODE_PARAM: base_mode_e.BEEP.value, ID_PARAM: id}
       else:
          mode = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: id}
          mode_string = f"{MODE_DRILL_SELECTED}{id}"
