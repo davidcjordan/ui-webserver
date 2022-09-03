@@ -205,12 +205,12 @@ body {
   display: inline-block;
   text-align: left;
   height: 50px;
-  width: 320px;
+  width: 470px;
   font-size: 32px;
-  padding: 0px 20px;
-  margin: 5px 0px;
+  padding: 2px;
+  margin: 10px 2px;
   background-color: #555555;
-  border: 4px solid #494949;
+  border: 3px solid #494949;
   border-radius: 8px;
 }
 .radio-text-buttons input[type="radio"]:checked + label {

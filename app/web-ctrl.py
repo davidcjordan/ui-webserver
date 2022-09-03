@@ -825,17 +825,20 @@ def favorites():
    except:
       app.logger.error(f"Error reading '{settings_dir}/{recents_filename}'; using defaults")
       #TODO: read a factory defaults from drill directory
-      recent_drills = [100, 101, 102]
+      recent_drills = [801, 802, 803, 804, 805, 806, 808, 809, \
+         810, 811, 812, 813, 814, 815, 816, 817, 818, \
+         822, 823, 825, 826, 827]
 
    for drill_id in recent_drills:
       # drill filename format: DRL123.csv
       try:
          with open(f'{drills_dir}/DRL{drill_id:03}.csv') as f:
             lines = f.readlines()
+            # remove quotes from title string, if they exist
+            selection_list.append({'id': f"{drill_id:03}", 'title': lines[0].replace('"','')})
       except:
-         pass
+         app.logger.error(f"Error reading DRL{drill_id:03}.csv; not including in choices")
 
-      selection_list.append({'id': f"{drill_id:03}", 'title': lines[0]})
 
    return render_template(SELECT_TEMPLATE, \
       home_button = my_home_button, \
