@@ -53,6 +53,7 @@ body {
   margin-block-start: 5px;
   margin-block-end: 5px;
   margin-inline-start: 10px;
+  font: 32px sans-serif; 
   /* margin-inline-end: 5px; */
 }
 

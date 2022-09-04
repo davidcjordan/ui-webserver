@@ -68,12 +68,12 @@ except:
    app.logger.error("Missing 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
    exit()
 
-sys.path.append(f'{user_dir}/{boomer_dir}/drills')
-try:
-   from ui_drill_selection_lists import *
-except:
-   app.logger.error("Missing 'ui_drill_selection_lists' modules, please run: git clone https://github.com/davidcjordon/drills")
-   exit()
+# sys.path.append(f'{user_dir}/{boomer_dir}/drills')
+# try:
+#    from ui_drill_selection_lists import *
+# except:
+#    app.logger.error("Missing 'ui_drill_selection_lists' modules, please run: git clone https://github.com/davidcjordon/drills")
+#    exit()
 
 customization_dict = None
 settings_dict = None
@@ -814,7 +814,7 @@ def drill_select_type():
 
 
 @app.route(RECENTS_URL, methods=DEFAULT_METHODS)
-def favorites():
+def recents():
 
    global recent_drills
    selection_list = []
@@ -825,9 +825,8 @@ def favorites():
    except:
       app.logger.error(f"Error reading '{settings_dir}/{recents_filename}'; using defaults")
       #TODO: read a factory defaults from drill directory
-      recent_drills = [801, 802, 803, 804, 805, 806, 808, 809, \
-         810, 811, 812, 813, 814, 815, 816, 817, 818, \
-         822, 823, 825, 826, 827]
+      recent_drills = [1, 2, 5, 6, 8, 9, 11, 22, 26, 27]
+#      , 811, 812, 813, 814, 815, 816, 817, 818, 822, 823, 825, 826, 827]
 
    for drill_id in recent_drills:
       # drill filename format: DRL123.csv
@@ -839,6 +838,8 @@ def favorites():
       except:
          app.logger.error(f"Error reading DRL{drill_id:03}.csv; not including in choices")
 
+   page_js = []
+   page_js.append(Markup('<script src="/static/js/get_drill_info.js"></script>'))
 
    return render_template(SELECT_TEMPLATE, \
       home_button = my_home_button, \
@@ -846,7 +847,8 @@ def favorites():
       installation_icon = customization_dict['icon'], \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED, \
       url_for_post = DRILL_URL, \
-      choices = selection_list
+      choices = selection_list, \
+      page_specific_js = page_js
    )
 
 
@@ -975,10 +977,13 @@ def drill():
 
    drill_stepper_options = {}
    if id is not None:
-      if not workout_select and beep_type_value is None and id != recent_drills[0]:
-         # re-write recents file putting drill at top
+      if not workout_select and beep_type_value is None:
+         if id in recent_drills:
+            recent_drills.remove(id)
+         else:
+            recent_drills = recent_drills[:-1] #remove oldest drill_id
+         # re-write recents file putting drill at top         
          recent_drills.insert(0, id)
-         recent_drills = recent_drills[:-1] #remove oldest drill_id
          try:
             with open(f'{settings_dir}/{recents_filename}', 'w') as f:
                json.dump(recent_drills, f)
@@ -1199,6 +1204,21 @@ def handle_coord_array(data):
    # app.logger.info(f"court_point_dict={court_points_dict}")
 '''
 
+@socketio.on('get_drill_desc')
+def handle_get_drill(data):
+   # app.logger.debug(f"get_drill_desc data: {data}")
+   if 'drill_id' in data:
+      drill_id = data['drill_id']
+      app.logger.debug(f"get_drill_desc for drill={drill_id}")
+      drill_info_dict = get_drill_info(drill_id)
+      if 'desc' in drill_info_dict:
+         emit('drill_desc', drill_info_dict['desc'])
+      else:
+         app.logger.warning(f"no description for drill number={drill_id}")
+   else:
+      app.logger.error(f"no drill number in get_drill_desc message")
+
+
 @socketio.on('get_updates')
 def handle_get_updates(data):
    json_data = json.loads(data)
@@ -1391,6 +1411,20 @@ def read_court_point_files():
             app.logger.debug(f"court_points_dict_list[{side_name}]={court_points_dict_list[side]}")
       except:
          app.logger.warning(f"court_points_dict_list[{side_name}] load failed")
+
+
+def get_drill_info(drill_id):
+   drill_info = {}
+   try:
+      file_path = f'{drills_dir}/DRL{drill_id}.csv'
+      app.logger.debug(f"get_drill_info file_path='{file_path}'")
+      with open(file_path) as f:
+         lines = f.readlines()
+         # remove quotes from title string, if they exist
+         drill_info['desc'] = lines[1].replace('"','')
+   except:
+      app.logger.error(f"get_drill_info: Error reading '{file_path}'")
+   return drill_info
 
 
 if __name__ == '__main__':

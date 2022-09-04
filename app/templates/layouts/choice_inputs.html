@@ -14,15 +14,15 @@
   {%- endfor %}
 
   {%- if radio_options is defined %}
+    <fieldset class="radio-slider-buttons">
     {%- for key,item in radio_options.items() %}
-  <fieldset class="radio-slider-buttons">
-    <label for="{{key}}">{{item['legend']}}:</label>
-    {%- for button in item['buttons'] %}
-    <input type="radio" id="{{key}}_{{button['label']}}" name="{{key}}" value={{button['value']}} {%- if button['checked'] is defined %} checked{%- endif %}>
-      <label for="{{key}}_{{button['label']}}">{{button['label']}}</label>
+      <label for="{{key}}">{{item['legend']}}:</label>
+      {%- for button in item['buttons'] %}
+        <input type="radio" id="{{key}}_{{button['label']}}" name="{{key}}" value={{button['value']}} {%- if button['checked'] is defined %} checked{%- endif %}>
+        <label for="{{key}}_{{button['label']}}">{{button['label']}}</label>
+      {%- endfor %}
     {%- endfor %}
   </fieldset>
-    {%- endfor %}
   {%- endif %}
 
   {%- if url_for_post is defined %}
