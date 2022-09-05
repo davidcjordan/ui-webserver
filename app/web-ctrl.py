@@ -76,13 +76,8 @@ except:
 #    exit()
 # TODO: restore getting lists from ui_drill_selection_lists
 workout_list = [\
-{'id': 31, 'title': 'General test long'},\
-{'id': 32, 'title': 'General test short'},\
-{'id': 33, 'title': 'General test long 2 player'},\
-{'id': 34, 'title': 'General test short 2 player'},\
-{'id': 35, 'title': 'Groundstroke Warmup'},\
-{'id': 36, 'title': "Coach Nielsen's workout"},\
-{'id': 39, 'title': 'UTR rating'}\
+{'id': '001', 'title': 'Example Workout'},\
+{'id': '002', 'title': 'Thrower Calibration'},\
 ]
 
 customization_dict = None
@@ -640,7 +635,7 @@ def index():
       {"value": "Select", "onclick_url": DRILL_SELECT_TYPE_URL},\
       {"value": "Beep", "onclick_url": BEEP_SELECTION_URL, "html_after": html_horizontal_rule},\
       {"value": "Workouts", "onclick_url": SELECT_URL, \
-         "param_name": ONCLICK_MODE_KEY, "param_value": ONCLICK_MODE_WORKOUT_VALUE, "disabled": 1, "html_after": html_horizontal_rule}, \
+         "param_name": ONCLICK_MODE_KEY, "param_value": ONCLICK_MODE_WORKOUT_VALUE, "disabled": 0, "html_after": html_horizontal_rule}, \
       {"value": "Settings", "onclick_url": SETTINGS_URL}
    ]
 
@@ -1000,7 +995,8 @@ def drill():
       #request_form: ImmutableMultiDict([('beep_options.Type', '2'), ('beep_options.Stroke', '5'), ('beep_options.Difficulty', '2')])
       # for key in request.form:
       #    app.logger.info(f"Beep choice {key} = {request.form[key]}")
-      #mini-tennis: 900-904; volley: 905-909; 910-914 flat, 915-919 loop, 920-924 chip, 925-929 topspin, 930-934 random
+      # example beep drill ranges - consult the drills repository for the real thing:
+      #mini-tennis: 901-905; volley: 906-910; 911-915 flat, 916-920 loop, 921-925 chip, 926-930 topspin, 931-935 random
       stroke_type_offset = 0
       difficulty_offset = 3
       if 'beep_options.Difficulty' in request.form:
@@ -1461,9 +1457,15 @@ def read_court_point_files():
 
 
 def get_drill_info(drill_id):
+   global workout_select
+   if (workout_select):
+      prefix = "WORK"
+   else:
+      prefix = "DRL"
+
    drill_info = {}
    try:
-      file_path = f'{drills_dir}/DRL{drill_id}.csv'
+      file_path = f'{drills_dir}/{prefix}{drill_id}.csv'
       app.logger.debug(f"get_drill_info file_path='{file_path}'")
       with open(file_path) as f:
          lines = f.readlines()
