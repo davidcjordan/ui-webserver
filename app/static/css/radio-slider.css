@@ -26,6 +26,10 @@ body {
   background-color: #225c1b;
 }
 
+.radio-slider-buttons input[type=radio]:disabled + label, input[type=checkbox]:disabled + label{
+  color: #555555;
+  background-color: #333333;
+}
 
 /* original:
 input[type=radio] + label, input[type=checkbox] + label {

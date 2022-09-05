@@ -74,6 +74,16 @@ except:
 # except:
 #    app.logger.error("Missing 'ui_drill_selection_lists' modules, please run: git clone https://github.com/davidcjordon/drills")
 #    exit()
+# TODO: restore getting lists from ui_drill_selection_lists
+workout_list = [\
+{'id': 31, 'title': 'General test long'},\
+{'id': 32, 'title': 'General test short'},\
+{'id': 33, 'title': 'General test long 2 player'},\
+{'id': 34, 'title': 'General test short 2 player'},\
+{'id': 35, 'title': 'Groundstroke Warmup'},\
+{'id': 36, 'title': "Coach Nielsen's workout"},\
+{'id': 39, 'title': 'UTR rating'}\
+]
 
 customization_dict = None
 settings_dict = None
@@ -220,6 +230,35 @@ beep_mode_choices = {\
    beep_options.Difficulty: [beep_difficulty.Very_Easy, beep_difficulty.Easy, \
       beep_difficulty.Medium, beep_difficulty.Hard, beep_difficulty.Very_Hard] \
 }
+
+class drill_type_options(enum.Enum):
+   Group = 0
+   Lines = 1
+   Focus = 2
+   Stroke = 3
+
+class group_options(enum.Enum):
+   Individual = 0
+   Group = 1
+
+class line_options(enum.Enum):
+   One = 1
+   Two = 2
+   Three = 3
+
+class focus_options(enum.Enum):
+   Development = 0
+   Situational = 1
+   Movement = 2
+
+drill_type_choices = {\
+   drill_type_options.Group:[group_options.Individual, group_options.Group], \
+   drill_type_options.Lines:[line_options.One, line_options.Two, line_options.Three], \
+   drill_type_options.Focus:[focus_options.Development, focus_options.Situational, focus_options.Movement], \
+   drill_type_options.Stroke: [beep_stroke.Topspin, beep_stroke.Flat, beep_stroke.Chip, \
+      beep_stroke.Loop, beep_stroke.Random], \
+}
+
 
 recent_drills = []
 
@@ -790,32 +829,29 @@ def game():
 
 @app.route(DRILL_SELECT_TYPE_URL, methods=DEFAULT_METHODS)
 def drill_select_type():
-   # clicking stop when the drill is active goes to this page, so stop the drill
-   rc, code = send_msg(PUT_METHOD, STOP_RSRC)
-   if not rc:
-      app.logger.error("PUT STOP failed, code: {}".format(code))
+   global drill_type_choices
 
-   global back_url, previous_url
-   back_url = previous_url
+   drill_type_radio_options = {}
+   # in the for loop - options is the list of radio buttons and choice is the legend
+   for choice, options in drill_type_choices.items():
+      button_list = []
+      for i, option in enumerate(options):
+         button_list.append({"label":option.name.replace("_","-"), "value":option.value})
+         if i == 0:
+            button_list[i].update({"checked":1})
+      drill_type_radio_options.update({choice: {"legend":choice.name, "buttons": button_list}})
 
-   drill_select_type_list = [\
-      {'value': DRILL_SELECT_TYPE_PLAYER},\
-      {'value': DRILL_SELECT_TYPE_INSTRUCTORS},\
-      {'value': DRILL_SELECT_TYPE_TEST},\
-   ]
-
-   return render_template(CHOICE_INPUTS_TEMPLATE, \
+   return render_template(GAME_OPTIONS_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
-      form_choices = drill_select_type_list, \
+      radio_options = drill_type_radio_options, \
       url_for_post = SELECT_URL, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
 
 @app.route(RECENTS_URL, methods=DEFAULT_METHODS)
 def recents():
-
    global recent_drills
    selection_list = []
 
@@ -859,7 +895,8 @@ def select():
    back_url = '/'
    previous_url = "/" + inspect.currentframe().f_code.co_name
 
-   app.logger.debug(f"select [drill/workout] request: {request}")
+   # app.logger.debug(f"select [drill/workout] request: {request}")
+   app.logger.debug(f"SELECT_URL request_form: {request.form}")
 
    send_settings_to_base() #restore level, delay, speed, etc
 
@@ -874,25 +911,34 @@ def select():
       mode_string = MODE_WORKOUT_NOT_SELECTED
    else:
       workout_select = False
-      drill_select_type = None
+      # drill_select_type = None
       mode_string = MODE_DRILL_NOT_SELECTED
-      if request.method=='POST':
-         app.logger.debug(f"request_form_getlist_type: {request.form.getlist('choice')}")
-         drill_select_type = request.form.getlist('choice')[0]
+      selection_list = [\
+         {'id': '001', 'title': 'Ground: Random'},\
+         {'id': '002', 'title': 'Net: Random'},\
+         {'id': '003', 'title': 'Volley: Random'},\
+      ]
+      # if request.method=='POST':
+      #    app.logger.debug(f"request_form_getlist_type: {request.form.getlist('choice')}")
+      #    drill_select_type = request.form.getlist('choice')[0]
 
-      # refer to /home/pi/boomer/drills/ui_drill_selection_lists.py for drill_list format
-      if drill_select_type == DRILL_SELECT_TYPE_TEST:
-         selection_list = drill_list_test
-      elif drill_select_type == DRILL_SELECT_TYPE_INSTRUCTORS:
-         selection_list = drill_list_instructor
-      else:
-         selection_list = drill_list_player
-         filter_list = ['data-Type', 'data-Stroke', 'data-Difficulty']
+   
 
-   if len(filter_list) > 0:
-      page_js = filter_js
-   else:
-      page_js = []
+      # # refer to /home/pi/boomer/drills/ui_drill_selection_lists.py for drill_list format
+      # if drill_select_type == DRILL_SELECT_TYPE_TEST:
+      #    selection_list = drill_list_test
+      # elif drill_select_type == DRILL_SELECT_TYPE_INSTRUCTORS:
+      #    selection_list = drill_list_instructor
+      # else:
+      #    selection_list = drill_list_player
+      #    filter_list = ['data-Type', 'data-Stroke', 'data-Difficulty']
+
+   # if len(filter_list) > 0:
+   #    page_js = filter_js
+   # else:
+   #    page_js = []
+   page_js = []
+   page_js.append(Markup('<script src="/static/js/get_drill_info.js"></script>'))
 
    return render_template(SELECT_TEMPLATE, \
       home_button = my_home_button, \
@@ -1044,14 +1090,14 @@ def beep_selection():
       button_list = []
       for i, option in enumerate(options):
          button_list.append({"label":option.name.replace("_","-"), "value":option.value})
-         if i == 2:
+         if i == 0:
             button_list[i].update({"checked":1})
       beep_radio_options.update({choice: {"legend":choice.name, "buttons": button_list}})
 
    # app.logger.info(f"beep_radio_options: {beep_radio_options}")
 
-   # page_js = []
-   # page_js.append(Markup('<script src="/static/js/radio-button-emit.js"></script>'))
+   page_js = []
+   page_js.append(Markup('<script src="/static/js/radio-button-disable.js"></script>'))
 
    return render_template(GAME_OPTIONS_TEMPLATE, \
       home_button = my_home_button, \
@@ -1059,6 +1105,7 @@ def beep_selection():
       installation_icon = customization_dict['icon'], \
       radio_options = beep_radio_options, \
       url_for_post = DRILL_URL, \
+      page_specific_js = page_js, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
 
 
