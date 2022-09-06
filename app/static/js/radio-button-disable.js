@@ -1,21 +1,19 @@
-var radios = document.querySelectorAll('input[type=radio]')
+const radios = document.querySelectorAll('[data-disables_field]');
 for(var i = 0, max = radios.length; i < max; i++) {
    radios[i].onclick = function() {
-      // console.log("this.name=" + this.name + "  this.value=" + this.value)
-      if (this.name.includes("Type")) {
-         if (this.value !== '0') {
-            disable_button = true;
-            // console.log("disabling stroketype");
+      // console.log(this)
+      if (this.dataset.disables_field) {
+         // console.log("fieldset= " + this.dataset.disables_field);
+         if (this.dataset.enable) {
+            // console.log("enable=" + this.dataset.enable);
+            var FieldsetId = document.getElementById(this.dataset.disables_field);
+            //invert enable to become disable
+            FieldsetId.disabled = !Number(this.dataset.enable);
          } else {
-            // console.log("enabling stroketype");
-            disable_button = false;
+            console.log("WARN: this.data-enable is undefined for ", this);
          }
-         var IdsToToggle = document.getElementsByName("beep_options.Stroke");
-         // console.log("IdsToToggle= ", IdsToToggle);
-         for (let i = 0; i < IdsToToggle.length; i++) {
-            IdsToToggle[i].disabled = disable_button;
-            // console.log("Setting ", IdsToToggle[i]);
-         }
+      } else {
+        console.log("WARN: this.data-disables_field is undefined for ", this);
       }
    }
 }

@@ -10,10 +10,12 @@
   <div class="selections_90percent">
     {%- if radio_options is defined %}
       {%- for fieldset in radio_options %}
-        <fieldset class="radio-slider-buttons" id="{{fieldset['name']}}">
+        <fieldset class="radio-slider-buttons" id="{{fieldset['name']}}"{%- if fieldset['disabled'] is defined %} disabled {%- endif %}>
           <legend>{{fieldset['legend']}}:</legend>
             {%- for button in fieldset['buttons'] %}
-              <input type="radio" id="{{fieldset['name']}}_{{button['label']}}" name="{{fieldset['name']}}" value={{button['value']}} {%- if button['checked'] is defined %} checked{%- endif %}>
+              <input type="radio" id="{{fieldset['name']}}_{{button['label']}}" name="{{fieldset['name']}}" value={{button['value']}}
+                {%- if fieldset['disables'] is defined %} data-disables_field="{{fieldset['disables']}}" data-enable="{{button['enable']}}" {%- endif %}
+                {%- if button['checked'] is defined %} checked{%- endif %}>
               <label for="{{fieldset['name']}}_{{button['label']}}">{{button['label']}}</label>
             {%- endfor %}
         </fieldset>

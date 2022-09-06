@@ -222,9 +222,9 @@ class beep_difficulty(enum.Enum):
 
 beep_mode_choices = [\
    {'name': beep_options.Type.name, 'legend':beep_options.Type.name, 'buttons':[ \
-      {'label': beep_type.Ground.name, 'value': beep_type.Ground.value, 'disables': 0, 'checked' : 1}, \
-      {'label': beep_type.Volley.name, 'value': beep_type.Volley.value, 'disables': 0}, \
-      {'label': beep_type.Mini_Tennis.name.replace("_","-"), 'value': beep_type.Mini_Tennis.value, 'disables': 0} \
+      {'label': beep_type.Ground.name, 'value': beep_type.Ground.value, 'enable': 1, 'checked' : 1}, \
+      {'label': beep_type.Volley.name, 'value': beep_type.Volley.value, 'enable': 0}, \
+      {'label': beep_type.Mini_Tennis.name.replace("_","-"), 'value': beep_type.Mini_Tennis.value, 'enable': 0} \
    ], 'disables': beep_options.Stroke.name}, \
    {'name': beep_options.Stroke.name, 'legend':beep_options.Stroke.name, 'buttons':[ \
       {'label': beep_stroke.Topspin.name, 'value': beep_stroke.Topspin.value}, \
@@ -251,24 +251,34 @@ class group_options(enum.Enum):
    Individual = 0
    Group = 1
 
-class line_options(enum.Enum):
-   One = 1
-   Two = 2
-   Three = 3
-
 class focus_options(enum.Enum):
    Development = 0
    Situational = 1
    Movement = 2
 
-drill_type_choices = {\
-   drill_type_options.Group:[group_options.Individual, group_options.Group], \
-   drill_type_options.Lines:[line_options.One, line_options.Two, line_options.Three], \
-   drill_type_options.Focus:[focus_options.Development, focus_options.Situational, focus_options.Movement], \
-   drill_type_options.Stroke: [beep_stroke.Topspin, beep_stroke.Flat, beep_stroke.Chip, \
-      beep_stroke.Loop, beep_stroke.Random], \
-}
-
+# the Lines radio-buttons are disabled until the 'Group' button is pushed:
+drill_type_choices = [\
+   {'name': drill_type_options.Group.name, 'legend':drill_type_options.Group.name, 'buttons':[ \
+      {'label': group_options.Individual.name, 'value': group_options.Individual.value, 'enable': 0, 'checked' : 1}, \
+      {'label': group_options.Group.name, 'value': group_options.Group.value, 'enable': 1}, \
+   ], 'disables': drill_type_options.Lines.name}, \
+   {'name': drill_type_options.Lines.name, 'legend':drill_type_options.Lines.name, 'buttons':[ \
+      {'label': "1-Line", 'value': 1}, \
+      {'label': "2-Lines", 'value': 2}, \
+      {'label': "3-Lines", 'value': 3}, \
+   ], 'disabled': 1}, \
+   {'name': drill_type_options.Focus.name,'legend':drill_type_options.Focus.name, 'buttons':[ \
+      {'label': focus_options.Development.name, 'value': focus_options.Development.value, 'checked' : 1}, \
+      {'label': focus_options.Situational.name, 'value': focus_options.Situational.value}, \
+      {'label': focus_options.Movement.name, 'value': focus_options.Movement.value}, \
+   ]}, \
+   {'name': beep_options.Stroke.name, 'legend':beep_options.Stroke.name, 'buttons':[ \
+      {'label': beep_stroke.Topspin.name, 'value': beep_stroke.Topspin.value}, \
+      {'label': beep_stroke.Flat.name, 'value': beep_stroke.Flat.value, 'checked' : 1}, \
+      {'label': beep_stroke.Chip.name, 'value': beep_stroke.Chip.value}, \
+      {'label': beep_stroke.Loop.name, 'value': beep_stroke.Loop.value}, \
+   ]}, \
+]
 
 recent_drills = []
 
@@ -281,9 +291,9 @@ THROWER_CALIBRATION_WORKOUT_ID = 2
 
 filter_js = []
 filter_js.append(Markup('<script src="/static/js/jquery-3.3.1.min.js"></script>'))
-filter_js.append(Markup('<script src="/static/js/b_filtrify.js"></script>'))
-filter_js.append(Markup('<script src="/static/js/invoke_filtrify.js"></script>'))
-filter_js.append(Markup('<link rel="stylesheet" href="/static/css/b_filtrify.css">'))
+# filter_js.append(Markup('<script src="/static/js/b_filtrify.js"></script>'))
+# filter_js.append(Markup('<script src="/static/js/invoke_filtrify.js"></script>'))
+# filter_js.append(Markup('<link rel="stylesheet" href="/static/css/b_filtrify.css">'))
 # unused/alternate scripts:
 # <script src="/static/js/filtrify.min.js"></script>
 # <script src="/static/js/highlight.pack.js"></script>
@@ -845,23 +855,17 @@ def game():
 def drill_select_type():
    global drill_type_choices
 
-   drill_type_radio_options = {}
-   # in the for loop - options is the list of radio buttons and choice is the legend
-   for choice, options in drill_type_choices.items():
-      button_list = []
-      for i, option in enumerate(options):
-         button_list.append({"label":option.name.replace("_","-"), "value":option.value})
-         if i == 0:
-            button_list[i].update({"checked":1})
-      drill_type_radio_options.update({choice: {"legend":choice.name, "buttons": button_list}})
+   page_js = [Markup('<script src="/static/js/radio-button-disable.js"></script>')]
 
    return render_template(GAME_OPTIONS_TEMPLATE, \
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
-      radio_options = drill_type_radio_options, \
+      radio_options = drill_type_choices, \
       url_for_post = SELECT_URL, \
-      footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
+      footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED, \
+      page_specific_js = page_js \
+   )
 
 
 @app.route(RECENTS_URL, methods=DEFAULT_METHODS)
@@ -911,6 +915,7 @@ def select():
 
    # app.logger.debug(f"select [drill/workout] request: {request}")
    app.logger.debug(f"SELECT_URL request_form: {request.form}")
+   # DEBUG:flask.app:SELECT_URL request_form: ImmutableMultiDict([('Group', '0'), ('Focus', '0'), ('Stroke', '1')])
 
    send_settings_to_base() #restore level, delay, speed, etc
 
@@ -925,18 +930,18 @@ def select():
       mode_string = MODE_WORKOUT_NOT_SELECTED
    else:
       workout_select = False
+
+      #TODO: make lists for: Development-StrokeType, Situation, Movement, 1-line, 2-line, 3-line
       # drill_select_type = None
       mode_string = MODE_DRILL_NOT_SELECTED
       selection_list = [\
-         {'id': '001', 'title': 'Ground: Random'},\
-         {'id': '002', 'title': 'Net: Random'},\
+         {'id': '009', 'title': 'Ground: Grover'},\
+         {'id': '010', 'title': 'Volley: Groover'},\
          {'id': '003', 'title': 'Volley: Random'},\
       ]
       # if request.method=='POST':
       #    app.logger.debug(f"request_form_getlist_type: {request.form.getlist('choice')}")
       #    drill_select_type = request.form.getlist('choice')[0]
-
-   
 
       # # refer to /home/pi/boomer/drills/ui_drill_selection_lists.py for drill_list format
       # if drill_select_type == DRILL_SELECT_TYPE_TEST:
@@ -951,8 +956,7 @@ def select():
    #    page_js = filter_js
    # else:
    #    page_js = []
-   page_js = []
-   page_js.append(Markup('<script src="/static/js/get_drill_info.js"></script>'))
+   page_js = [Markup('<script src="/static/js/get_drill_info.js"></script>')]
 
    return render_template(SELECT_TEMPLATE, \
       home_button = my_home_button, \
@@ -962,7 +966,6 @@ def select():
       # the following doesn't work: the query parameter is now stripped by the browser.  TODO: remove from template
       # post_param = select_post_param, \
       choices = selection_list, \
-      filters = filter_list, \
       footer_center = "Mode: " + mode_string, \
       page_specific_js = page_js
    )
