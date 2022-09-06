@@ -8,15 +8,17 @@
 {%- block selections %}
 <form method="post" action="{{url_for_post}}">
   <div class="selections_90percent">
-    {%- for key,item in radio_options.items() %}
-      <fieldset class="radio-slider-buttons">
-      <label for="{{key}}">{{item['legend']}}:</label>
-        {%- for button in item['buttons'] %}
-        <input type="radio" id="{{key}}_{{button['label']}}" name="{{key}}" value={{button['value']}} {%- if button['checked'] is defined %} checked{% endif %}>
-          <label for="{{key}}_{{button['label']}}">{{button['label']}}</label>
-        {%- endfor %}
-      </fieldset>
-    {%- endfor %}
+    {%- if radio_options is defined %}
+      {%- for fieldset in radio_options %}
+        <fieldset class="radio-slider-buttons" id="{{fieldset['name']}}">
+          <legend>{{fieldset['legend']}}:</legend>
+            {%- for button in fieldset['buttons'] %}
+              <input type="radio" id="{{fieldset['name']}}_{{button['label']}}" name="{{fieldset['name']}}" value={{button['value']}} {%- if button['checked'] is defined %} checked{%- endif %}>
+              <label for="{{fieldset['name']}}_{{button['label']}}">{{button['label']}}</label>
+            {%- endfor %}
+        </fieldset>
+      {%- endfor %}
+    {%- endif %}
   </div>
 <!-- 
       <div class="stepper">

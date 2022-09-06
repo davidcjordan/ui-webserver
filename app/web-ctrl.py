@@ -218,14 +218,29 @@ class beep_difficulty(enum.Enum):
    Hard = 3
    Very_Hard = 4
 
-beep_mode_choices = {\
-   beep_options.Type:[beep_type.Ground, beep_type.Volley, beep_type.Mini_Tennis,], \
-   beep_options.Stroke: [beep_stroke.Topspin, beep_stroke.Flat, beep_stroke.Chip, \
-      beep_stroke.Loop, beep_stroke.Random], \
-   beep_options.Difficulty: [beep_difficulty.Very_Easy, beep_difficulty.Easy, \
-      beep_difficulty.Medium, beep_difficulty.Hard, beep_difficulty.Very_Hard] \
-}
+# having the name seperate from the legend allows the name to be a parameter name instead of what is on the screen
 
+beep_mode_choices = [\
+   {'name': beep_options.Type.name, 'legend':beep_options.Type.name, 'buttons':[ \
+      {'label': beep_type.Ground.name, 'value': beep_type.Ground.value, 'disables': 0, 'checked' : 1}, \
+      {'label': beep_type.Volley.name, 'value': beep_type.Volley.value, 'disables': 0}, \
+      {'label': beep_type.Mini_Tennis.name.replace("_","-"), 'value': beep_type.Mini_Tennis.value, 'disables': 0} \
+   ], 'disables': beep_options.Stroke.name}, \
+   {'name': beep_options.Stroke.name, 'legend':beep_options.Stroke.name, 'buttons':[ \
+      {'label': beep_stroke.Topspin.name, 'value': beep_stroke.Topspin.value}, \
+      {'label': beep_stroke.Flat.name, 'value': beep_stroke.Flat.value, 'checked' : 1}, \
+      {'label': beep_stroke.Chip.name, 'value': beep_stroke.Chip.value}, \
+      {'label': beep_stroke.Loop.name, 'value': beep_stroke.Loop.value}, \
+      {'label': beep_stroke.Random.name, 'value': beep_stroke.Random.value} \
+   ]}, \
+   {'name': beep_options.Difficulty.name,'legend':beep_options.Difficulty.name, 'buttons':[ \
+      {'label': beep_difficulty.Very_Easy.name.replace("_","-"), 'value': beep_difficulty.Very_Easy.value}, \
+      {'label': beep_difficulty.Easy.name, 'value': beep_difficulty.Easy.value, 'checked' : 1}, \
+      {'label': beep_difficulty.Medium.name, 'value': beep_difficulty.Medium.value}, \
+      {'label': beep_difficulty.Hard.name, 'value': beep_difficulty.Hard.value}, \
+      {'label': beep_difficulty.Very_Hard.name.replace("_","-"), 'value': beep_difficulty.Very_Hard.value} \
+   ]} \
+]
 class drill_type_options(enum.Enum):
    Group = 0
    Lines = 1
@@ -761,14 +776,18 @@ def game_options():
 
    send_settings_to_base() #restore level, delay, speed, etc
 
-   game_radio_options = { \
-      SERVE_MODE_PARAM:{"legend":"Serves", "buttons":[{"label":"Alternate", "value":0},\
-         {"label":"All Player","value":1},{"label":"All Boomer","value":2}]}, \
-      TIEBREAKER_PARAM:{"legend":"Scoring", "buttons":[{"label":"Standard", "value":0},{"label":"Tie Breaker", "value":1}]}, \
+   game_radio_options = [\
+   {'name': SERVE_MODE_PARAM, 'legend':"Serves", 'buttons':[ \
+      {'label': "Alternate", 'value': 0, 'checked' : 1}, \
+      {'label': "All Player", 'value': 1}, \
+      {'label': "All Boomer", 'value': 2} \
+   ]}, \
+   {'name': TIEBREAKER_PARAM,'legend':"Scoring", 'buttons':[ \
+      {'label': "Standard", 'value': 0, 'checked' : 1}, \
+      {'label': "Tie Breaker", 'value': 1}, \
+   ]} \
       # RUN_REDUCE_PARAM:{"legend":"Running", "buttons":[{"label":"Standard", "value":0},{"label":"Less", "value":1}]} \
-   }
-   game_radio_options[SERVE_MODE_PARAM]["buttons"][settings_dict[SERVE_MODE_PARAM]]["checked"] = 1
-   game_radio_options[TIEBREAKER_PARAM]["buttons"][settings_dict[TIEBREAKER_PARAM]]["checked"] = 1
+]
 
    page_js = []
    page_js.append(Markup('<script src="/static/js/radio-button-emit.js"></script>'))
@@ -989,25 +1008,30 @@ def drill():
       id = int(request.args[WORKOUT_ID])
       workout_select = True
       app.logger.info(f"Setting workout_id= {id} from request.args")
-   elif 'beep_options.Type' in request.form:
-      beep_type_value = int(request.form['beep_options.Type'])
+   elif beep_options.Type.name in request.form:
+      beep_type_value = int(request.form[ beep_options.Type.name])
       # beep drill mode
-      #request_form: ImmutableMultiDict([('beep_options.Type', '2'), ('beep_options.Stroke', '5'), ('beep_options.Difficulty', '2')])
+      #request_form: ImmutableMultiDict([('Type', '2'), ('Stroke', '5'), ('Difficulty', '2')])
       # for key in request.form:
       #    app.logger.info(f"Beep choice {key} = {request.form[key]}")
       # example beep drill ranges - consult the drills repository for the real thing:
       #mini-tennis: 901-905; volley: 906-910; 911-915 flat, 916-920 loop, 921-925 chip, 926-930 topspin, 931-935 random
-      stroke_type_offset = 0
-      difficulty_offset = 3
-      if 'beep_options.Difficulty' in request.form:
-         difficulty_offset = int(request.form['beep_options.Difficulty'])
+      if beep_options.Difficulty.name in request.form:
+         difficulty_offset = int(request.form[beep_options.Difficulty.name])
          # app.logger.info(f"beep_type={beep_type(beep_type_value).name}; Increasing id by {difficulty_offset}, e.g. {beep_difficulty(difficulty_offset).name}")
       else:
-         app.logger.warning(f"beep_options.Difficulty not in request.form")
+         app.logger.warning(f"Beep drill option: {beep_options.Difficulty.name} not in request.form")
+         difficulty_offset = 2
+
       if beep_type_value is beep_type.Volley.value:
          stroke_type_offset = 5
+
       if beep_type_value is beep_type.Ground.value:
-         stroke_type = int(request.form['beep_options.Stroke'])
+         if beep_options.Stroke.name in request.form:
+            stroke_type = int(request.form[beep_options.Stroke.name])
+         else:
+            app.logger.warning(f"Beep drill option: {beep_options.Stroke.name} not in request.form")
+            stroke_type = 1
          stroke_type_offset = (stroke_type * 5) + 10
          app.logger.info(f"Ground beep type, so using stroke_type={beep_stroke(stroke_type).name}")
 
@@ -1080,26 +1104,16 @@ def beep_selection():
 
    send_settings_to_base() #restore level, delay, speed, etc
 
-   beep_radio_options = {}
-   # in the for loop - options is the list of radio buttons and choice is the legend
-   for choice, options in beep_mode_choices.items():
-      button_list = []
-      for i, option in enumerate(options):
-         button_list.append({"label":option.name.replace("_","-"), "value":option.value})
-         if i == 0:
-            button_list[i].update({"checked":1})
-      beep_radio_options.update({choice: {"legend":choice.name, "buttons": button_list}})
-
-   # app.logger.info(f"beep_radio_options: {beep_radio_options}")
+   app.logger.info(f"beep_mode_choices: {beep_mode_choices}")
 
    page_js = []
    page_js.append(Markup('<script src="/static/js/radio-button-disable.js"></script>'))
 
-   return render_template(GAME_OPTIONS_TEMPLATE, \
+   return render_template(GAME_OPTIONS_TEMPLATE,
       home_button = my_home_button, \
       installation_title = customization_dict['title'], \
       installation_icon = customization_dict['icon'], \
-      radio_options = beep_radio_options, \
+      radio_options = beep_mode_choices, \
       url_for_post = DRILL_URL, \
       page_specific_js = page_js, \
       footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
