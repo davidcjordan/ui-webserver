@@ -206,10 +206,10 @@ class beep_type(enum.Enum):
    Mini_Tennis = 2
 
 class beep_stroke(enum.Enum):
-   Topspin = 0
-   Flat = 1
+   Flat = 0
+   Loop = 1
    Chip = 2
-   Loop = 3
+   Topspin = 3
    Random = 4
 class beep_difficulty(enum.Enum):
    Very_Easy = 0
@@ -227,10 +227,10 @@ beep_mode_choices = [\
       {'label': beep_type.Mini_Tennis.name.replace("_","-"), 'value': beep_type.Mini_Tennis.value, 'enable': 0} \
    ], 'disables': beep_options.Stroke.name}, \
    {'name': beep_options.Stroke.name, 'legend':beep_options.Stroke.name, 'buttons':[ \
-      {'label': beep_stroke.Topspin.name, 'value': beep_stroke.Topspin.value}, \
       {'label': beep_stroke.Flat.name, 'value': beep_stroke.Flat.value, 'checked' : 1}, \
-      {'label': beep_stroke.Chip.name, 'value': beep_stroke.Chip.value}, \
       {'label': beep_stroke.Loop.name, 'value': beep_stroke.Loop.value}, \
+      {'label': beep_stroke.Chip.name, 'value': beep_stroke.Chip.value}, \
+      {'label': beep_stroke.Topspin.name, 'value': beep_stroke.Topspin.value}, \
       {'label': beep_stroke.Random.name, 'value': beep_stroke.Random.value} \
    ]}, \
    {'name': beep_options.Difficulty.name,'legend':beep_options.Difficulty.name, 'buttons':[ \
@@ -698,18 +698,23 @@ def settings():
       {"value": "Right Cam Calib"}\
    ]
 
-   settings_radio_options = { \
-   GRUNTS_PARAM:{"legend":"Grunts", "buttons":[{"label":"Off", "value":0},{"label":"On","value":1}]}, \
-   TRASHT_PARAM:{"legend":"Trash Talking", "buttons":[{"label":"Off", "value":0},{"label":"On"}]}, \
-   }
+   settings_radio_options = [\
+   {'name': GRUNTS_PARAM, 'legend':"Grunts", 'buttons':[ \
+      {'label': "Off", 'value': 0}, \
+      {'label': "On", 'value': 1}, \
+   ]}, \
+   {'name': TRASHT_PARAM,'legend':"Trash Talking", 'buttons':[ \
+      {'label': "Off", 'value': 0}, \
+      {'label': "On", 'value': 1}, \
+   ]} \
+   ]
 
-   read_settings_from_file()
-   # the following adds checked to  param[buttons][index]
-   settings_radio_options[GRUNTS_PARAM]["buttons"][settings_dict[GRUNTS_PARAM]]["checked"] = 1
-   settings_radio_options[TRASHT_PARAM]["buttons"][settings_dict[TRASHT_PARAM]]["checked"] = 1
-
-   page_js = []
-   page_js.append(Markup('<script src="/static/js/radio-button-emit.js"></script>'))
+   # read_settings_from_file()
+   # if (settings_dict[GRUNTS_PARAM] == 1):
+   settings_radio_options[0]['buttons'][settings_dict[GRUNTS_PARAM]]['checked'] = 1
+   settings_radio_options[1]['buttons'][settings_dict[TRASHT_PARAM]]['checked'] = 1
+   
+   page_js = [Markup('<script src="/static/js/radio-button-emit.js"></script>')]
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
@@ -786,21 +791,28 @@ def game_options():
 
    send_settings_to_base() #restore level, delay, speed, etc
 
+   #TODO: Have checked from from the settings
    game_radio_options = [\
    {'name': SERVE_MODE_PARAM, 'legend':"Serves", 'buttons':[ \
-      {'label': "Alternate", 'value': 0, 'checked' : 1}, \
+      {'label': "Alternate", 'value': 0}, \
       {'label': "All Player", 'value': 1}, \
       {'label': "All Boomer", 'value': 2} \
    ]}, \
    {'name': TIEBREAKER_PARAM,'legend':"Scoring", 'buttons':[ \
-      {'label': "Standard", 'value': 0, 'checked' : 1}, \
+      {'label': "Standard", 'value': 0}, \
       {'label': "Tie Breaker", 'value': 1}, \
    ]} \
-      # RUN_REDUCE_PARAM:{"legend":"Running", "buttons":[{"label":"Standard", "value":0},{"label":"Less", "value":1}]} \
+   # RUN_REDUCE_PARAM:{"legend":"Running", "buttons":[{"label":"Standard", "value":0},{"label":"Less", "value":1}]} \
 ]
 
-   page_js = []
-   page_js.append(Markup('<script src="/static/js/radio-button-emit.js"></script>'))
+   game_radio_options[0]['buttons'][settings_dict[SERVE_MODE_PARAM]]['checked'] = 1
+   # app.logger.debug(f"settings_dict[SERVE_MODE_PARAM]= {settings_dict[SERVE_MODE_PARAM]}")
+   # if (settings_dict[TIEBREAKER_PARAM] == 1):
+   # app.logger.debug(f"settings_dict[TIEBREAKER_PARAM]= {settings_dict[TIEBREAKER_PARAM]}")
+   game_radio_options[1]['buttons'][settings_dict[TIEBREAKER_PARAM]]['checked'] = 1
+   # app.logger.debug(f"game_radio_options= {game_radio_options}")
+
+   page_js = [Markup('<script src="/static/js/radio-button-emit.js"></script>')]
 
    return render_template(GAME_OPTIONS_TEMPLATE, \
       home_button = my_home_button, \
@@ -1019,12 +1031,15 @@ def drill():
       #    app.logger.info(f"Beep choice {key} = {request.form[key]}")
       # example beep drill ranges - consult the drills repository for the real thing:
       #mini-tennis: 901-905; volley: 906-910; 911-915 flat, 916-920 loop, 921-925 chip, 926-930 topspin, 931-935 random
+      #set defaults if missing keys in form:
+      stroke_type_offset = 0 #default to mini-tennis
+      difficulty_offset = 2
+
       if beep_options.Difficulty.name in request.form:
          difficulty_offset = int(request.form[beep_options.Difficulty.name])
          # app.logger.info(f"beep_type={beep_type(beep_type_value).name}; Increasing id by {difficulty_offset}, e.g. {beep_difficulty(difficulty_offset).name}")
       else:
          app.logger.warning(f"Beep drill option: {beep_options.Difficulty.name} not in request.form")
-         difficulty_offset = 2
 
       if beep_type_value is beep_type.Volley.value:
          stroke_type_offset = 5
@@ -1207,6 +1222,7 @@ def handle_change_params(data):          # change_params() is the event callback
       if data[k] == None:
          app.logger.warning(f'Received NoneType for {k}')
       else:
+         # app.logger.debug(f'data[k] is not None; Setting: {k} to {data[k]}')
          if (k == LEVEL_PARAM):
             settings_dict[k] = int(data[k]*10)
          elif (k == DELAY_MOD_PARAM):
