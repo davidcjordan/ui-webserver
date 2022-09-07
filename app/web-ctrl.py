@@ -287,7 +287,8 @@ recent_drills = []
 
 faults_table = {}
 #TODO: generate the dict by parsing the name in the drill description in the file
-thrower_calib_drill_dict = {"ROTARY":(THROWER_CALIB_DRILL_NUMBER_START), "ELEVATOR": (THROWER_CALIB_DRILL_NUMBER_START+1)}
+# thrower_calib_drill_dict = {"ROTARY":(THROWER_CALIB_DRILL_NUMBER_START), "ELEVATOR": (THROWER_CALIB_DRILL_NUMBER_START+1)}
+thrower_calib_drill_dict = {"ROTARY":(THROWER_CALIB_DRILL_NUMBER_START)}
 for i in range(balltype_e.SERVE.value, balltype_e.CUSTOM.value):
    thrower_calib_drill_dict[balltype_e(i).name] = THROWER_CALIB_DRILL_NUMBER_START+i+1
 THROWER_CALIBRATION_WORKOUT_ID = 2
