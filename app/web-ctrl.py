@@ -77,7 +77,6 @@ except:
 # TODO: restore getting lists from ui_drill_selection_lists
 workout_list = [\
 {'id': '001', 'title': 'Example Workout'},\
-{'id': '002', 'title': 'Thrower Calibration'},\
 ]
 
 customization_dict = None
@@ -94,6 +93,8 @@ workout_select = False
 my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
          <img src="/static/home.png" style="height:64px;" alt="Home"> \
          </button>')
+
+html_horizontal_rule =  Markup('<hr>')
 
 IP_PORT = 1111 # picked what is hopefully an unused port  (can't use 44)
 DEFAULT_METHODS = ['POST', 'GET']
@@ -400,10 +401,10 @@ def cam_location():
 
    return render_template(CAM_LOCATION_TEMPLATE, \
       home_button = my_home_button, \
-      installation_title = customization_dict['title'], \
+      page_title = f"Enter {cam_side} Camera Location", \
       installation_icon = customization_dict['icon'], \
       options = position_options, \
-      footer_center = f"Mode: Cam Location")
+      footer_center = customization_dict['title'])
 
 
 @app.route(CAM_CALIB_URL, methods=DEFAULT_METHODS)
@@ -513,12 +514,12 @@ def cam_calib():
    return render_template(CAM_CALIBRATION_TEMPLATE, \
       page_specific_styles = page_styles, \
       home_button = my_home_button, \
-      installation_title = customization_dict['title'], \
+      page_title = f"Enter Court Coordinates", \
       installation_icon = customization_dict['icon'], \
       image_path = "/static/" + cam_side.lower() + "_court.png", \
       court_point_coords = court_points_dict_list[court_point_dict_index], \
       # court_point_coords = COURT_POINT_KEYS_W_AXIS, \
-      footer_center = "Mode: " + mode_str)
+      footer_center = customization_dict['title'])
 
 
 @app.route(CAM_CALIB_DONE_URL, methods=DEFAULT_METHODS)
@@ -590,7 +591,7 @@ def cam_calib_done():
                app.logger.error("PUT FUNC_GEN_CORRECTION_VECTORS failed, code: {code}")
                status = f"FAILED: {cam_side} camera correction vector generation failed."
             else:
-               status = f"{cam_side} camera calibration finished."
+               status = f""
 
 
    page_js = []
@@ -599,12 +600,12 @@ def cam_calib_done():
    button_label = "Camera Calibration"
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
-      installation_title = customization_dict['title'], \
+      page_title = f"{cam_side} Camera Calibration Finished.", \
       installation_icon = customization_dict['icon'], \
       message = status, \
       page_specific_js = page_js, \
       # onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL}], \
-      footer_center = "Mode: " + button_label)
+      footer_center = customization_dict['title'])
 
 @app.route(CAM_VERIF_URL, methods=DEFAULT_METHODS)
 def cam_verif():
@@ -626,17 +627,18 @@ def cam_verif():
 
    return render_template(CAM_VERIFICATION_TEMPLATE, \
       home_button = my_home_button, \
-      installation_title = customization_dict['title'], \
+      page_title = "Check court point locations.", \
       installation_icon = customization_dict['icon'], \
       image_path = "/static/" + cam_name + "_court.png", \
       court_point_coords = court_points_dict_list[court_point_dict_index], \
-      footer_center = "Mode: " + "Check Camera")
+      footer_center = customization_dict['title'])
 
  
 @app.route(MAIN_URL, methods=DEFAULT_METHODS)
 def index():
    global back_url, previous_url
    back_url = previous_url = "/"
+   global html_horizontal_rule
 
    # app.logger.debug(f"Test of printing function name: in function: {sys._getframe(0).f_code.co_name}")
 
@@ -651,8 +653,6 @@ def index():
    # TODO: fix disable CSS
    # onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL, "disabled": 1, "id": "Done"}], \
 
-   html_horizontal_rule =  Markup('<hr>')
-
    onclick_choice_list = [\
       {"html_before": "Game:", "value": "Play", "onclick_url": GAME_URL, "id": "game_button"},\
       {"value": "Options", "onclick_url": GAME_OPTIONS_URL, "id": "game_button", "html_after": html_horizontal_rule},\
@@ -665,10 +665,10 @@ def index():
    ]
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
-      installation_title = customization_dict['title'], \
+      page_title = "Welcome to Boomer", \
       installation_icon = customization_dict['icon'], \
       onclick_choices = onclick_choice_list, \
-      footer_center = "Mode: --")
+      footer_center = customization_dict['title'])
 
 '''
 @app.route('/back')
@@ -718,34 +718,37 @@ def settings():
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
-      installation_title = customization_dict['title'], \
+      page_title = "Change Settings or Perform Calibration", \
       installation_icon = customization_dict['icon'], \
       onclick_choices = onclick_choice_list, \
       radio_options = settings_radio_options, \
       form_choices = form_choice_list, \
       url_for_post = CAM_LOCATION_URL, \
       page_specific_js = page_js, \
-      footer_center = "Mode: --")
+      footer_center = customization_dict['title'])
 
 
 @app.route(THROWER_CALIB_SELECTION_URL, methods=DEFAULT_METHODS)
 def thrower_calib():
+   global html_horizontal_rule
    # value is the label of the button
    onclick_choice_list = [\
-      {"value": "Calibrate All", "onclick_url": DRILL_URL, "param_name": WORKOUT_ID,"param_value": THROWER_CALIBRATION_WORKOUT_ID},
-      {"value": "Rotary Creep", "onclick_url": CREEP_CALIB_URL, "param_name": CREEP_ID,"param_value": ROTARY_CALIB_NAME},
-      {"value": "Elevator Creep", "onclick_url": CREEP_CALIB_URL, "param_name": CREEP_ID,"param_value": ELEVATOR_CALIB_NAME}
+      {"html_before": "Motor Creep:", \
+         "value": ROTARY_CALIB_NAME.title(), "onclick_url": CREEP_CALIB_URL, "param_name": CREEP_ID,"param_value": ROTARY_CALIB_NAME}, \
+      {"value": ELEVATOR_CALIB_NAME.title(), "onclick_url": CREEP_CALIB_URL, "param_name": CREEP_ID,"param_value": ELEVATOR_CALIB_NAME, \
+          "html_after": html_horizontal_rule}, \
+      {"value": "All", "onclick_url": DRILL_URL, "param_name": WORKOUT_ID,"param_value": THROWER_CALIBRATION_WORKOUT_ID} \
    ]
    for parameter, drill_num in thrower_calib_drill_dict.items():
-      button_label = f"Calibrate {parameter.title()}"
+      button_label = f"{parameter.title()}"
       onclick_choice_list.append({"value": button_label, "param_name": DRILL_ID, "onclick_url": DRILL_URL, "param_value": drill_num})
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
-      installation_title = customization_dict['title'], \
+      page_title = "Select Thrower Calibration Type", \
       installation_icon = customization_dict['icon'], \
       onclick_choices = onclick_choice_list, \
-      footer_center = "Mode: --")
+      footer_center = customization_dict['title'])
 
 
 @app.route(CREEP_CALIB_URL, methods=DEFAULT_METHODS)
@@ -771,11 +774,10 @@ def creep_calib():
          app.logger.error(f"function '{sys._getframe(0).f_code.co_name}': PUT Function failed, code: {code}")
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
-      home_button = my_home_button, \
-      installation_title = customization_dict['title'], \
+      page_title = "Motor Calibration", \
       installation_icon = customization_dict['icon'], \
       message = f"{creep_type.title()} creep calibration in progress.", \
-      footer_center = "Mode: Creep Calibration")
+      footer_center = customization_dict['title'])
 
 
 @app.route(GAME_OPTIONS_URL, methods=DEFAULT_METHODS)
@@ -816,7 +818,7 @@ def game_options():
 
    return render_template(GAME_OPTIONS_TEMPLATE, \
       home_button = my_home_button, \
-      installation_title = customization_dict['title'], \
+      page_title = "Select Game Mode Options", \
       installation_icon = customization_dict['icon'], \
       url_for_post = GAME_URL, \
       # optional_form_begin = Markup('<form action ="' + GAME_URL + '" method="post">'), \
@@ -828,7 +830,7 @@ def game_options():
       # point_delay_max = GAME_POINT_DELAY_MAX, \
       # point_delay_step = GAME_POINT_DELAY_STEP, \
       page_specific_js = page_js, \
-      footer_center = "Mode: " + "Game Options")
+      footer_center = customization_dict['title'])
 
 @app.route(GAME_URL, methods=DEFAULT_METHODS)
 def game():
@@ -854,13 +856,13 @@ def game():
    # Using emit on radio buttons instead of taking the post data
 
    return render_template(GAME_TEMPLATE, \
-      installation_title = customization_dict['title'], \
+      page_title = "Game Mode", \
       installation_icon = customization_dict['icon'], \
       level_dflt = settings_dict[LEVEL_PARAM]/LEVEL_UI_FACTOR, \
       level_min = LEVEL_MIN/LEVEL_UI_FACTOR, \
       level_max = LEVEL_MAX/LEVEL_UI_FACTOR, \
       level_step = LEVEL_UI_STEP/LEVEL_UI_FACTOR, \
-      footer_center = "Mode: " + MODE_GAME)
+      footer_center = customization_dict['title'])
 
 
 @app.route(DRILL_SELECT_TYPE_URL, methods=DEFAULT_METHODS)
@@ -871,11 +873,11 @@ def drill_select_type():
 
    return render_template(GAME_OPTIONS_TEMPLATE, \
       home_button = my_home_button, \
-      installation_title = customization_dict['title'], \
+      page_title = "Select Type of Drill", \
       installation_icon = customization_dict['icon'], \
       radio_options = drill_type_choices, \
       url_for_post = SELECT_URL, \
-      footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED, \
+      footer_center = customization_dict['title'], \
       page_specific_js = page_js \
    )
 
@@ -909,9 +911,9 @@ def recents():
 
    return render_template(SELECT_TEMPLATE, \
       home_button = my_home_button, \
-      installation_title = customization_dict['title'], \
+      page_title = "Select Drill", \
       installation_icon = customization_dict['icon'], \
-      footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED, \
+      footer_center = customization_dict['title'], \
       url_for_post = DRILL_URL, \
       choices = selection_list, \
       page_specific_js = page_js
@@ -935,11 +937,12 @@ def select():
    # a parameter (mode) indicates the if workflow or drills should be selected
    select_post_param = []
    filter_list = []
+   page_title_str = "Select Drill"
    if request.args.get(ONCLICK_MODE_KEY) == ONCLICK_MODE_WORKOUT_VALUE:
       workout_select = True
       selection_list = workout_list
       # select_post_param = {"name": ONCLICK_MODE_KEY, "value": ONCLICK_MODE_WORKOUT_VALUE}
-      mode_string = MODE_WORKOUT_NOT_SELECTED
+      page_title_str = "Select Workout"
    else:
       workout_select = False
 
@@ -972,13 +975,13 @@ def select():
 
    return render_template(SELECT_TEMPLATE, \
       home_button = my_home_button, \
-      installation_title = customization_dict['title'], \
+      page_title = page_title_str, \
       installation_icon = customization_dict['icon'], \
       url_for_post = DRILL_URL, \
       # the following doesn't work: the query parameter is now stripped by the browser.  TODO: remove from template
       # post_param = select_post_param, \
       choices = selection_list, \
-      footer_center = "Mode: " + mode_string, \
+      footer_center = customization_dict['title'], \
       page_specific_js = page_js
    )
  
@@ -1110,10 +1113,10 @@ def drill():
          
    previous_url = "/" + inspect.currentframe().f_code.co_name
    return render_template(DRILL_TEMPLATE, \
-      installation_title = customization_dict['title'], \
+      page_title = f"Running {mode_string}", \
       installation_icon = customization_dict['icon'], \
       stepper_options = drill_stepper_options, \
-      footer_center = "Mode: " + mode_string)
+      footer_center = customization_dict['title'])
 
 
 @app.route(BEEP_SELECTION_URL, methods=DEFAULT_METHODS)
@@ -1122,19 +1125,19 @@ def beep_selection():
 
    send_settings_to_base() #restore level, delay, speed, etc
 
-   app.logger.info(f"beep_mode_choices: {beep_mode_choices}")
+   # app.logger.info(f"beep_mode_choices: {beep_mode_choices}")
 
    page_js = []
    page_js.append(Markup('<script src="/static/js/radio-button-disable.js"></script>'))
 
    return render_template(GAME_OPTIONS_TEMPLATE,
       home_button = my_home_button, \
-      installation_title = customization_dict['title'], \
+      page_title = "Select Type of Beep Drill", \
       installation_icon = customization_dict['icon'], \
       radio_options = beep_mode_choices, \
       url_for_post = DRILL_URL, \
       page_specific_js = page_js, \
-      footer_center = "Mode: " + MODE_DRILL_NOT_SELECTED)
+      footer_center = customization_dict['title'])
 
 
 @app.route(FAULTS_URL, methods=DEFAULT_METHODS)
@@ -1144,18 +1147,18 @@ def faults():
    read_settings_from_file()
 
    return render_template(FAULTS_TEMPLATE, \
-      installation_title = customization_dict['title'], \
+      page_title = "Problems Detected", \
       installation_icon = customization_dict['icon'], \
-      footer_center = "Mode: " + "--")
+      footer_center = customization_dict['title'])
 
 
 @app.route(DONE_URL, methods=DEFAULT_METHODS)
 def done():
 
+   status = "Finished"
    msg_ok, base_mode_register = send_msg(GET_METHOD, MODE_RSRC)
    if not msg_ok:
       app.logger.error(f"function '{sys._getframe(0).f_code.co_name}': GET STOP MODE_RSRC failed")
-      status = "Error occurred on obtaining Boomer mode"
    else:
       status = f"{base_mode_e(base_mode_register[MODE_PARAM]).name.title()} Finished."
  
@@ -1163,12 +1166,12 @@ def done():
       # page_js.append(Markup('<script src="/static/js/timed-redirect.js"></script>'))
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
-      installation_title = customization_dict['title'], \
+      page_title = status, \
       installation_icon = customization_dict['icon'], \
-      message = status, \
+      # message = status, \
       onclick_choices = [{"value": "OK", "onclick_url": MAIN_URL}], \
       # page_specific_js = page_js, \
-      footer_center = "Mode: " + "Finished")
+      footer_center = customization_dict['title'])
 
 
 @app.route('/favicon.ico')
@@ -1446,7 +1449,7 @@ def read_settings_from_file():
       with open(f'{settings_dir}/ui_customization.json') as f:
          customization_dict = json.load(f)
    except:
-      customization_dict = {"title": "Welcome to Boomer", "icon": "/static/favicon.ico"}
+      customization_dict = {"title": "Boomer #1", "icon": "/static/favicon.ico"}
 
    try:
       with open(f'{settings_dir}/{settings_filename}') as f:
