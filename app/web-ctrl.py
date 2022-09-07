@@ -144,9 +144,11 @@ DRILL_SELECT_TYPE_PLAYER = 'Player(s)'
 DRILL_SELECT_TYPE_INSTRUCTORS = 'Instructors'
 DRILL_SELECT_TYPE_TEST ='Test'
 
+# the following are used as URL args/parameters
 WORKOUT_ID = 'workout_id'
 DRILL_ID = 'drill_id' # indicates drill_id for thrower calibration, which doesn't use a POST
 CREEP_ID = "creep_type"
+CAM_SIDE_ID = "cam_side"
 ONCLICK_MODE_KEY = 'mode'
 ONCLICK_MODE_WORKOUT_VALUE = 'workouts'
 
@@ -311,16 +313,13 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 @app.route(CAM_LOCATION_URL, methods=DEFAULT_METHODS)
 def cam_location():
    global cam_side, Units, unit_lengths
-   if request.method=='POST':
-      app.logger.debug(f"POST to CAM_LOCATION request.form: {request.form}")
-      # POST to CAM_LOCATION request.form: ImmutableMultiDict([('choice', 'Left Cam Calib')])
-      if ('choice' in request.form) and request.form['choice'].lower().startswith('r'):
-         cam_side = cam_side_right_label
-      else:
-         cam_side = cam_side_left_label
-   else:
-      app.logger.warning(f"Did not get POST to CAM_LOCATION; request.method: {request.method}")
-      cam_side = cam_side_right_label
+ 
+   app.logger.debug(f"CAM_LOCATION_URL request_args: {request.args}")
+   cam_side = request.args.get(CAM_SIDE_ID)
+   # app.logger.debug(f"request for CAM_LOCATION_URL; {CAM_SIDE_ID}={cam_side}")
+   if cam_side is None:
+      app.logger.error(f"request for CAM_LOCATION_URL is missing {CAM_SIDE_ID} arg")
+      cam_side = cam_side_left_label
 
    # restore measurements, which are A (camera to left doubles), B (cam to right doubles), and Z (cam height)
    cam_measurements_filepath = f'{settings_dir}/{cam_side.lower()}_cam_measurements.json'
@@ -530,10 +529,9 @@ def cam_calib_done():
    # app.logger.debug(f"POST to CALIB_DONE request.content_type: {request.content_type}")
 
    if request.method=='POST':
-
       if cam_side == None:
          # this happens during debug, when using the browser 'back' to navigate to CAM_CALIB_URL
-         cam_side = "Left"
+         cam_side = cam_side_left_label
          app.logger.warning("cam_side was None in cam_calib_done")
 
       if (request.content_type.startswith('application/json')):
@@ -690,12 +688,13 @@ def settings():
 
    # value is the label of the button
    onclick_choice_list = [\
-      {"value": "Check Camera", "onclick_url": CAM_VERIF_URL}, \
-      {"value": "Thrower Calibration", "onclick_url": THROWER_CALIB_SELECTION_URL}
-   ]
-   form_choice_list = [\
-      {"value": "Left Cam Calib"},\
-      {"value": "Right Cam Calib"}\
+      {"html_before": "Check:", \
+         "value": "Cameras", "onclick_url": CAM_VERIF_URL, "html_after": html_horizontal_rule}, \
+      {"html_before": "Calibrate:", \
+         "value": "Thrower", "onclick_url": THROWER_CALIB_SELECTION_URL}, \
+      {"value": "Left Camera", "onclick_url": CAM_LOCATION_URL, "param_name": CAM_SIDE_ID, "param_value": cam_side_left_label}, \
+      {"value": "Right Cam", "onclick_url": CAM_LOCATION_URL, "param_name": CAM_SIDE_ID, "param_value": cam_side_right_label, \
+         "html_after": html_horizontal_rule}
    ]
 
    settings_radio_options = [\
@@ -722,8 +721,6 @@ def settings():
       installation_icon = customization_dict['icon'], \
       onclick_choices = onclick_choice_list, \
       radio_options = settings_radio_options, \
-      form_choices = form_choice_list, \
-      url_for_post = CAM_LOCATION_URL, \
       page_specific_js = page_js, \
       footer_center = customization_dict['title'])
 
