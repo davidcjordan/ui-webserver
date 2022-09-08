@@ -947,12 +947,17 @@ def select():
 
       #TODO: make lists for: Development-StrokeType, Situation, Movement, 1-line, 2-line, 3-line
       # drill_select_type = None
-      mode_string = MODE_DRILL_NOT_SELECTED
-      selection_list = [\
-         {'id': '009', 'title': 'Ground: Grover'},\
-         {'id': '010', 'title': 'Volley: Groover'},\
-         {'id': '003', 'title': 'Volley: Random'},\
-      ]
+
+      drill_list = [9,10,11]
+      selection_list = []
+      for drill_id in drill_list:
+         app.logger.debug(f"drill_id={drill_id} is of type {type(drill_id)}")
+         drill_id_str = f"{drill_id:03}"
+         if (fetch_into_drills_dict(drill_id_str)):
+            selection_list.append({'id': drill_id_str, 'title': drills_dict[drill_id_str]['name']})
+         else:
+            app.logger.error(f"DRL{drill_id_str} missing from drill_dict; not including in choices")
+
       # if request.method=='POST':
       #    app.logger.debug(f"request_form_getlist_type: {request.form.getlist('choice')}")
       #    drill_select_type = request.form.getlist('choice')[0]
