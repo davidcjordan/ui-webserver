@@ -78,6 +78,7 @@ except:
 workout_list = [\
 {'id': '001', 'title': 'Example Workout'},\
 ]
+drills_dict = {} # holds copies of drills read in from DRLxxx.csv files; keys are the drill numbers
 
 customization_dict = None
 settings_dict = None
@@ -883,6 +884,7 @@ def drill_select_type():
 @app.route(RECENTS_URL, methods=DEFAULT_METHODS)
 def recents():
    global recent_drills
+   global drills_dict
    selection_list = []
 
    try:
@@ -895,14 +897,13 @@ def recents():
 #      , 811, 812, 813, 814, 815, 816, 817, 818, 822, 823, 825, 826, 827]
 
    for drill_id in recent_drills:
-      # drill filename format: DRL123.csv
-      try:
-         with open(f'{drills_dir}/DRL{drill_id:03}.csv') as f:
-            lines = f.readlines()
-            # remove quotes from title string, if they exist
-            selection_list.append({'id': f"{drill_id:03}", 'title': lines[0].replace('"','')})
-      except:
-         app.logger.error(f"Error reading DRL{drill_id:03}.csv; not including in choices")
+      drill_id_str = f"{drill_id:03}"
+      if (fetch_into_drills_dict(drill_id_str)):
+         selection_list.append({'id': drill_id_str, 'title': drills_dict[drill_id_str]['name']})
+      else:
+         app.logger.error(f"DRL{drill_id_str} missing from drill_dict; not including in choices")
+
+   # app.logger.debug(f"drills_dict={drills_dict}")
 
    page_js = []
    page_js.append(Markup('<script src="/static/js/get_drill_info.js"></script>'))
@@ -1490,6 +1491,20 @@ def read_court_point_files():
          app.logger.warning(f"court_points_dict_list[{side_name}] load failed")
 
 
+def fetch_into_drills_dict(drill_id_str):
+   global drills_dict
+   # get name from drills_dict, or read the drill file and populate the drills_dict
+   if (drill_id_str not in drills_dict):
+      this_drill_info = get_drill_info(drill_id_str)
+      if ('name' in this_drill_info):
+         drills_dict[drill_id_str] = this_drill_info
+
+   if ((drill_id_str in drills_dict) and ('name' in drills_dict[drill_id_str])):
+      return True
+   else:
+      return False
+
+
 def get_drill_info(drill_id):
    global workout_select
    if (workout_select):
@@ -1498,13 +1513,24 @@ def get_drill_info(drill_id):
       prefix = "DRL"
 
    drill_info = {}
+
+   if isinstance(drill_id, str):
+      int_drill_id = int(drill_id)
+   elif isinstance(drill_id, int):
+      int_drill_id = drill_id
+   else:
+      app.logger.error(f"drill_id {drill_id} is type={type(drill_id)} (not str or int)")
+      return drill_info
+
    try:
-      file_path = f'{drills_dir}/{prefix}{drill_id}.csv'
+      file_path = f'{drills_dir}/{prefix}{int_drill_id:03}.csv'
       app.logger.debug(f"get_drill_info file_path='{file_path}'")
       with open(file_path) as f:
-         lines = f.readlines()
-         # remove quotes from title string, if they exist
+         lines = f.read().splitlines()
+         # remove quotes from name, description and audio strings, if they exist
+         drill_info['name'] = lines[0].replace('"','')
          drill_info['desc'] = lines[1].replace('"','')
+         drill_info['audio'] = lines[2].replace('"','')
    except:
       app.logger.error(f"get_drill_info: Error reading '{file_path}'")
    return drill_info
