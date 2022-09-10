@@ -68,17 +68,15 @@ except:
    app.logger.error("Missing 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
    exit()
 
-# sys.path.append(f'{user_dir}/{boomer_dir}/drills')
-# try:
-#    from ui_drill_selection_lists import *
-# except:
-#    app.logger.error("Missing 'ui_drill_selection_lists' modules, please run: git clone https://github.com/davidcjordon/drills")
-#    exit()
-# TODO: restore getting lists from ui_drill_selection_lists
-workout_list = [\
-{'id': '001', 'title': 'Example Workout'},\
-]
+sys.path.append(f'{user_dir}/{boomer_dir}/drills')
+try:
+   from ui_drill_selection_lists import *
+except:
+   app.logger.error("Missing 'ui_drill_selection_lists' modules, please run: git clone https://github.com/davidcjordon/drills")
+   exit()
+
 drills_dict = {} # holds copies of drills read in from DRLxxx.csv files; keys are the drill numbers
+workouts_dict = {} #as above, but using WORKxxx.csv files
 
 customization_dict = None
 settings_dict = None
@@ -204,17 +202,19 @@ class beep_options(enum.Enum):
    Type = 0
    Stroke = 1
    Difficulty = 2
-class beep_type(enum.Enum):
+class stroke_category(enum.Enum):
    Ground = 0
    Volley = 1
    Mini_Tennis = 2
+   Net = 3 
 
-class beep_stroke(enum.Enum):
-   Flat = 0
-   Loop = 1
-   Chip = 2
-   Topspin = 3
-   Random = 4
+# converted to balltype_e so, the following will be deleted:
+# class beep_stroke(enum.Enum):
+#    Flat = 0
+#    Loop = 1
+#    Chip = 2
+#    Topspin = 3
+#    Random = 4
 class beep_difficulty(enum.Enum):
    Very_Easy = 0
    Easy = 1
@@ -223,19 +223,18 @@ class beep_difficulty(enum.Enum):
    Very_Hard = 4
 
 # having the name seperate from the legend allows the name to be a parameter name instead of what is on the screen
-
 beep_mode_choices = [\
    {'name': beep_options.Type.name, 'legend':beep_options.Type.name, 'buttons':[ \
-      {'label': beep_type.Ground.name, 'value': beep_type.Ground.value, 'enable': 1, 'checked' : 1}, \
-      {'label': beep_type.Volley.name, 'value': beep_type.Volley.value, 'enable': 0}, \
-      {'label': beep_type.Mini_Tennis.name.replace("_","-"), 'value': beep_type.Mini_Tennis.value, 'enable': 0} \
+      {'label': stroke_category.Ground.name, 'value': stroke_category.Ground.value, 'enable': 1, 'checked' : 1}, \
+      {'label': stroke_category.Volley.name, 'value': stroke_category.Volley.value, 'enable': 0}, \
+      {'label': stroke_category.Mini_Tennis.name.replace("_","-"), 'value': stroke_category.Mini_Tennis.value, 'enable': 0} \
    ], 'disables': beep_options.Stroke.name}, \
    {'name': beep_options.Stroke.name, 'legend':beep_options.Stroke.name, 'buttons':[ \
-      {'label': beep_stroke.Flat.name, 'value': beep_stroke.Flat.value, 'checked' : 1}, \
-      {'label': beep_stroke.Loop.name, 'value': beep_stroke.Loop.value}, \
-      {'label': beep_stroke.Chip.name, 'value': beep_stroke.Chip.value}, \
-      {'label': beep_stroke.Topspin.name, 'value': beep_stroke.Topspin.value}, \
-      {'label': beep_stroke.Random.name, 'value': beep_stroke.Random.value} \
+      {'label': balltype_e.FLAT.name.title(), 'value': 0, 'checked' : 1}, \
+      {'label': balltype_e.LOOP.name.title(), 'value': 1}, \
+      {'label': balltype_e.CHIP.name.title(), 'value': 2}, \
+      {'label': balltype_e.TOPSPIN.name.title(), 'value': 3}, \
+      {'label': "Random", 'value': 4} \
    ]}, \
    {'name': beep_options.Difficulty.name,'legend':beep_options.Difficulty.name, 'buttons':[ \
       {'label': beep_difficulty.Very_Easy.name.replace("_","-"), 'value': beep_difficulty.Very_Easy.value}, \
@@ -261,30 +260,34 @@ class focus_options(enum.Enum):
    Movement = 2
 
 # the Lines radio-buttons are disabled until the 'Group' button is pushed:
+#If a radio button in a fieldset (choice dictionary) disables a different fieldset then:
+#  add 'disables' to the fieldset dict
+#  for each button, add 'enable' to the button dictionary.
 drill_type_choices = [\
-   {'name': drill_type_options.Group.name, 'legend':drill_type_options.Group.name, 'buttons':[ \
+   {'name': drill_type_options.Group.name, 'legend': "Type", 'buttons':[ \
       {'label': group_options.Individual.name, 'value': group_options.Individual.value, 'enable': 0, 'checked' : 1}, \
       {'label': group_options.Group.name, 'value': group_options.Group.value, 'enable': 1}, \
    ], 'disables': drill_type_options.Lines.name}, \
    {'name': drill_type_options.Lines.name, 'legend':drill_type_options.Lines.name, 'buttons':[ \
-      {'label': "1-Line", 'value': 1}, \
-      {'label': "2-Lines", 'value': 2}, \
-      {'label': "3-Lines", 'value': 3}, \
+      {'label': "1-Line", 'value': "1-line"}, \
+      {'label': "2-Lines", 'value':"2-line"}, \
+      {'label': "3-Lines", 'value': "3-line"}, \
+      {'label': "Mini-Tennis", 'value': "mini"}, \
    ], 'disabled': 1}, \
    {'name': drill_type_options.Focus.name,'legend':drill_type_options.Focus.name, 'buttons':[ \
-      {'label': focus_options.Development.name, 'value': focus_options.Development.value, 'checked' : 1}, \
-      {'label': focus_options.Situational.name, 'value': focus_options.Situational.value}, \
-      {'label': focus_options.Movement.name, 'value': focus_options.Movement.value}, \
-   ]}, \
+      {'label': focus_options.Development.name, 'value': focus_options.Development.value, 'enable': 1, 'checked' : 1}, \
+      {'label': focus_options.Situational.name, 'value': focus_options.Situational.value, 'enable': 0}, \
+      {'label': focus_options.Movement.name, 'value': focus_options.Movement.value, 'enable': 0}, \
+   ], 'disables': beep_options.Stroke.name}, \
    {'name': beep_options.Stroke.name, 'legend':beep_options.Stroke.name, 'buttons':[ \
-      {'label': beep_stroke.Topspin.name, 'value': beep_stroke.Topspin.value}, \
-      {'label': beep_stroke.Flat.name, 'value': beep_stroke.Flat.value, 'checked' : 1}, \
-      {'label': beep_stroke.Chip.name, 'value': beep_stroke.Chip.value}, \
-      {'label': beep_stroke.Loop.name, 'value': beep_stroke.Loop.value}, \
+      {'label': stroke_category.Ground.name.title(), 'value': stroke_category.Ground.name.lower(), 'checked' : 1}, \
+      {'label': stroke_category.Volley.name.title(), 'value': stroke_category.Volley.name.lower()}, \
+      {'label': stroke_category.Net.name.title(), 'value': stroke_category.Net.name.lower()}, \
+      {'label': "Overhead", 'value': balltype_e.LOB.name.lower()}, \
    ]}, \
 ]
 
-recent_drills = []
+recent_drill_list = []
 
 faults_table = {}
 #TODO: generate the dict by parsing the name in the drill description in the file
@@ -883,20 +886,19 @@ def drill_select_type():
 
 @app.route(RECENTS_URL, methods=DEFAULT_METHODS)
 def recents():
-   global recent_drills
+   global recent_drill_list
    global drills_dict
    selection_list = []
 
    try:
       with open(f'{settings_dir}/{recents_filename}') as f:
-         recent_drills = json.load(f)
+         recent_drill_list = json.load(f)
    except:
       app.logger.error(f"Error reading '{settings_dir}/{recents_filename}'; using defaults")
       #TODO: read a factory defaults from drill directory
-      recent_drills = [1, 2, 5, 6, 8, 9, 11, 22, 26, 27]
-#      , 811, 812, 813, 814, 815, 816, 817, 818, 822, 823, 825, 826, 827]
+      recent_drill_list = default_recents_drill_list
 
-   for drill_id in recent_drills:
+   for drill_id in recent_drill_list:
       drill_id_str = f"{drill_id:03}"
       if (fetch_into_drills_dict(drill_id_str)):
          selection_list.append({'id': drill_id_str, 'title': drills_dict[drill_id_str]['name']})
@@ -928,7 +930,7 @@ def select():
 
    # app.logger.debug(f"select [drill/workout] request: {request}")
    app.logger.debug(f"SELECT_URL request_form: {request.form}")
-   # DEBUG:flask.app:SELECT_URL request_form: ImmutableMultiDict([('Group', '0'), ('Focus', '0'), ('Stroke', '1')])
+   # DEBUG:flask.app:SELECT_URL request_form: ImmutableMultiDict([('Group', '1'), ('Lines', '4'), ('Focus', '0'), ('Stroke', '0')])
 
    send_settings_to_base() #restore level, delay, speed, etc
 
@@ -936,45 +938,58 @@ def select():
    # a parameter (mode) indicates the if workflow or drills should be selected
    select_post_param = []
    filter_list = []
+   drill_list = None
    page_title_str = "Select Drill"
    if request.args.get(ONCLICK_MODE_KEY) == ONCLICK_MODE_WORKOUT_VALUE:
-      workout_select = True
-      selection_list = workout_list
       # select_post_param = {"name": ONCLICK_MODE_KEY, "value": ONCLICK_MODE_WORKOUT_VALUE}
+      workout_select = True
+      selection_list = []
+      for workout_id in workout_list:
+         # app.logger.debug(f"workout_id={workout_id} is of type {type(workout_id)}")
+         workout_id_str = f"{workout_id:03}"
+         if (fetch_into_workout_dict(workout_id_str)):
+            selection_list.append({'id': workout_id_str, 'title': workouts_dict[workout_id_str]['name']})
+         else:
+            app.logger.error(f"WORK{workout_id_str} missing from workouts_dict; not including in choices")
       page_title_str = "Select Workout"
    else:
       workout_select = False
+      # parse drill selection criteria to make list of drills:
+      if ((drill_type_options.Group.name in request.form) and (request.form[drill_type_options.Group.name] == '1')):
+         if (drill_type_options.Lines.name in request.form):
+            # drill_list = globals()[request.form[drill_type_options.Lines.name]]
+            drill_list = line_drill_dict[request.form[drill_type_options.Lines.name]]
+         else:
+            app.logger.error(f"request.form missing [drill_type_options.Lines.name]: using 1-line drills")
+            drill_list = line_drill_dict['1-line']
+      elif (drill_type_options.Focus.name in request.form):
+         app.logger.debug(f"request.form[drill_type_options.Focus.name]={request.form[drill_type_options.Focus.name]}")
+         if (request.form[drill_type_options.Focus.name] == str(focus_options.Movement.value)):
+            drill_list = movement_drill_list
+         elif (request.form[drill_type_options.Focus.name] == str(focus_options.Situational.value)):
+            drill_list = situational_drill_list
+         elif (request.form[drill_type_options.Focus.name] == str(focus_options.Development.value)):
 
-      #TODO: make lists for: Development-StrokeType, Situation, Movement, 1-line, 2-line, 3-line
-      # drill_select_type = None
+            drill_list = stroketype_drill_dict[request.form[beep_options.Stroke.name]]
+         else:
+            app.logger.error(f"Unrecognized Drill Select Focus: {request.form[drill_type_options.Focus.name]}; using recent_drill_list")
+            drill_list = recent_drill_list
 
-      drill_list = [9,10,11]
+      # app.logger.debug(f"Group test: drill_list={drill_list}; drill_list_name={request.form[drill_type_options.Lines.name]}")
+      if drill_list is None:
+         app.logger.error(f"Drill list was None after drill selection processing; using recent_drill_list")
+         drill_list = recent_drill_list
+         
+      # now make drill selection list (array of ID & name dicts) from drill list
       selection_list = []
       for drill_id in drill_list:
-         app.logger.debug(f"drill_id={drill_id} is of type {type(drill_id)}")
+         # app.logger.debug(f"drill_id={drill_id} is of type {type(drill_id)}")
          drill_id_str = f"{drill_id:03}"
          if (fetch_into_drills_dict(drill_id_str)):
             selection_list.append({'id': drill_id_str, 'title': drills_dict[drill_id_str]['name']})
          else:
             app.logger.error(f"DRL{drill_id_str} missing from drill_dict; not including in choices")
 
-      # if request.method=='POST':
-      #    app.logger.debug(f"request_form_getlist_type: {request.form.getlist('choice')}")
-      #    drill_select_type = request.form.getlist('choice')[0]
-
-      # # refer to /home/pi/boomer/drills/ui_drill_selection_lists.py for drill_list format
-      # if drill_select_type == DRILL_SELECT_TYPE_TEST:
-      #    selection_list = drill_list_test
-      # elif drill_select_type == DRILL_SELECT_TYPE_INSTRUCTORS:
-      #    selection_list = drill_list_instructor
-      # else:
-      #    selection_list = drill_list_player
-      #    filter_list = ['data-Type', 'data-Stroke', 'data-Difficulty']
-
-   # if len(filter_list) > 0:
-   #    page_js = filter_js
-   # else:
-   #    page_js = []
    page_js = [Markup('<script src="/static/js/get_drill_info.js"></script>')]
 
    return render_template(SELECT_TEMPLATE, \
@@ -994,7 +1009,7 @@ def drill():
    global beep_mode_choices
    global back_url, previous_url
    global workout_select
-   global recent_drills
+   global recent_drill_list
    back_url = previous_url
 
    read_settings_from_file()
@@ -1048,20 +1063,20 @@ def drill():
       else:
          app.logger.warning(f"Beep drill option: {beep_options.Difficulty.name} not in request.form")
 
-      if beep_type_value is beep_type.Volley.value:
+      if beep_type_value is stroke_category.Volley.value:
          stroke_type_offset = 5
 
-      if beep_type_value is beep_type.Ground.value:
+      if beep_type_value is stroke_category.Ground.value:
          if beep_options.Stroke.name in request.form:
             stroke_type = int(request.form[beep_options.Stroke.name])
          else:
             app.logger.warning(f"Beep drill option: {beep_options.Stroke.name} not in request.form")
             stroke_type = 1
          stroke_type_offset = (stroke_type * 5) + 10
-         app.logger.info(f"Ground beep type, so using stroke_type={beep_stroke(stroke_type).name}")
+         # app.logger.info(f"Ground beep type, so using stroke_type={beep_stroke(stroke_type).name}")
 
       id = BEEP_DRILL_NUMBER_START + difficulty_offset + stroke_type_offset
-      app.logger.info(f"drill_id={id}: {beep_type(beep_type_value).name}, difficulty_offset={difficulty_offset}, stroke_type_offset={stroke_type_offset}")
+      app.logger.info(f"drill_id={id}: {stroke_category(beep_type_value).name}, difficulty_offset={difficulty_offset}, stroke_type_offset={stroke_type_offset}")
    else:
       app.logger.error("DRILL_URL - no drill or workout id!")
       mode_string = f"ERROR: no drill selected"
@@ -1069,15 +1084,15 @@ def drill():
    drill_stepper_options = {}
    if id is not None:
       if not workout_select and beep_type_value is None:
-         if id in recent_drills:
-            recent_drills.remove(id)
+         if id in recent_drill_list:
+            recent_drill_list.remove(id)
          else:
-            recent_drills = recent_drills[:-1] #remove oldest drill_id
+            recent_drill_list = recent_drill_list[:-1] #remove oldest drill_id
          # re-write recents file putting drill at top         
-         recent_drills.insert(0, id)
+         recent_drill_list.insert(0, id)
          try:
             with open(f'{settings_dir}/{recents_filename}', 'w') as f:
-               json.dump(recent_drills, f)
+               json.dump(recent_drill_list, f)
          except:
             app.logger.error(f"Error writing '{settings_dir}/{recents_filename}'")
 
@@ -1509,6 +1524,18 @@ def fetch_into_drills_dict(drill_id_str):
    else:
       return False
 
+def fetch_into_workout_dict(id_str):
+   global workouts_dict
+   # get name from drills_dict, or read the drill file and populate the drills_dict
+   if (id_str not in workouts_dict):
+      this_workout_info = get_drill_info(id_str)
+      if ('name' in this_workout_info):
+         workouts_dict[id_str] = this_workout_info
+
+   if ((id_str in workouts_dict) and ('name' in workouts_dict[id_str])):
+      return True
+   else:
+      return False
 
 def get_drill_info(drill_id):
    global workout_select
