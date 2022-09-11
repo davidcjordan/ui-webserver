@@ -969,7 +969,6 @@ def select():
          elif (request.form[drill_type_options.Focus.name] == str(focus_options.Situational.value)):
             drill_list = situational_drill_list
          elif (request.form[drill_type_options.Focus.name] == str(focus_options.Development.value)):
-
             drill_list = stroketype_drill_dict[request.form[beep_options.Stroke.name]]
          else:
             app.logger.error(f"Unrecognized Drill Select Focus: {request.form[drill_type_options.Focus.name]}; using recent_drill_list")
@@ -1084,11 +1083,15 @@ def drill():
    drill_stepper_options = {}
    if id is not None:
       if not workout_select and beep_type_value is None:
+         if (len(recent_drill_list) < 6):
+            app.logger.error(f"recent_drill_list only had {len(recent_drill_list)} drills; restoring with defaults.")
+            recent_drill_list = default_recents_drill_list
          if id in recent_drill_list:
             recent_drill_list.remove(id)
          else:
             recent_drill_list = recent_drill_list[:-1] #remove oldest drill_id
-         # re-write recents file putting drill at top         
+         # re-write recents file putting drill at top
+         app.logger.debug(f"Updating '{recents_filename}' with {len(recent_drill_list)} drill ids.")
          recent_drill_list.insert(0, id)
          try:
             with open(f'{settings_dir}/{recents_filename}', 'w') as f:
