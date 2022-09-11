@@ -181,37 +181,25 @@ body {
 }
 
 /* for drill and workout selection */
-/*
-.radio-text-buttons {
-  margin: 10px;
-}
-*/
 .radio-text-buttons input[type="radio"] {
   opacity: 0;
   width: 0;
   height: 0;
+  padding: 0px;
+  margin: 0px;
 }
-/*
-.radio-text-buttons input[type='radio'] + label{   
-  vertical-align: baseline;
-  padding: 10px;
-  margin: 10px;
-}
-.radio-text-buttons fieldset {
-  padding: None;
-  border: None;
-}
-*/
 .radio-text-buttons label {
   display: inline-block;
+  height: 44px;
+  width: 480px;
+  padding: 6px 0px;
+  margin: 24px 0px;
   text-align: left;
-  height: 50px;
-  width: 470px;
+  vertical-align: middle;
   font-size: 32px;
-  padding: 2px;
-  margin: 10px 2px;
+  White-space: nowrap;
   background-color: #555555;
-  border: 3px solid #494949;
+  border: 4px solid #494949;
   border-radius: 8px;
 }
 .radio-text-buttons input[type="radio"]:checked + label {
@@ -219,11 +207,6 @@ body {
   border-radius: 20px;
   border-color: #494949;
 }
-/*
-.radio-text-buttons input[type="radio"]:focus + label {
-  border: 2px dashed #444;
-}
-*/
 
 .submit-button {
   margin: 8px;
