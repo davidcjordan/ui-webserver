@@ -1086,13 +1086,14 @@ def drill():
          if (len(recent_drill_list) < 6):
             app.logger.error(f"recent_drill_list only had {len(recent_drill_list)} drills; restoring with defaults.")
             recent_drill_list = default_recents_drill_list
+         # move to beginning of list
          if id in recent_drill_list:
             recent_drill_list.remove(id)
-         else:
+         recent_drill_list.insert(0,id)
+         while len(recent_drill_list) > 10:
             recent_drill_list = recent_drill_list[:-1] #remove oldest drill_id
          # re-write recents file putting drill at top
          app.logger.debug(f"Updating '{recents_filename}' with {len(recent_drill_list)} drill ids.")
-         recent_drill_list.insert(0, id)
          try:
             with open(f'{settings_dir}/{recents_filename}', 'w') as f:
                json.dump(recent_drill_list, f)
