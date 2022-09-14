@@ -983,6 +983,8 @@ def select():
       selection_list = []
       for drill_id in drill_list:
          # app.logger.debug(f"drill_id={drill_id} is of type {type(drill_id)}")
+         if len(selection_list) > 9: #limit to 10 entries
+            break
          drill_id_str = f"{drill_id:03}"
          if (fetch_into_drills_dict(drill_id_str)):
             selection_list.append({'id': drill_id_str, 'title': drills_dict[drill_id_str]['name']})
