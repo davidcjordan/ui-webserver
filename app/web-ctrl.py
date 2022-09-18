@@ -52,7 +52,6 @@ boomer_dir = 'boomer'
 repos_dir = 'repos'
 site_data_dir = 'this_boomers_data'
 settings_dir = f'{user_dir}/{boomer_dir}/{site_data_dir}'
-drills_dir = f'{user_dir}/{boomer_dir}/drills'
 execs_dir = f"{user_dir}/{boomer_dir}/execs"
 settings_filename = "drill_game_settings.json"
 recents_filename = "recents.json"
@@ -74,8 +73,11 @@ except:
    app.logger.error("Missing 'ui_drill_selection_lists' modules, please run: git clone https://github.com/davidcjordon/drills")
    exit()
 
-drills_dict = {} # holds copies of drills read in from DRLxxx.csv files; keys are the drill numbers
-workouts_dict = {} #as above, but using WORKxxx.csv files
+try:
+   from func_drills import *
+except:
+   app.logger.error("Missing 'func_drill.py' module")
+   exit()
 
 customization_dict = None
 settings_dict = None
@@ -1473,64 +1475,6 @@ def read_court_point_files():
             app.logger.debug(f"court_points_dict_list[{side_name}]={court_points_dict_list[side]}")
       except:
          app.logger.warning(f"court_points_dict_list[{side_name}] load failed")
-
-
-def fetch_into_drills_dict(drill_id_str):
-   global drills_dict
-   # get name from drills_dict, or read the drill file and populate the drills_dict
-   if (drill_id_str not in drills_dict):
-      this_drill_info = get_drill_info(drill_id_str)
-      if ('name' in this_drill_info):
-         drills_dict[drill_id_str] = this_drill_info
-
-   if ((drill_id_str in drills_dict) and ('name' in drills_dict[drill_id_str])):
-      return True
-   else:
-      return False
-
-
-def fetch_into_workout_dict(id_str):
-   global workouts_dict
-   # get name from drills_dict, or read the drill file and populate the drills_dict
-   if (id_str not in workouts_dict):
-      this_workout_info = get_drill_info(id_str)
-      if ('name' in this_workout_info):
-         workouts_dict[id_str] = this_workout_info
-
-   if ((id_str in workouts_dict) and ('name' in workouts_dict[id_str])):
-      return True
-   else:
-      return False
-
-def get_drill_info(drill_id):
-   global workout_select
-   if (workout_select):
-      prefix = "WORK"
-   else:
-      prefix = "DRL"
-
-   drill_info = {}
-
-   if isinstance(drill_id, str):
-      int_drill_id = int(drill_id)
-   elif isinstance(drill_id, int):
-      int_drill_id = drill_id
-   else:
-      app.logger.error(f"drill_id {drill_id} is type={type(drill_id)} (not str or int)")
-      return drill_info
-
-   try:
-      file_path = f'{drills_dir}/{prefix}{int_drill_id:03}.csv'
-      app.logger.debug(f"get_drill_info file_path='{file_path}'")
-      with open(file_path) as f:
-         lines = f.read().splitlines()
-         # remove quotes from name, description and audio strings, if they exist
-         drill_info['name'] = lines[0].replace('"','')
-         drill_info['desc'] = lines[1].replace('"','')
-         drill_info['audio'] = lines[2].replace('"','')
-   except:
-      app.logger.error(f"get_drill_info: Error reading '{file_path}'")
-   return drill_info
 
 
 if __name__ == '__main__':
