@@ -23,7 +23,6 @@ import json
 import enum
 import copy
 import datetime
-from threading import Thread
 from subprocess import Popen
 import time
 from random import randint # for score updates - will be deleted
@@ -48,7 +47,6 @@ def before_first_request():
    app.logger.addHandler(handler)
    app.logger.setLevel(log_level)
 
-# the following requires: export PYTHONPATH='/Users/tom/Documents/Projects/Boomer/control_ipc_utils'
 user_dir = '/home/pi'
 boomer_dir = 'boomer'
 repos_dir = 'repos'
@@ -59,6 +57,7 @@ execs_dir = f"{user_dir}/{boomer_dir}/execs"
 settings_filename = "drill_game_settings.json"
 recents_filename = "recents.json"
 
+# the following requires: export PYTHONPATH='/Users/tom/Documents/Projects/Boomer/control_ipc_utils'
 sys.path.append(f'{user_dir}/{repos_dir}/control_ipc_utils')
 # print(sys.path)
 try:
@@ -84,9 +83,7 @@ settings_dict = None
 base_state = base_state_e.BASE_STATE_NONE
 previous_base_state = base_state_e.BASE_STATE_NONE
 soft_fault_status = soft_fault_e.SOFT_FAULT_NONE
-client_state = False
 bbase_down_timestamp = None
-printout_counter = 0
 workout_select = False
 
 my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
@@ -130,18 +127,8 @@ CAM_LOCATION_TEMPLATE = '/layouts' + CAM_LOCATION_URL + '.html'
 CAM_VERIFICATION_TEMPLATE = '/layouts' + CAM_VERIF_URL + '.html'
 FAULTS_TEMPLATE = '/layouts' + FAULTS_URL + '.html'
 
-# base process status strings:
-MODE_NONE = " --"
-MODE_GAME = "Game"
-MODE_DRILL_NOT_SELECTED = "Drill Selection"
 MODE_DRILL_SELECTED = "Drill #"
-MODE_WORKOUT_NOT_SELECTED = "Workout Selection"
 MODE_WORKOUT_SELECTED = "Workout #"
-MODE_SETTINGS = "Boomer Options"
-
-DRILL_SELECT_TYPE_PLAYER = 'Player(s)'
-DRILL_SELECT_TYPE_INSTRUCTORS = 'Instructors'
-DRILL_SELECT_TYPE_TEST ='Test'
 
 # the following are used as URL args/parameters
 WORKOUT_ID = 'workout_id'
@@ -570,10 +557,11 @@ def cam_calib_done():
          else:
             app.logger.debug("POST to CALIB_DONE request.form is zero length; using emit data instead")
 
+         result = ""
          # do some sanity checking:
          if court_points_dict_list[court_point_dict_index]["NBR"][1] < 1:
             app.logger.error(f"Invalid court_point values: {court_points_dict_list[court_point_dict_index]}")
-            status = f"FAILED: {cam_side} camera court points are invalid."
+            result = f"FAILED: {cam_side} camera court points are invalid."
          else:
             #persist values for base to use to generate correction vectors
             dt = datetime.datetime.now()
@@ -592,10 +580,7 @@ def cam_calib_done():
                if not code:
                   code = "unknown"
                app.logger.error("PUT FUNC_GEN_CORRECTION_VECTORS failed, code: {code}")
-               status = f"FAILED: {cam_side} camera correction vector generation failed."
-            else:
-               status = f""
-
+               result = f"FAILED: {cam_side} camera correction vector generation failed."
 
    page_js = []
    page_js.append(Markup('<script src="/static/js/timed-redirect.js"></script>'))
@@ -605,9 +590,10 @@ def cam_calib_done():
       home_button = my_home_button, \
       page_title = f"{cam_side} Camera Calibration Finished.", \
       installation_icon = customization_dict['icon'], \
-      message = status, \
+      message = result, \
+      # UI decision: redirect after seconds  -or-  have user click 'OK'
       page_specific_js = page_js, \
-      # onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL}], \
+      # onclick_choices = [{"value": "OK", "onclick_url": MAIN_URL}], \
       footer_center = customization_dict['title'])
 
 @app.route(CAM_VERIF_URL, methods=DEFAULT_METHODS)
@@ -1180,22 +1166,17 @@ def faults():
 @app.route(DONE_URL, methods=DEFAULT_METHODS)
 def done():
 
-   status = "Finished"
+   result = "Finished"
    msg_ok, base_mode_register = send_msg(GET_METHOD, MODE_RSRC)
    if not msg_ok:
       app.logger.error(f"function '{sys._getframe(0).f_code.co_name}': GET STOP MODE_RSRC failed")
    else:
-      status = f"{base_mode_e(base_mode_register[MODE_PARAM]).name.title()} Finished."
+      result = f"{base_mode_e(base_mode_register[MODE_PARAM]).name.title()} Finished."
  
-      # page_js = []
-      # page_js.append(Markup('<script src="/static/js/timed-redirect.js"></script>'))
-
    return render_template(CHOICE_INPUTS_TEMPLATE, \
-      page_title = status, \
+      page_title = result, \
       installation_icon = customization_dict['icon'], \
-      # message = status, \
       onclick_choices = [{"value": "OK", "onclick_url": MAIN_URL}], \
-      # page_specific_js = page_js, \
       footer_center = customization_dict['title'])
 
 
@@ -1386,71 +1367,48 @@ def set_base_state_on_failure(fault_code = fault_e.CONTROL_PROGRAM_GET_STATUS_FA
 
 
 def check_base():
-   threaded = False
    process_name = 'bbase'
    global base_state, previous_base_state
-   global client_state, socketio
-   global printout_counter
    global faults_table, previous_fault_table
    global bbase_down_timestamp
    global soft_fault_status
-   done = False
-   while not done:
-      base_pid = os.popen(f"pgrep {process_name}").read()
-      #base_pid is empty if base is not running
-      if base_pid:
-         # verify responding to FIFO
-         # app.logger.info("Getting status message")
-         msg_ok, status_msg = send_msg()
-         if not msg_ok:
-            set_base_state_on_failure(fault_e.CONTROL_PROGRAM_FAILED)
+   base_pid = os.popen(f"pgrep {process_name}").read()
+   #base_pid is empty if base is not running
+   if base_pid:
+      # verify responding to FIFO
+      # app.logger.info("Getting status message")
+      msg_ok, status_msg = send_msg()
+      if not msg_ok:
+         set_base_state_on_failure(fault_e.CONTROL_PROGRAM_FAILED)
+      else:
+         if (status_msg is not None):
+            if (STATUS_PARAM in status_msg):
+               bbase_down_timestamp = None
+               base_state = base_state_e(status_msg[STATUS_PARAM])
+            else:
+               set_base_state_on_failure(fault_e.CONTROL_PROGRAM_FAILED)
+
+            if (HARD_FAULT_PARAM in status_msg and status_msg[HARD_FAULT_PARAM] > 0):
+               previous_fault_table = copy.deepcopy(faults_table)
+               # app.logger.info("Getting fault table")
+               msg_ok, faults_table = send_msg(GET_METHOD, FLTS_RSRC)
+               if not msg_ok:
+                  app.logger.error("msg status not OK when getting fault table")
+                  set_base_state_on_failure(fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED)
+
+            if (SOFT_FAULT_PARAM in status_msg):
+               soft_fault_status = soft_fault_e(status_msg[SOFT_FAULT_PARAM])
+            # app.logger.info(f"faults: {faults_table[0]}")
          else:
-            if (status_msg is not None):
-               if (STATUS_PARAM in status_msg):
-                  bbase_down_timestamp = None
-                  base_state = base_state_e(status_msg[STATUS_PARAM])
-               else:
-                  set_base_state_on_failure(fault_e.CONTROL_PROGRAM_FAILED)
+            app.logger.error("received None as status message")
+            set_base_state_on_failure(fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED)
+   else:
+      set_base_state_on_failure(fault_e.CONTROL_PROGRAM_NOT_RUNNING)
 
-               if (HARD_FAULT_PARAM in status_msg and status_msg[HARD_FAULT_PARAM] > 0):
-                  previous_fault_table = copy.deepcopy(faults_table)
-                  # app.logger.info("Getting fault table")
-                  msg_ok, faults_table = send_msg(GET_METHOD, FLTS_RSRC)
-                  if not msg_ok:
-                     app.logger.error("msg status not OK when getting fault table")
-                     set_base_state_on_failure(fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED)
+   if base_state != previous_base_state:
+      app.logger.info(f"Base state change: {base_state_e(previous_base_state).name} -> {base_state_e(base_state).name}")
+   previous_base_state = base_state
 
-               if (SOFT_FAULT_PARAM in status_msg):
-                  soft_fault_status = soft_fault_e(status_msg[SOFT_FAULT_PARAM])
-
-               # app.logger.info(f"faults: {faults_table[0]}")
-            else:
-               app.logger.error("received None as status message")
-               set_base_state_on_failure(fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED)
-      else:
-         set_base_state_on_failure(fault_e.CONTROL_PROGRAM_NOT_RUNNING)
-
-      if base_state != previous_base_state:
-         app.logger.info(f"Base state change: {base_state_e(previous_base_state).name} -> {base_state_e(base_state).name}")
-         # app.logger.info(f"Base state change: {previous_base_state} -> {base_state}")
-          
-      if threaded:
-         # the following didn't work when in a seperate thread: the emit didn't get to the client
-         printout_counter += 1
-         if printout_counter > 35:
-            printout_counter = 0
-            if client_state:
-               socketio.emit('base_state_update', {"base_state": base_state})
-               app.logger.debug(f"emitting: {{'base_state_update', {{\"base_state\": \"{base_state}\"}}}}")
-               # print(f"emitting: {{'base_state_update', {{\"base_state\": \"{base_state}\"}}}}")
-            else:
-               app.logger.debug(f"client_state is false")
-               # print(f"client_state is false")
-         time.sleep(0.3)
-      else:
-         done = True
-      previous_base_state = base_state
-   # end while loop
 
 def send_settings_to_base():
    rc, code = send_msg(PUT_METHOD, BCFG_RSRC, \
@@ -1488,7 +1446,6 @@ def read_settings_from_file():
             ELEVATION_MOD_PARAM: ELEVATION_ANGLE_MOD_DEFAULT}
 
 def scp_court_png(side='Left', frame='even'):
-
    source_path = f"{side.lower()}:/run/shm/frame_{frame}.png"
    destination_path = f"{user_dir}/{boomer_dir}/{side.lower()}_court.png"
    # the q is for quiet
@@ -1498,6 +1455,7 @@ def scp_court_png(side='Left', frame='even'):
       app.logger.error(f"FAILED: scp {source_path} {destination_path}; error_code={p.returncode}")
    else:
       app.logger.info(f"OK: scp {source_path} {destination_path}")
+
 
 def read_court_point_files():
    global court_point_dict_list
@@ -1529,6 +1487,7 @@ def fetch_into_drills_dict(drill_id_str):
       return True
    else:
       return False
+
 
 def fetch_into_workout_dict(id_str):
    global workouts_dict
@@ -1575,21 +1534,6 @@ def get_drill_info(drill_id):
 
 
 if __name__ == '__main__':
-
-   do_threaded_base_checks = False
-   if do_threaded_base_checks:
-      check_base_thread = Thread(target = check_base, args =("bbase", ))
-      check_base_thread.daemon = True
-      check_base_thread.start()
-      # refer to: https://newbedev.com/python-flask-socketio-send-message-from-thread-not-always-working
-      socketio.start_background_task(target = check_base)
-   
-   do_status_printout = False
-   if do_status_printout:
-      print_base_thread = Thread(target = print_base_status, args =(20, ))
-      print_base_thread.daemon = True
-      print_base_thread.start() 
-
    # app.run(host="0.0.0.0", port=IP_PORT, debug = True)
    socketio.run(app, host="0.0.0.0", port=IP_PORT, debug = True)
    try:
@@ -1598,5 +1542,3 @@ if __name__ == '__main__':
    except Exception as e:
       print(e)
       sys.exit(1)
-   
-   # check_base_thread.join()
