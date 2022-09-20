@@ -18,15 +18,9 @@ app = Flask(__name__)
 from waitress import serve
 
 import inspect
-import os  # for sending favicon & checking the base is running (pgrep)
-import json
 import enum
-import copy
-import datetime
-from subprocess import Popen
-import time
-from random import randint # for score updates - will be deleted
 import sys # for sys.path to search
+
 
 @app.before_first_request
 def before_first_request():
@@ -53,7 +47,6 @@ repos_dir = 'repos'
 site_data_dir = 'this_boomers_data'
 settings_dir = f'{user_dir}/{boomer_dir}/{site_data_dir}'
 execs_dir = f"{user_dir}/{boomer_dir}/execs"
-settings_filename = "drill_game_settings.json"
 recents_filename = "recents.json"
 
 # the following requires: export PYTHONPATH='/Users/tom/Documents/Projects/Boomer/control_ipc_utils'
@@ -63,29 +56,31 @@ try:
    from ctrl_messaging_routines import send_msg
    from control_ipc_defines import *
 except:
-   app.logger.error("Missing 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
+   app.logger.error("Problems with 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
    exit()
 
 sys.path.append(f'{user_dir}/{boomer_dir}/drills')
 try:
    from ui_drill_selection_lists import *
 except:
-   app.logger.error("Missing 'ui_drill_selection_lists' modules, please run: git clone https://github.com/davidcjordon/drills")
+   app.logger.error("Problems with 'ui_drill_selection_lists' modules, please run: git clone https://github.com/davidcjordon/drills")
    exit()
 
 try:
    from func_drills import *
 except:
-   app.logger.error("Missing 'func_drill.py' module")
+   app.logger.error("Problems with 'func_drill.py' module")
+   exit()
+
+try:
+   from func_base import *
+except:
+   app.logger.error("Problems with 'func_base.py' module")
    exit()
 
 customization_dict = None
 settings_dict = None
 
-base_state = base_state_e.BASE_STATE_NONE
-previous_base_state = base_state_e.BASE_STATE_NONE
-soft_fault_status = soft_fault_e.SOFT_FAULT_NONE
-bbase_down_timestamp = None
 workout_select = False
 
 my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
@@ -601,16 +596,19 @@ def cam_calib_done():
 @app.route(CAM_VERIF_URL, methods=DEFAULT_METHODS)
 def cam_verif():
    court_point_dict_index = 0
-   cam_name = 'left'
+   cam_name = cam_side_left_label.lower()
 
    if request.method=='POST':
       app.logger.debug(f"POST to CAM_VERIF_URL request.form: {request.form}")
       # POST to CAM_LOCATION request.form: ImmutableMultiDict([('choice', 'Left Cam Calib')])
       if ('image_path' in request.form) and 'left' in request.form['image_path']:
          court_point_dict_index = 1
-         cam_name = 'right'
+         cam_name = cam_side_right_label.lower()
  
-   read_court_point_files()
+   read_ok, temp_dict = read_court_points_file(cam_name)
+   if read_ok:
+      court_points_dict_list[court_point_dict_index] = temp_dict
+   # app.logger.debug(f"cam_verif; court_points={court_points_dict_list}")
 
    scp_court_png(side = cam_name)
 
@@ -630,6 +628,7 @@ def index():
    global back_url, previous_url
    back_url = previous_url = "/"
    global html_horizontal_rule
+   global customization_dict, settings_dict 
 
    # app.logger.debug(f"Test of printing function name: in function: {sys._getframe(0).f_code.co_name}")
 
@@ -638,7 +637,9 @@ def index():
    if not rc:
       app.logger.error(f"function '{sys._getframe(0).f_code.co_name}': PUT STOP failed, code: {code}")
 
-   read_settings_from_file()
+   customization_dict = read_customization_file()
+   settings_dict = read_settings_from_file()
+   send_settings_to_base(settings_dict)
 
    # example of setting button disabled and a button ID
    # TODO: fix disable CSS
@@ -701,8 +702,6 @@ def settings():
    ]} \
    ]
 
-   # read_settings_from_file()
-   # if (settings_dict[GRUNTS_PARAM] == 1):
    settings_radio_options[0]['buttons'][settings_dict[GRUNTS_PARAM]]['checked'] = 1
    settings_radio_options[1]['buttons'][settings_dict[TRASHT_PARAM]]['checked'] = 1
    
@@ -781,9 +780,6 @@ def game_options():
    if not rc:
       app.logger.error("PUT STOP failed, code: {}".format(code))
 
-   send_settings_to_base() #restore level, delay, speed, etc
-
-   #TODO: Have checked from from the settings
    game_radio_options = [\
    {'name': SERVE_MODE_PARAM, 'legend':"Serves", 'buttons':[ \
       {'label': "Alternate", 'value': 0}, \
@@ -831,8 +827,7 @@ def game():
    # app.logger.debug(f"GAME_URL request_form: {request.form}")
    #ImmutableMultiDict([('wServes', '0'), ('tiebreaker', '0')])
 
-   read_settings_from_file()
-   send_settings_to_base() #restore settings
+   send_settings_to_base(settings_dict)
 
    rc, code = send_msg(PUT_METHOD, MODE_RSRC, {MODE_PARAM: base_mode_e.GAME.value})
    if not rc:
@@ -920,8 +915,6 @@ def select():
    app.logger.debug(f"SELECT_URL request_form: {request.form}")
    # DEBUG:flask.app:SELECT_URL request_form: ImmutableMultiDict([('Group', '1'), ('Lines', '4'), ('Focus', '0'), ('Stroke', '0')])
 
-   send_settings_to_base() #restore level, delay, speed, etc
-
    #enter this page from drill categories (player, instructor), or from Main (workflows)
    # a parameter (mode) indicates the if workflow or drills should be selected
    select_post_param = []
@@ -1001,8 +994,7 @@ def drill():
    global recent_drill_list
    back_url = previous_url
 
-   read_settings_from_file()
-   send_settings_to_base() #restore settings
+   send_settings_to_base(settings_dict)
 
    '''
    There are multiple ways of getting to this page
@@ -1136,8 +1128,6 @@ def drill():
 def beep_selection():
    global beep_mode_choices
 
-   send_settings_to_base() #restore level, delay, speed, etc
-
    # app.logger.info(f"beep_mode_choices: {beep_mode_choices}")
 
    page_js = []
@@ -1157,7 +1147,7 @@ def beep_selection():
 def faults():
    global back_url, previous_url
    back_url = previous_url
-   read_settings_from_file()
+   customization_dict = read_customization_file()
 
    return render_template(FAULTS_TEMPLATE, \
       page_title = "Problems Detected", \
@@ -1184,40 +1174,13 @@ def done():
 
 @app.route('/favicon.ico')
 def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'),
+   from os import path 
+   return send_from_directory(path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @socketio.on('message')
 def handle_message(data):
    app.logger.debug('received message: ' + data)
-
-def textify_faults_table():
-   global faults_table
-   # example fault table:
-   # faults: [{'fCod': 20, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 22, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 15, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 6, 'fLoc': 0, 'fTim': 1649434843}, {'fCod': 6, 'fLoc': 1, 'fTim': 1649434843}, {'fCod': 6, 'fLoc': 2, 'fTim': 1649434843}]
-
-   # the faults_table gets erroneously populated with the status when multiple instances are running.
-   textified_faults_table = []
-   if (type(faults_table) is list):
-      for fault in faults_table:
-         # print(f"fault: {fault}")
-         row_dict = {}
-         row_dict[FLT_CODE_PARAM] = fault_e(fault[FLT_CODE_PARAM]).name
-         row_dict[FLT_LOCATION_PARAM] = net_device_e(fault[FLT_LOCATION_PARAM]).name
-         timestamp = datetime.datetime.fromtimestamp(fault[FLT_TIMESTAMP_PARAM])
-         #TODO: compare date and put "yesterday" or "days ago"
-         row_dict[FLT_TIMESTAMP_PARAM] = timestamp.strftime("%H:%M:%S")
-         textified_faults_table.append(row_dict)
-   else:
-      app.logger.error(f"bogus fault table in fault_request: {faults_table}")
-   return textified_faults_table
-
-# the following is not necessary: state_update sends fault info.
-# @socketio.on('fault_request')
-# def handle_fault_request():
-#    global faults_table
-#    app.logger.info('received fault_request')
-#    emit('faults_update', json.dumps(textify_faults_table()))
  
 @socketio.on('client_connected')
 def handle_client_connected(data):
@@ -1271,25 +1234,6 @@ def handle_refresh_image(data):
    app.logger.info(f'received refresh_image: {data}')
    scp_court_png(data['side'], data['frame'])
 
-'''
-@socketio.on('coord')
-def handle_coord_array(data):
-   global court_points_dict
-   # app.logger.info(f"received coord_array: {data}")
-   point_id_w_axis = list(data.keys())[0]
-   value = int(data[point_id_w_axis])
-   court_point_id = str(point_id_w_axis)[:3].upper()
-   axis_letter = str(point_id_w_axis)[3]
-   if axis_letter is 'x':
-      axis = 0
-   elif axis_letter is 'y':
-      axis = 1
-   else:
-      app.logger.error(f"unknown axis in court coord: {axis_letter}")
-   app.logger.info(f"court_point_id={court_point_id} axis={axis} value={value}")
-   court_points_dict[court_point_id][axis] = value
-   # app.logger.info(f"court_point_dict={court_points_dict}")
-'''
 
 @socketio.on('get_drill_desc')
 def handle_get_drill(data):
@@ -1310,9 +1254,8 @@ def handle_get_drill(data):
 def handle_get_updates(data):
    json_data = json.loads(data)
    # app.logger.info(f"get_update data= {json_data}")
-   global base_state
-   # local_previous_base_state = base_state
-   check_base()
+
+   base_state, soft_fault_status, faults_table = check_base()
    base_state_text = base_state_e(base_state).name.title() #title changes it from uppercase to capital for 1st char
    update_dict = {"base_state": base_state_text}
 
@@ -1334,7 +1277,7 @@ def handle_get_updates(data):
  
       if (current_page == FAULTS_URL):
          #TODO: if (len(faults_table) != len(previous_faults_table)):
-         emit('faults_update', json.dumps(textify_faults_table()))
+         emit('faults_update', json.dumps(textify_faults_table(faults_table)))
 
       if (((current_page == GAME_URL) or (current_page == DRILL_URL) or (current_page == CREEP_CALIB_URL)) and
          (base_state == base_state_e.IDLE)):
@@ -1349,7 +1292,8 @@ def handle_get_updates(data):
             # score= {'time': 36611, 'server': 'b', 'b_sets': 0, 'p_sets': 0, 'b_games': 0, 'p_games': 0, 'b_pts': 0, 'p_pts': 0, 'b_t_pts': 0, 'p_t_pts': 0}
             update_dict["game_state"] = game_state
 
-   update_dict['soft_fault'] = soft_fault_e(soft_fault_status).value
+   if (soft_fault_status is not None):
+      update_dict['soft_fault'] = soft_fault_e(soft_fault_status).value
 
    if ("new_url" in update_dict):
       app.logger.info(f"Changing URL from '{current_page}' to {update_dict['new_url']} since base_state={base_state_e(base_state).name}")
@@ -1357,124 +1301,13 @@ def handle_get_updates(data):
    emit('state_update', update_dict)
 
 
-def set_base_state_on_failure(fault_code = fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED):
-   global base_state
-   global faults_table
-   global bbase_down_timestamp
-
-   base_state = base_state_e.FAULTED
-   if bbase_down_timestamp is None:
-      bbase_down_timestamp = time.time()
-   faults_table = [{FLT_CODE_PARAM: fault_code, FLT_LOCATION_PARAM: net_device_e.BASE, FLT_TIMESTAMP_PARAM: bbase_down_timestamp}]
-
-
-def check_base():
-   process_name = 'bbase'
-   global base_state, previous_base_state
-   global faults_table, previous_fault_table
-   global bbase_down_timestamp
-   global soft_fault_status
-   base_pid = os.popen(f"pgrep {process_name}").read()
-   #base_pid is empty if base is not running
-   if base_pid:
-      # verify responding to FIFO
-      # app.logger.info("Getting status message")
-      msg_ok, status_msg = send_msg()
-      if not msg_ok:
-         set_base_state_on_failure(fault_e.CONTROL_PROGRAM_FAILED)
-      else:
-         if (status_msg is not None):
-            if (STATUS_PARAM in status_msg):
-               bbase_down_timestamp = None
-               base_state = base_state_e(status_msg[STATUS_PARAM])
-            else:
-               set_base_state_on_failure(fault_e.CONTROL_PROGRAM_FAILED)
-
-            if (HARD_FAULT_PARAM in status_msg and status_msg[HARD_FAULT_PARAM] > 0):
-               previous_fault_table = copy.deepcopy(faults_table)
-               # app.logger.info("Getting fault table")
-               msg_ok, faults_table = send_msg(GET_METHOD, FLTS_RSRC)
-               if not msg_ok:
-                  app.logger.error("msg status not OK when getting fault table")
-                  set_base_state_on_failure(fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED)
-
-            if (SOFT_FAULT_PARAM in status_msg):
-               soft_fault_status = soft_fault_e(status_msg[SOFT_FAULT_PARAM])
-            # app.logger.info(f"faults: {faults_table[0]}")
-         else:
-            app.logger.error("received None as status message")
-            set_base_state_on_failure(fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED)
-   else:
-      set_base_state_on_failure(fault_e.CONTROL_PROGRAM_NOT_RUNNING)
-
-   if base_state != previous_base_state:
-      app.logger.info(f"Base state change: {base_state_e(previous_base_state).name} -> {base_state_e(base_state).name}")
-   previous_base_state = base_state
-
-
-def send_settings_to_base():
-   rc, code = send_msg(PUT_METHOD, BCFG_RSRC, \
-      {LEVEL_PARAM: settings_dict[LEVEL_PARAM], \
-         GRUNTS_PARAM: settings_dict[GRUNTS_PARAM], \
-         TRASHT_PARAM: settings_dict[TRASHT_PARAM]})
-
-   rc, code = send_msg(PUT_METHOD, DCFG_RSRC, \
-      {SPEED_MOD_PARAM: settings_dict[SPEED_MOD_PARAM], \
-         DELAY_MOD_PARAM: settings_dict[DELAY_MOD_PARAM], \
-         ELEVATION_MOD_PARAM: settings_dict[ELEVATION_MOD_PARAM]})
-
-   rc, code = send_msg(PUT_METHOD, GCFG_RSRC, \
-      {SERVE_MODE_PARAM: settings_dict[SERVE_MODE_PARAM], \
-         TIEBREAKER_PARAM: settings_dict[TIEBREAKER_PARAM]})
-         # POINTS_DELAY_PARAM: settings_dict[POINTS_DELAY_PARAM]})
-
-def read_settings_from_file():
-   global customization_dict, settings_dict
+def read_customization_file():
    try:
       with open(f'{settings_dir}/ui_customization.json') as f:
          customization_dict = json.load(f)
    except:
       customization_dict = {"title": "Boomer #1", "icon": "/static/favicon.ico"}
-
-   try:
-      with open(f'{settings_dir}/{settings_filename}') as f:
-         settings_dict = json.load(f)
-         # app.logger.debug(f"Settings restored: {settings_dict}")
-   except:
-      app.logger.warning(f"Settings file read failed; using defaults.")
-      settings_dict = {GRUNTS_PARAM: 0, TRASHT_PARAM: 0, LEVEL_PARAM: LEVEL_DEFAULT, \
-            SERVE_MODE_PARAM: 1, TIEBREAKER_PARAM: 0, \
-            SPEED_MOD_PARAM: SPEED_MOD_DEFAULT, DELAY_MOD_PARAM: DELAY_MOD_DEFAULT, \
-            ELEVATION_MOD_PARAM: ELEVATION_ANGLE_MOD_DEFAULT}
-
-def scp_court_png(side='Left', frame='even'):
-   source_path = f"{side.lower()}:/run/shm/frame_{frame}.png"
-   destination_path = f"{user_dir}/{boomer_dir}/{side.lower()}_court.png"
-   # the q is for quiet
-   p = Popen(["scp", "-q", source_path, destination_path])
-   stdoutdata, stderrdata = p.communicate()
-   if p.returncode != 0:
-      app.logger.error(f"FAILED: scp {source_path} {destination_path}; error_code={p.returncode}")
-   else:
-      app.logger.info(f"OK: scp {source_path} {destination_path}")
-
-
-def read_court_point_files():
-   global court_point_dict_list
-   for side in range(2):
-      if side == 0:
-         side_name = 'left'
-      else:
-         side_name = 'right'
-      try:
-         with open(f'{settings_dir}/{side_name}_court_points.json') as f:
-            file_lines = f.readlines()
-            first_line_json = file_lines[0].split("}")[0] + "}"
-            # app.logger.debug(f"first_line_json={first_line_json}")
-            court_points_dict_list[side] = json.loads(first_line_json)
-            app.logger.debug(f"court_points_dict_list[{side_name}]={court_points_dict_list[side]}")
-      except:
-         app.logger.warning(f"court_points_dict_list[{side_name}] load failed")
+   return customization_dict
 
 
 if __name__ == '__main__':
