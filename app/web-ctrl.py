@@ -397,6 +397,7 @@ def cam_location():
 
 @app.route(CAM_CALIB_URL, methods=DEFAULT_METHODS)
 def cam_calib():
+   import datetime
    global cam_side, Units, unit_lengths
 
    new_cam_measurement_mm = [0]*3
@@ -427,6 +428,8 @@ def cam_calib():
                app.logger.error("Unknown key '{key}' in POST of camera location measurement")
 
       if change_from_persisted_measurement:
+         #TODO: move persist values to func_base
+
          app.logger.debug(f"Updating {cam_side} cam_measurements and cam_location")
          #persist new A,B, Z measurements and cam_location for base to use to generate correction vectors
          dt = datetime.datetime.now()
@@ -435,7 +438,7 @@ def cam_calib():
          # convert from floating point to integer:
          for i in Measurement:
             new_cam_measurement_mm[Measurement(i).value] = int(new_cam_measurement_mm[Measurement(i).value])
-
+         
          output_line = json.dumps(new_cam_measurement_mm) + " " +  dt_str + "\n"
          with open(f'{settings_dir}/{cam_side.lower()}_cam_measurements.json', 'r+') as outfile:
             lines = outfile.readlines() # read old content
@@ -443,8 +446,6 @@ def cam_calib():
             outfile.write(output_line) # write new content at the beginning
             for line in lines: # write old content after new
                outfile.write(line)
-         # with open(f"{settings_dir}/{cam_side.lower()}_cam_measurements.json", "w") as outfile:
-         #    json.dump(new_cam_measurement_mm, outfile)
 
          # convert measurements (A & B) to camera_location X and Y and save in file
          court_width_mm = 36 * 12 * INCHES_TO_MM
@@ -475,6 +476,7 @@ def cam_calib():
          new_cam_location_mm[Axis.y.value] = int(Y)
          new_cam_location_mm[Axis.z.value] = new_cam_measurement_mm[Measurement.z.value]
 
+         #TODO: move persist values to func_base
          output_line = json.dumps(new_cam_location_mm) + " " +  dt_str + "\n"
          with open(f'{settings_dir}/{cam_side.lower()}_cam_location.json', 'r+') as outfile:
             lines = outfile.readlines() # read old content
@@ -513,6 +515,7 @@ def cam_calib():
 @app.route(CAM_CALIB_DONE_URL, methods=DEFAULT_METHODS)
 def cam_calib_done():
    global cam_side, new_cam_location_mm
+   import datetime
 
    # app.logger.debug(f"POST to CALIB_DONE request: {request}")
    # app.logger.debug(f"POST to CALIB_DONE request.content_type: {request.content_type}")
@@ -560,6 +563,7 @@ def cam_calib_done():
             app.logger.error(f"Invalid court_point values: {court_points_dict_list[court_point_dict_index]}")
             result = f"FAILED: {cam_side} camera court points are invalid."
          else:
+            #TODO: move persist values to func_base
             #persist values for base to use to generate correction vectors
             dt = datetime.datetime.now()
             dt_str = dt.strftime("%Y-%m-%d_%H-%M")
