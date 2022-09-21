@@ -5,10 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Boomer-Control</title>
-    <link rel="stylesheet" href="/static/css/boomer.css">
-    <link rel="stylesheet" href="/static/css/number-picker-2.css">
-    <link rel="stylesheet" href="/static/css/radio-slider.css">
-    <link rel="stylesheet" href="/static/css/tables.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/boomer.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/number-picker-2.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/radio-slider.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tables.css') }}">
     {%- block page_specific_styles %} 
       {%- for line in page_specific_styles %}
         {{line}}
