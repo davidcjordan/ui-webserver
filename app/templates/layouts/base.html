@@ -43,35 +43,23 @@
   </body>
   
   <script src="/static/js/socket.io.js"></script>
-  <script> var socket = io(); </script>
   <script>
+    var socket = io();
     var socket = io.connect('http://' + document.domain + ':' + location.port);
     var data_get_update = {};
     // pop takes the last element of an array/
     data_get_update["page"] = window.location.pathname.split("/").pop();
-    // console.log("data_get_update=" + data_get_update);
+    // console.log("data_get_update=", data_get_update);
+    if (data_get_update["page"] === "") {
+      data_get_update["page"] = "home"
+    }
 
-    // console.log("Sending client_connected")
     socket.on('connect', function() {
+      console.log("Sending client_connected from page: " + data_get_update["page"])
       socket.emit('client_connected', JSON.stringify(data_get_update));
     });
   </script>  
   <script src="/static/js/state_update.js"></script>
-  <script>
-    var pollingVar = setInterval(pollingTimer, 350);
-    function pollingTimer() {
-      socket.emit("get_updates", JSON.stringify(data_get_update));
-    }
-    socket.onclose = function (event) {  
-      console.log("socket onclose occurred; event.code: " + event.code);  
-      if (event.code != 1000) {
-        // Error code 1000 means that the connection was closed normally; Try to reconnect.
-        if (!navigator.onLine) {
-            alert("You are offline. Please connect to the Internet and try again.");
-        }
-      }
-    }
-  </script>
   {%- block page_specific_js %} 
     {%- for line in page_specific_js %}
       {{line}}

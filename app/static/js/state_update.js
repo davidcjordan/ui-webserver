@@ -81,3 +81,8 @@ socket.on('state_update', function(data) {
     }
   })
 });
+// the following used to be in base.html; moved here in order to be invoked after the handle_updates is defined.
+var pollingVar = setInterval(pollingTimer, 350);
+function pollingTimer() {
+  socket.emit("get_updates", JSON.stringify(data_get_update));
+}
