@@ -10,12 +10,23 @@ except:
    print("Missing package 'flask_socketio', please run: python3 -m pip install flask-socketio")
    exit()
 
+# refer to: https://github.com/miguelgrinberg/python-engineio/issues/142
+# the following magically fixed socketio failures logged on the browser console
+from engineio.payload import Payload
+Payload.max_decode_packets = 64
+
 import logging
 # logging.basicConfig(level=logging.INFO)
 # logging.basicConfig(level=logging.DEBUG, format='%(levelname)s %(asctime)s %(message)s')
 
 app = Flask(__name__)
 from waitress import serve
+app.config['SECRET_KEY'] = 'secret!'
+# didn't find how to have multiple allowed origins
+# socketio = SocketIO(app, cors_allowed_origins="https://cdnjs.cloudflare.com http://localhost")
+# socketio = SocketIO(app, cors_allowed_origins="http://localhost")
+# socketio = SocketIO(app, cors_allowed_origins="http://127.0.0.1")
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 import inspect
 import enum
@@ -291,13 +302,6 @@ filter_js.append(Markup('<script src="/static/js/jquery-3.3.1.min.js"></script>'
 # <script src="/static/js/highlight.pack.js"></script>
 # <script src="/static/js/script.js"></script>
 
-app.config['SECRET_KEY'] = 'secret!'
-# didn't find how to have multiple allowed origins
-# socketio = SocketIO(app, cors_allowed_origins="https://cdnjs.cloudflare.com http://localhost")
-# socketio = SocketIO(app, cors_allowed_origins="http://localhost")
-# socketio = SocketIO(app, cors_allowed_origins="http://127.0.0.1")
-socketio = SocketIO(app, cors_allowed_origins="*")
-
 
 @app.route(CAM_LOCATION_URL, methods=DEFAULT_METHODS)
 def cam_location():
@@ -465,10 +469,11 @@ def cam_calib():
 
          # pow(number, 2) is the same as squaring;  pow(number, 0.5) is squareroot
          x1 = (pow(court_width_mm, 2) + pow(cam_to_left_doubles, 2) - pow(cam_to_right_doubles, 2)) / (court_width_mm*2)
-         new_cam_location_mm[Axis.x.value] = int(x1 - doubles_width_mm)
-         if new_cam_location_mm[Axis.x.value] < 0:
-            app.logger.error(f"x1 distance calculation error; x={x1}")
+         if not isinstance(x1,float):
+            app.logger.error(f"x1 distance calculation error; x1={x1}")
             x1 = 0
+         new_cam_location_mm[Axis.x.value] = int(x1 - doubles_width_mm)
+
          Y = pow((pow(cam_to_left_doubles, 2) - pow(x1, 2)), 0.5) + court_depth_mm
          if not isinstance(Y,float):
             app.logger.error(f"Y distance calculation error; y={Y}")
@@ -1316,7 +1321,7 @@ def read_customization_file():
 
 if __name__ == '__main__':
    # app.run(host="0.0.0.0", port=IP_PORT, debug = True)
-   socketio.run(app, host="0.0.0.0", port=IP_PORT, debug = True)
+   socketio.run(app, host="0.0.0.0", port=IP_PORT, debug = False)
    try:
       serve(app, host="0.0.0.0", port=IP_PORT)
       app.logger.info("started server")
