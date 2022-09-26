@@ -16,9 +16,36 @@ CAM_VERIF_URL = '/cam_verif'
 DONE_URL = '/done'
 RECENTS_URL = '/recent_drills'
 
+from flask import Markup
+my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
+         <img src="/static/home.png" style="height:64px;" alt="Home"> \
+         </button>')
+html_horizontal_rule =  Markup('<hr>')
+
+DEFAULT_METHODS = ['POST', 'GET']
+# Flask looks for following in the 'templates' directory
+MAIN_TEMPLATE = 'index.html'
+GAME_OPTIONS_TEMPLATE = '/layouts' + GAME_OPTIONS_URL + '.html'
+GAME_TEMPLATE = '/layouts' + GAME_URL + '.html'
+CHOICE_INPUTS_TEMPLATE = '/layouts' + '/choice_inputs' + '.html'
+SELECT_TEMPLATE = '/layouts' + SELECT_URL + '.html'
+DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
+CAM_CALIBRATION_TEMPLATE = '/layouts' + CAM_CALIB_URL + '.html'
+CAM_LOCATION_TEMPLATE = '/layouts' + CAM_LOCATION_URL + '.html'
+CAM_VERIFICATION_TEMPLATE = '/layouts' + CAM_VERIF_URL + '.html'
+FAULTS_TEMPLATE = '/layouts' + FAULTS_URL + '.html'
+
+ONCLICK_MODE_KEY = 'mode'
+ONCLICK_MODE_WORKOUT_VALUE = 'workouts'
+CAM_SIDE_ID = "cam_side"
+CAM_SIDE_LEFT_LABEL = 'Left'
+CAM_SIDE_RIGHT_LABEL = 'Right'
+
+
 user_dir = '/home/pi'
 boomer_dir = 'boomer'
 repos_dir = 'repos'
 site_data_dir = 'this_boomers_data'
 settings_dir = f'{user_dir}/{boomer_dir}/{site_data_dir}'
 
+customization_dict = {}

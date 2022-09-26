@@ -22,27 +22,6 @@ except:
    exit()
 
 
-my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
-         <img src="/static/home.png" style="height:64px;" alt="Home"> \
-         </button>')
-html_horizontal_rule =  Markup('<hr>')
-
-DEFAULT_METHODS = ['POST', 'GET']
-# Flask looks for following in the 'templates' directory
-MAIN_TEMPLATE = 'index.html'
-GAME_OPTIONS_TEMPLATE = '/layouts' + GAME_OPTIONS_URL + '.html'
-GAME_TEMPLATE = '/layouts' + GAME_URL + '.html'
-CHOICE_INPUTS_TEMPLATE = '/layouts' + '/choice_inputs' + '.html'
-SELECT_TEMPLATE = '/layouts' + SELECT_URL + '.html'
-DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
-CAM_CALIBRATION_TEMPLATE = '/layouts' + CAM_CALIB_URL + '.html'
-CAM_LOCATION_TEMPLATE = '/layouts' + CAM_LOCATION_URL + '.html'
-CAM_VERIFICATION_TEMPLATE = '/layouts' + CAM_VERIF_URL + '.html'
-FAULTS_TEMPLATE = '/layouts' + FAULTS_URL + '.html'
-
-ONCLICK_MODE_KEY = 'mode'
-ONCLICK_MODE_WORKOUT_VALUE = 'workouts'
-
 workout_select = False
 
 
@@ -97,6 +76,44 @@ def faults():
       installation_icon = customization_dict['icon'], \
       footer_center = customization_dict['title'])
 
+
+@main.route(SETTINGS_URL, methods=DEFAULT_METHODS)
+def settings():
+   # value is the label of the button
+   onclick_choice_list = [\
+      {"html_before": "Check:", \
+         "value": "Cameras", "onclick_url": CAM_VERIF_URL, "html_after": html_horizontal_rule}, \
+      {"html_before": "Calibrate:", \
+         "value": "Thrower", "onclick_url": THROWER_CALIB_SELECTION_URL}, \
+      {"value": "Left Camera", "onclick_url": CAM_LOCATION_URL, "param_name": CAM_SIDE_ID, "param_value": CAM_SIDE_LEFT_LABEL}, \
+      {"value": "Right Cam", "onclick_url": CAM_LOCATION_URL, "param_name": CAM_SIDE_ID, "param_value": CAM_SIDE_RIGHT_LABEL, \
+         "html_after": html_horizontal_rule}
+   ]
+
+   settings_radio_options = [\
+   {'name': GRUNTS_PARAM, 'legend':"Grunts", 'buttons':[ \
+      {'label': "Off", 'value': 0}, \
+      {'label': "On", 'value': 1}, \
+   ]}, \
+   {'name': TRASHT_PARAM,'legend':"Trash Talking", 'buttons':[ \
+      {'label': "Off", 'value': 0}, \
+      {'label': "On", 'value': 1}, \
+   ]} \
+   ]
+
+   settings_radio_options[0]['buttons'][settings_dict[GRUNTS_PARAM]]['checked'] = 1
+   settings_radio_options[1]['buttons'][settings_dict[TRASHT_PARAM]]['checked'] = 1
+   
+   page_js = [Markup('<script src="/static/js/radio-button-emit.js"></script>')]
+
+   return render_template(CHOICE_INPUTS_TEMPLATE, \
+      home_button = my_home_button, \
+      page_title = "Change Settings or Perform Calibration", \
+      installation_icon = customization_dict['icon'], \
+      onclick_choices = onclick_choice_list, \
+      radio_options = settings_radio_options, \
+      page_specific_js = page_js, \
+      footer_center = customization_dict['title'])
 
 
 def read_customization_file():

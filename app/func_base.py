@@ -138,37 +138,6 @@ def read_settings_from_file():
    return settings_dict
 
 
-def scp_court_png(side='Left', frame='even'):
-   # current_app.logger.debug(f"scp_court_png: side={side} frame={frame}")
-   source_path = f"{side.lower()}:/run/shm/frame_{frame}.png"
-   destination_path = f"{user_dir}/{boomer_dir}/{side.lower()}_court.png"
-   # current_app.logger.info(f"BEFORE: scp {source_path} {destination_path}")
-   # the q is for quiet
-   p = subprocess.Popen(["scp", "-q", source_path, destination_path], shell=False)
-   rc = p.wait()
-   stdoutdata, stderrdata = p.communicate()
-   if p.returncode != 0:
-      current_app.logger.error(f"FAILED: scp {source_path} {destination_path}; error_code={p.returncode}")
-   else:
-      current_app.logger.info(f"OK: scp {source_path} {destination_path}")
-
-
-def read_court_points_file(side_name = 'left'):
-   court_points_dict = {}
-   read_ok = True
-   try:
-      with open(f'{settings_dir}/{side_name}_court_points.json') as f:
-         file_lines = f.readlines()
-         first_line_json = file_lines[0].split("}")[0] + "}"
-         # current_app.logger.debug(f"first_line_json={first_line_json}")
-         court_points_dict = json.loads(first_line_json)
-         current_app.logger.debug(f"{side_name} court_points={court_points_dict}")
-   except:
-      current_app.logger.warning(f"read failed: {settings_dir}/{side_name}_court_points.json")
-      read_ok = False
-
-   return read_ok, court_points_dict
-
 
 def textify_faults_table(faults_table):
    import datetime
