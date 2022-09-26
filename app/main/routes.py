@@ -61,13 +61,12 @@ def index():
    # current_app.logger.debug(f"Test of printing function name: in function: {sys._getframe(0).f_code.co_name}")
 
    # clicking stop on the game_url & drill_url goes to main/home/index, so issue stop.
-   rc, code = send_msg(PUT_METHOD, STOP_RSRC)
-   if not rc:
-      current_app.logger.error(f"function '{sys._getframe(0).f_code.co_name}': PUT STOP failed, code: {code}")
+   send_stop_to_base()
 
    customization_dict = read_customization_file()
    settings_dict = read_settings_from_file()
-   send_settings_to_base(settings_dict)
+   # update the base settings can happen at game/drill start:
+   # send_settings_to_base(settings_dict)
 
    # example of setting button disabled and a button ID
    # TODO: fix disable CSS

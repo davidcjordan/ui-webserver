@@ -19,21 +19,12 @@ except:
    current_app.logger.error("Problems with 'func_base' modules")
    exit()
 
-sys.path.append(f'{user_dir}/{repos_dir}/control_ipc_utils')
-try:
-   from ctrl_messaging_routines import send_msg
-   from control_ipc_defines import *
-except:
-   current_app.logger.error("Problems with 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
-   exit()
-
 
 @socketio.on('pause_resume')
 def handle_pause_resume():
    current_app.logger.info('received pause_resume.')
-   rc, code = send_msg(PUT_METHOD, PAUS_RSRC)
-   if not rc:
-      current_app.logger.error("PUT PAUSE failed, code: {}".format(code))
+   send_pause_resume_to_base()
+
 
 @socketio.on('refresh_image')
 def handle_refresh_image(data):

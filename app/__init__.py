@@ -1,7 +1,28 @@
 from flask import Flask
 from flask_socketio import SocketIO
 
-socketio = SocketIO()
+import logging
+gunicorn_logger = logging.getLogger('gunicorn.warning')
+log_level = logging.DEBUG
+# https://betterstack.com/community/guides/logging/how-to-start-logging-with-flask/
+   #  root = os.path.dirname(os.path.abspath(__file__))
+   #  logdir = os.path.join(root, 'logs')
+   #  if not os.path.exists(logdir):
+   #      os.mkdir(logdir)
+   #  log_file = os.path.join(logdir, 'app.log')
+file_handler = logging.FileHandler('/run/shm/ui.log')
+defaultFormatter = logging.Formatter('[%(asctime)s]%(levelname)s in %(module)s: %(message)s')
+file_handler.setFormatter(defaultFormatter)
+file_handler.setLevel(log_level)
+
+import eventlet
+eventlet.monkey_patch()
+# without the following, the following error occurs: RuntimeError: Second simultaneous read on fileno N detected
+# occurs because of the FIFO read.  Look into threading control to control access to the FIFO?  Use eventlet semaphore?
+import eventlet.debug
+eventlet.debug.hub_prevent_multiple_readers(False)
+
+socketio = SocketIO() # logger=True)
 
 def create_app(debug=False):
    """Create an application."""
@@ -17,34 +38,19 @@ def create_app(debug=False):
    from engineio.payload import Payload
    Payload.max_decode_packets = 64
 
-   if (0):
-      #TODO: fix logging to file
-      import logging
-      log_level = logging.DEBUG
-      for handler in app.logger.handlers:
-         app.logger.removeHandler(handler)
-      # https://betterstack.com/community/guides/logging/how-to-start-logging-with-flask/
-         #  root = os.path.dirname(os.path.abspath(__file__))
-         #  logdir = os.path.join(root, 'logs')
-         #  if not os.path.exists(logdir):
-         #      os.mkdir(logdir)
-         #  log_file = os.path.join(logdir, 'app.log')
-      handler = logging.FileHandler('/run/shm/ui.log')
-      defaultFormatter = logging.Formatter('[%(asctime)s]%(levelname)s: %(message)s')
-      handler.setFormatter(defaultFormatter)
-      handler.setLevel(log_level)
-      app.logger.addHandler(handler)
-      app.logger.setLevel(log_level)
+   # for handler in app.logger.handlers:
+   #    # removes: <StreamHandler <stderr> (NOTSET)>
+   #    app.logger.removeHandler(handler)
+   # from flask.logging import default_handler
+   # app.logger.removeHandler(default_handler)
+
+   app.logger.addHandler(file_handler)
+   app.logger.setLevel(log_level)
+
+   # app.logger.addHandler(gunicorn_logger.handlers)
+   # app.logger.handlers = gunicorn_logger.handlers
+   # app.logger.setLevel(gunicorn_logger.level)
 
    socketio.init_app(app)
-
-   # from waitress import serve
-   # import sys
-   # try:
-   #    serve(app, host="0.0.0.0", port="1111")
-   #    app.logger.info("started server")
-   # except Exception as e:
-   #    print(e)
-   #    sys.exit(1)
 
    return app

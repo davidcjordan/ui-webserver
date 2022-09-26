@@ -2,6 +2,8 @@
 '''
 base interaction: check status, make fault table, read/write config files
 '''
+# from ast import Not
+# from email.mime import base
 from flask import current_app
 import json
 import subprocess
@@ -24,12 +26,12 @@ site_data_dir = 'this_boomers_data'
 settings_dir = f'{user_dir}/{boomer_dir}/{site_data_dir}'
 settings_filename = "drill_game_settings.json"
 previous_base_state = base_state_e.BASE_STATE_NONE
-base_faulted_timestamp = None
+faults_table_when_base_not_accessible = None
 
 def check_base():
    import time
    global previous_base_state
-   global base_faulted_timestamp
+   global faults_table_when_base_not_accessible
    soft_fault_status = None
 
    base_pid = None
@@ -40,19 +42,23 @@ def check_base():
    else:
       base_pid = None
 
+   base_state = base_state_e.BASE_STATE_NONE
+   base_fault = None
+   faults_table = None
+
    if base_pid is not None:
       # verify responding to FIFO
       # current_app.logger.info("Getting status message")
       msg_ok, status_msg = send_msg()
       if not msg_ok:
-         faults_table = [{FLT_CODE_PARAM: fault_e.CONTROL_PROGRAM_FAILED, FLT_LOCATION_PARAM: net_device_e.BASE, FLT_TIMESTAMP_PARAM: base_faulted_timestamp}]
+         base_fault = fault_e.CONTROL_PROGRAM_FAILED.value
          base_state = base_state_e.FAULTED
       else:
          if (status_msg is not None):
             if (STATUS_PARAM in status_msg):
                base_state = base_state_e(status_msg[STATUS_PARAM])
             else:
-               faults_table = [{FLT_CODE_PARAM: fault_e.CONTROL_PROGRAM_FAILED, FLT_LOCATION_PARAM: net_device_e.BASE, FLT_TIMESTAMP_PARAM: base_faulted_timestamp}]
+               base_fault = fault_e.CONTROL_PROGRAM_FAILED.value
                base_state = base_state_e.FAULTED
 
             if (HARD_FAULT_PARAM in status_msg and status_msg[HARD_FAULT_PARAM] > 0):
@@ -61,7 +67,7 @@ def check_base():
                msg_ok, faults_table = send_msg(GET_METHOD, FLTS_RSRC)
                if not msg_ok:
                   current_app.logger.error("msg status not OK when getting fault table")
-                  faults_table = [{FLT_CODE_PARAM: fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED, FLT_LOCATION_PARAM: net_device_e.BASE, FLT_TIMESTAMP_PARAM: base_faulted_timestamp}]
+                  base_fault = fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED.value
                   base_state = base_state_e.FAULTED
 
             if (SOFT_FAULT_PARAM in status_msg):
@@ -69,20 +75,37 @@ def check_base():
             # current_app.logger.info(f"faults: {faults_table[0]}")
          else:
             current_app.logger.error("received None as status message")
-            faults_table = [{FLT_CODE_PARAM: fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED, FLT_LOCATION_PARAM: net_device_e.BASE, FLT_TIMESTAMP_PARAM: base_faulted_timestamp}]
+            base_fault = fault_e.CONTROL_PROGRAM_NOT_RUNNING.value
             base_state = base_state_e.FAULTED
    else:
-      faults_table = [{FLT_CODE_PARAM: fault_e.CONTROL_PROGRAM_NOT_RUNNING, FLT_LOCATION_PARAM: net_device_e.BASE, FLT_TIMESTAMP_PARAM: base_faulted_timestamp}]
+      base_fault = fault_e.CONTROL_PROGRAM_NOT_RUNNING.value
       base_state = base_state_e.FAULTED
 
    if base_state != previous_base_state:
       current_app.logger.info(f"Base state change: {base_state_e(previous_base_state).name} -> {base_state_e(base_state).name}")
-      if base_state == base_state_e.FAULTED:
-         base_faulted_timestamp = time.time()
+
+   if base_state == base_state_e.FAULTED:
+      if faults_table is None:
+         # didn't get faults_tabe from base, so use existing or generate a new one:
+         if faults_table_when_base_not_accessible is None:
+            faults_table_when_base_not_accessible = [{FLT_CODE_PARAM: base_fault, FLT_LOCATION_PARAM: net_device_e.BASE, FLT_TIMESTAMP_PARAM: time.time()}]
+         faults_table = faults_table_when_base_not_accessible
+   else:
+      faults_table_when_base_not_accessible = None
 
    previous_base_state = base_state
    return base_state, soft_fault_status, faults_table
 
+
+def send_stop_to_base():
+   rc, code = send_msg(PUT_METHOD, STOP_RSRC)
+   if not rc:
+      current_app.logger.error(f"function '{sys._getframe(0).f_code.co_name}': PUT STOP failed, code: {code}")
+
+def send_pause_resume_to_base():
+   rc, code = send_msg(PUT_METHOD, PAUS_RSRC)
+   if not rc:
+      current_app.logger.error("PUT PAUSE failed, code: {}".format(code))
 
 def send_settings_to_base(settings_dict):
    rc, code = send_msg(PUT_METHOD, BCFG_RSRC, \
