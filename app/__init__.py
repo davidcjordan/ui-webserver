@@ -25,13 +25,15 @@ eventlet.debug.hub_prevent_multiple_readers(False)
 socketio = SocketIO() # logger=True)
 
 def create_app(debug=False):
-   """Create an application."""
+   from app.main.blueprint_core import blueprint_core
+   from app.main.blueprint_camera import blueprint_camera
+
    app = Flask(__name__)
    app.debug = debug
    app.config['SECRET_KEY'] = 'gjr39dkjn344_!67#'
 
-   from .main import main as main_blueprint
-   app.register_blueprint(main_blueprint)
+   app.register_blueprint(blueprint_core)
+   app.register_blueprint(blueprint_camera)
 
    # refer to: https://github.com/miguelgrinberg/python-engineio/issues/142
    # the following magically fixed socketio failures logged on the browser console
@@ -52,5 +54,6 @@ def create_app(debug=False):
    # app.logger.setLevel(gunicorn_logger.level)
 
    socketio.init_app(app)
+   from app.main import events
 
    return app

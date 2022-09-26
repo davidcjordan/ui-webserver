@@ -3,36 +3,36 @@
 # from web-ctrl:
 # from flask import Flask, render_template, Response, request, redirect, url_for, Markup, send_from_directory
 
-from flask import render_template, request, url_for, Markup, send_from_directory
-from . import main
+from flask import render_template, request, Markup, send_from_directory, Blueprint, current_app #, url_for
 
-import os, sys
-current_dir = os.path.dirname(os.path.realpath(__file__))
-parent_dir = os.path.dirname(current_dir)
+# print(f"blueprint_core_name={__name__}") = app.main.blueprint_core
+blueprint_core = Blueprint('blueprint_core', __name__)
 
-sys.path.append(current_dir)
-from defines import *
+from app.main.defines import *
+from app.func_base import send_stop_to_base, read_settings_from_file
+# from app.func_drills import *
 
-sys.path.append(parent_dir)
+import sys
+sys.path.append(f'{user_dir}/{repos_dir}/control_ipc_utils')
 try:
-   from func_base import *
-   from func_drills import *
+   from control_ipc_defines import *
 except:
-   current_app.logger.error("Problems with 'func_base' modules")
+   current_app.logger.error("Problems with 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
    exit()
 
+customization_dict = {}
 
 workout_select = False
 
 
-@main.route('/favicon.ico')
+@blueprint_core.route('/favicon.ico')
 def favicon():
    from os import path 
    return send_from_directory(path.join(main.root_path, 'static'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
-@main.route(MAIN_URL, methods=DEFAULT_METHODS)
+@blueprint_core.route(MAIN_URL, methods=DEFAULT_METHODS)
 def index():
    global html_horizontal_rule
    global customization_dict, settings_dict 
@@ -69,7 +69,7 @@ def index():
       footer_center = customization_dict['title'])
 
 
-@main.route(FAULTS_URL, methods=DEFAULT_METHODS)
+@blueprint_core.route(FAULTS_URL, methods=DEFAULT_METHODS)
 def faults():
    return render_template(FAULTS_TEMPLATE, \
       page_title = "Problems Detected", \
@@ -77,7 +77,7 @@ def faults():
       footer_center = customization_dict['title'])
 
 
-@main.route(SETTINGS_URL, methods=DEFAULT_METHODS)
+@blueprint_core.route(SETTINGS_URL, methods=DEFAULT_METHODS)
 def settings():
    # value is the label of the button
    onclick_choice_list = [\
@@ -117,6 +117,7 @@ def settings():
 
 
 def read_customization_file():
+   import json
    try:
       with open(f'{settings_dir}/ui_customization.json') as f:
          customization_dict = json.load(f)

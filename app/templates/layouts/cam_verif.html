@@ -6,7 +6,7 @@
     <canvas id="canvas_not_zoomed"></canvas>
   </div>
   <div style="width:220px; display: inline-block;">
-    <form method="post" action="{{ url_for('cam_verif') }}">
+    <form method="post" action="{{ url_for('blueprint_camera.cam_verif') }}">
       <button type="submit" class="submit-button">Other Side</button>
       <button type="button" class="submit-button" onclick="refreshImage('even')">Reload Even</button>
       <button type="button" class="submit-button" onclick="refreshImage('odd')">Reload Odd</button>

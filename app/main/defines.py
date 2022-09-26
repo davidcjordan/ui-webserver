@@ -47,5 +47,5 @@ boomer_dir = 'boomer'
 repos_dir = 'repos'
 site_data_dir = 'this_boomers_data'
 settings_dir = f'{user_dir}/{boomer_dir}/{site_data_dir}'
-
-customization_dict = {}
+execs_dir = f"{user_dir}/{boomer_dir}/execs"
+recents_filename = "recents.json"

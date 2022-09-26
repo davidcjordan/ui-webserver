@@ -4,19 +4,20 @@ from flask_socketio import emit
 from .. import socketio
 import json
 
-import os, sys
-current_dir = os.path.dirname(os.path.realpath(__file__))
-parent_dir = os.path.dirname(current_dir)
+from app.main.defines import *
+from app.func_base import check_base, send_pause_resume_to_base, textify_faults_table
+from app.func_drills import get_drill_info
+from app.main.blueprint_camera import scp_court_png
 
-sys.path.append(current_dir)
-from defines import *
-
-sys.path.append(parent_dir)
+import sys
+user_dir = '/home/pi'
+boomer_dir = 'boomer'
+repos_dir = 'repos'
+sys.path.append(f'{user_dir}/{repos_dir}/control_ipc_utils')
 try:
-   from func_base import *
-   from func_drills import *
+   from control_ipc_defines import *
 except:
-   current_app.logger.error("Problems with 'func_base' modules")
+   current_app.logger.error("Problems with 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
    exit()
 
 

@@ -1,5 +1,5 @@
-from flask import Blueprint
+# from flask import Blueprint
 
-main = Blueprint('main', __name__)
+# blueprint_core = Blueprint('blueprint_core', __name__)
 
-from . import routes, events
+# from . import blueprint_core, events
