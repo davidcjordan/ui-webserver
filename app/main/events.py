@@ -5,14 +5,12 @@ from .. import socketio
 import json
 
 from app.main.defines import *
-from app.func_base import check_base, send_pause_resume_to_base, textify_faults_table
+from app.func_base import check_base, send_pause_resume_to_base, send_settings_to_base
+from app.main.blueprint_core import write_settings_to_file
 from app.func_drills import get_drill_info
 from app.main.blueprint_camera import scp_court_png
 
 import sys
-user_dir = '/home/pi'
-boomer_dir = 'boomer'
-repos_dir = 'repos'
 sys.path.append(f'{user_dir}/{repos_dir}/control_ipc_utils')
 try:
    from control_ipc_defines import *
@@ -97,3 +95,50 @@ def handle_get_updates(data):
       current_app.logger.info(f"Changing URL from '{current_page}' to {update_dict['new_url']} since base_state={base_state_e(base_state).name}")
 
    emit('state_update', update_dict)
+
+
+@socketio.on('change_params')     # Decorator to catch an event named change_params
+def handle_change_params(data):          # change_params() is the event callback function.
+   #  print('change_params data: ', data)      # data is a json string: {"speed":102}
+   current_app.logger.info(f'received change_params: {data}')
+
+   # using 'global' for settings_dict doesn't work; a local is created.
+   from app.main.blueprint_core import settings_dict
+
+   for k in data.keys():
+      if data[k] == None:
+         current_app.logger.warning(f'Received NoneType for {k}')
+      else:
+         # current_app.logger.debug(f'data[k] is not None; Setting: {k} to {data[k]}')
+         if (k == LEVEL_PARAM):
+            settings_dict[k] = int(data[k]*10)
+         elif (k == DELAY_MOD_PARAM):
+            settings_dict[k] = int(data[k]*1000)
+         else:
+            settings_dict[k] = int(data[k])
+         current_app.logger.debug(f'Setting: {k} to {settings_dict[k]}')
+         
+   write_settings_to_file() #writes global, hence no argument
+   send_settings_to_base(settings_dict)
+
+
+def textify_faults_table(faults_table):
+   import datetime
+   # example fault table:
+   # faults: [{'fCod': 20, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 22, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 15, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 6, 'fLoc': 0, 'fTim': 1649434843}, {'fCod': 6, 'fLoc': 1, 'fTim': 1649434843}, {'fCod': 6, 'fLoc': 2, 'fTim': 1649434843}]
+
+   # the faults_table gets erroneously populated with the status when multiple instances are running.
+   textified_faults_table = []
+   if (type(faults_table) is list):
+      for fault in faults_table:
+         # print(f"fault: {fault}")
+         row_dict = {}
+         row_dict[FLT_CODE_PARAM] = fault_e(fault[FLT_CODE_PARAM]).name
+         row_dict[FLT_LOCATION_PARAM] = net_device_e(fault[FLT_LOCATION_PARAM]).name
+         timestamp = datetime.datetime.fromtimestamp(fault[FLT_TIMESTAMP_PARAM])
+         #TODO: compare date and put "yesterday" or "days ago"
+         row_dict[FLT_TIMESTAMP_PARAM] = timestamp.strftime("%H:%M:%S")
+         textified_faults_table.append(row_dict)
+   else:
+      current_app.logger.error(f"bogus fault table in fault_request: {faults_table}")
+   return textified_faults_table

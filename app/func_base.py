@@ -106,6 +106,7 @@ def send_pause_resume_to_base():
    rc, code = send_msg(PUT_METHOD, PAUS_RSRC)
    if not rc:
       current_app.logger.error("PUT PAUSE failed, code: {}".format(code))
+      
 
 def send_settings_to_base(settings_dict):
    rc, code = send_msg(PUT_METHOD, BCFG_RSRC, \
@@ -122,40 +123,3 @@ def send_settings_to_base(settings_dict):
       {SERVE_MODE_PARAM: settings_dict[SERVE_MODE_PARAM], \
          TIEBREAKER_PARAM: settings_dict[TIEBREAKER_PARAM]})
          # POINTS_DELAY_PARAM: settings_dict[POINTS_DELAY_PARAM]})
-
-
-def read_settings_from_file():
-   try:
-      with open(f'{settings_dir}/{settings_filename}') as f:
-         settings_dict = json.load(f)
-         # current_app.logger.debug(f"Settings restored: {settings_dict}")
-   except:
-      current_app.logger.warning(f"Settings file read failed; using defaults.")
-      settings_dict = {GRUNTS_PARAM: 0, TRASHT_PARAM: 0, LEVEL_PARAM: LEVEL_DEFAULT, \
-            SERVE_MODE_PARAM: 1, TIEBREAKER_PARAM: 0, \
-            SPEED_MOD_PARAM: SPEED_MOD_DEFAULT, DELAY_MOD_PARAM: DELAY_MOD_DEFAULT, \
-            ELEVATION_MOD_PARAM: ELEVATION_ANGLE_MOD_DEFAULT}
-   return settings_dict
-
-
-
-def textify_faults_table(faults_table):
-   import datetime
-   # example fault table:
-   # faults: [{'fCod': 20, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 22, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 15, 'fLoc': 3, 'fTim': 1649434841}, {'fCod': 6, 'fLoc': 0, 'fTim': 1649434843}, {'fCod': 6, 'fLoc': 1, 'fTim': 1649434843}, {'fCod': 6, 'fLoc': 2, 'fTim': 1649434843}]
-
-   # the faults_table gets erroneously populated with the status when multiple instances are running.
-   textified_faults_table = []
-   if (type(faults_table) is list):
-      for fault in faults_table:
-         # print(f"fault: {fault}")
-         row_dict = {}
-         row_dict[FLT_CODE_PARAM] = fault_e(fault[FLT_CODE_PARAM]).name
-         row_dict[FLT_LOCATION_PARAM] = net_device_e(fault[FLT_LOCATION_PARAM]).name
-         timestamp = datetime.datetime.fromtimestamp(fault[FLT_TIMESTAMP_PARAM])
-         #TODO: compare date and put "yesterday" or "days ago"
-         row_dict[FLT_TIMESTAMP_PARAM] = timestamp.strftime("%H:%M:%S")
-         textified_faults_table.append(row_dict)
-   else:
-      current_app.logger.error(f"bogus fault table in fault_request: {faults_table}")
-   return textified_faults_table

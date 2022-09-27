@@ -3,8 +3,7 @@ from flask import Blueprint, current_app, request, render_template
 blueprint_camera = Blueprint('blueprint_camera', __name__)
 
 from app.main.defines import *
-from app.main.blueprint_core import customization_dict, read_customization_file
-# print(f"bp_cam: customization_dict={customization_dict}")
+from app.main.blueprint_core import customization_dict
 
 cam_side = None  # a global on which camera is being calibrated
 
@@ -50,8 +49,7 @@ unit_lengths = [[0 for _ in range(len(Measurement))] for _ in range(len(Units))]
 
 @blueprint_camera.route(CAM_VERIF_URL, methods=DEFAULT_METHODS)
 def cam_verif():
-   global customization_dict
-   customization_dict = read_customization_file()
+   # global customization_dict
    
    court_point_dict_index = 0
    cam_name = CAM_SIDE_LEFT_LABEL.lower()
