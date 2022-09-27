@@ -1,19 +1,13 @@
 
 '''
-base interaction: check status, make fault table, read/write config files
+base interaction: check status, update base_settings; this should be the only module that imports send_msg
 '''
-# from ast import Not
-# from email.mime import base
 from flask import current_app
-import json
+import time
 import subprocess
-# import copy # for deepcopy
 
+from .main.defines import user_dir, repos_dir
 import sys
-user_dir = '/home/pi'
-boomer_dir = 'boomer'
-repos_dir = 'repos'
-
 sys.path.append(f'{user_dir}/{repos_dir}/control_ipc_utils')
 try:
    from ctrl_messaging_routines import send_msg
@@ -22,14 +16,10 @@ except:
    current_app.logger.error("Problems with 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
    exit()
 
-site_data_dir = 'this_boomers_data'
-settings_dir = f'{user_dir}/{boomer_dir}/{site_data_dir}'
-settings_filename = "drill_game_settings.json"
 previous_base_state = base_state_e.BASE_STATE_NONE
 faults_table_when_base_not_accessible = None
 
 def check_base():
-   import time
    global previous_base_state
    global faults_table_when_base_not_accessible
    soft_fault_status = None
@@ -106,7 +96,7 @@ def send_pause_resume_to_base():
    rc, code = send_msg(PUT_METHOD, PAUS_RSRC)
    if not rc:
       current_app.logger.error("PUT PAUSE failed, code: {}".format(code))
-      
+
 
 def send_settings_to_base(settings_dict):
    rc, code = send_msg(PUT_METHOD, BCFG_RSRC, \
