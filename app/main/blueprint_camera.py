@@ -49,7 +49,7 @@ unit_lengths = [[0 for _ in range(len(Measurement))] for _ in range(len(Units))]
 @blueprint_camera.route(CAM_VERIF_URL, methods=DEFAULT_METHODS)
 def cam_verif():
 
-   from app.main.blueprint_core import customization_dict  # using 'global customization_dict' did not work
+   from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
    
    court_point_dict_index = 0
    cam_name = CAM_SIDE_LEFT_LABEL.lower()
@@ -73,10 +73,10 @@ def cam_verif():
    return render_template(CAM_VERIFICATION_TEMPLATE, \
       home_button = my_home_button, \
       page_title = "Check court point locations.", \
-      installation_icon = customization_dict['icon'], \
+      installation_icon = display_customization_dict['icon'], \
       image_path = "/static/" + cam_name + "_court.png", \
       court_point_coords = court_points_dict_list[court_point_dict_index], \
-      footer_center = customization_dict['title'])
+      footer_center = display_customization_dict['title'])
 
 
 def scp_court_png(side='Left', frame='even'):

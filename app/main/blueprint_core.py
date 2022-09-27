@@ -23,8 +23,8 @@ except:
 
 workout_select = False
 
-customization_dict = {}
-settings_dict = {}
+display_customization_dict = {}
+base_settings_dict = {}
 
 
 @blueprint_core.route('/favicon.ico')
@@ -52,15 +52,15 @@ def index():
    # else:
    #    current_app.logger.debug("customization_dict is in locals()")
 
-   global customization_dict 
+   global display_customization_dict 
    # get an unbound error if customization_dict is not declared global
-   if 'icon' not in customization_dict:
+   if 'icon' not in display_customization_dict:
       current_app.logger.debug("reading in customization_dict")
-      customization_dict = read_customization_file()
+      display_customization_dict = read_display_customization_file()
 
-   global settings_dict 
-   if GRUNTS_PARAM not in settings_dict:
-      settings_dict = read_settings_from_file()
+   global base_settings_dict 
+   if GRUNTS_PARAM not in base_settings_dict:
+      base_settings_dict = read_base_settings_from_file()
    # update the base settings can happen at game/drill start:
    # send_settings_to_base(settings_dict)
 
@@ -81,25 +81,25 @@ def index():
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       page_title = "Welcome to Boomer", \
-      installation_icon = customization_dict['icon'], \
+      installation_icon = display_customization_dict['icon'], \
       onclick_choices = onclick_choice_list, \
-      footer_center = customization_dict['title'])
+      footer_center = display_customization_dict['title'])
 
 
 @blueprint_core.route(FAULTS_URL, methods=DEFAULT_METHODS)
 def faults():
-   if 'icon' not in customization_dict:
-      read_customization_file()
+   if 'icon' not in display_customization_dict:
+      read_display_customization_file()
 
    return render_template(FAULTS_TEMPLATE, \
       page_title = "Problems Detected", \
-      installation_icon = customization_dict['icon'], \
-      footer_center = customization_dict['title'])
+      installation_icon = display_customization_dict['icon'], \
+      footer_center = display_customization_dict['title'])
 
 
 @blueprint_core.route(SETTINGS_URL, methods=DEFAULT_METHODS)
 def settings():
-   global settings_dict 
+   global base_settings_dict 
 
    # value is the label of the button
    onclick_choice_list = [\
@@ -123,22 +123,22 @@ def settings():
    ]} \
    ]
 
-   settings_radio_options[0]['buttons'][settings_dict[GRUNTS_PARAM]]['checked'] = 1
-   settings_radio_options[1]['buttons'][settings_dict[TRASHT_PARAM]]['checked'] = 1
+   settings_radio_options[0]['buttons'][base_settings_dict[GRUNTS_PARAM]]['checked'] = 1
+   settings_radio_options[1]['buttons'][base_settings_dict[TRASHT_PARAM]]['checked'] = 1
    
    page_js = [Markup('<script src="/static/js/radio-button-emit.js"></script>')]
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
       page_title = "Change Settings or Perform Calibration", \
-      installation_icon = customization_dict['icon'], \
+      installation_icon = display_customization_dict['icon'], \
       onclick_choices = onclick_choice_list, \
       radio_options = settings_radio_options, \
       page_specific_js = page_js, \
-      footer_center = customization_dict['title'])
+      footer_center = display_customization_dict['title'])
 
 
-def read_customization_file():
+def read_display_customization_file():
    try:
       with open(f'{settings_dir}/ui_customization.json') as f:
          customization_dict = json.load(f)
@@ -147,7 +147,7 @@ def read_customization_file():
    return customization_dict
 
 
-def read_settings_from_file():
+def read_base_settings_from_file():
    try:
       with open(f'{settings_dir}/{settings_filename}') as f:
          settings_dict = json.load(f)
@@ -161,10 +161,10 @@ def read_settings_from_file():
    return settings_dict
 
 
-def write_settings_to_file():
+def write_base_settings_to_file():
    try:
       with open(f'{settings_dir}/{settings_filename}', 'w') as f:
-            json.dump(settings_dict, f)
+            json.dump(base_settings_dict, f)
          # current_app.logger.debug(f"Settings written: {settings_dict}")
    except:
       current_app.logger.error(f"Settings file write failed.")

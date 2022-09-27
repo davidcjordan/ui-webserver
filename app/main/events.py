@@ -6,7 +6,7 @@ import json
 
 from app.main.defines import *
 from app.func_base import check_base, send_pause_resume_to_base, send_settings_to_base
-from app.main.blueprint_core import write_settings_to_file
+from app.main.blueprint_core import write_base_settings_to_file
 from app.func_drills import get_drill_info
 from app.main.blueprint_camera import scp_court_png
 
@@ -103,7 +103,7 @@ def handle_change_params(data):          # change_params() is the event callback
    current_app.logger.info(f'received change_params: {data}')
 
    # using 'global' for settings_dict doesn't work; a local is created.
-   from app.main.blueprint_core import settings_dict
+   from app.main.blueprint_core import base_settings_dict
 
    for k in data.keys():
       if data[k] == None:
@@ -111,15 +111,15 @@ def handle_change_params(data):          # change_params() is the event callback
       else:
          # current_app.logger.debug(f'data[k] is not None; Setting: {k} to {data[k]}')
          if (k == LEVEL_PARAM):
-            settings_dict[k] = int(data[k]*10)
+            base_settings_dict[k] = int(data[k]*10)
          elif (k == DELAY_MOD_PARAM):
-            settings_dict[k] = int(data[k]*1000)
+            base_settings_dict[k] = int(data[k]*1000)
          else:
-            settings_dict[k] = int(data[k])
-         current_app.logger.debug(f'Setting: {k} to {settings_dict[k]}')
-         
-   write_settings_to_file() #writes global, hence no argument
-   send_settings_to_base(settings_dict)
+            base_settings_dict[k] = int(data[k])
+         current_app.logger.debug(f'Setting: {k} to {base_settings_dict[k]}')
+
+   write_base_settings_to_file() #writes global, hence no argument
+   send_settings_to_base(base_settings_dict)
 
 
 def textify_faults_table(faults_table):
