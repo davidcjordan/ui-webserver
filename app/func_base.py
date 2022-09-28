@@ -6,7 +6,7 @@ from flask import current_app
 import time
 import subprocess
 
-from .main.defines import user_dir, repos_dir
+from .main.defines import user_dir, repos_dir, GAME_URL
 import sys
 sys.path.append(f'{user_dir}/{repos_dir}/control_ipc_utils')
 try:
@@ -113,3 +113,23 @@ def send_settings_to_base(settings_dict):
       {SERVE_MODE_PARAM: settings_dict[SERVE_MODE_PARAM], \
          TIEBREAKER_PARAM: settings_dict[TIEBREAKER_PARAM]})
          # POINTS_DELAY_PARAM: settings_dict[POINTS_DELAY_PARAM]})
+
+def send_start_to_base(mode_dict):
+   # mode_dict is either: 
+   #  {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: id}
+   #  {MODE_PARAM: base_mode_e.WORKOUT.value, ID_PARAM: id}
+   #  {MODE_PARAM: base_mode_e.GAME.value}
+   #  {MODE_PARAM: base_mode_e.CREEP_CALIBRATION.value, ID_PARAM: id}
+   
+   rc, code = send_msg(PUT_METHOD, MODE_RSRC, mode_dict)
+   if not rc:
+      current_app.logger.error(f"PUT Mode {mode_dict} failed, code: {code}")
+   else:
+      if mode_dict[MODE_PARAM] == base_mode_e.CREEP_CALIBRATION.value:
+         rc, code = send_msg(PUT_METHOD, FUNC_RSRC, {FUNC_CREEP: mode_dict[ID_PARAM]})
+         if not rc:
+            current_app.logger.error(f"function '{sys._getframe(0).f_code.co_name}': PUT Function failed, code: {code}")
+      else:
+         rc, code = send_msg(PUT_METHOD, STRT_RSRC)
+         if not rc:
+            current_app.logger.error("PUT START failed, code: {}".format(code))

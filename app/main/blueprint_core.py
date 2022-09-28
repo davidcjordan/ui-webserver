@@ -21,8 +21,6 @@ except:
    current_app.logger.error("Problems with 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
    exit()
 
-workout_select = False
-
 display_customization_dict = {}
 base_settings_dict = {}
 
