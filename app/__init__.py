@@ -28,6 +28,7 @@ def create_app(debug=False):
    from app.main.blueprint_core import blueprint_core
    from app.main.blueprint_camera import blueprint_camera
    from app.main.blueprint_drills import blueprint_drills
+   from app.main.blueprint_games import blueprint_games
 
    app = Flask(__name__)
    app.debug = debug
@@ -36,6 +37,7 @@ def create_app(debug=False):
    app.register_blueprint(blueprint_core)
    app.register_blueprint(blueprint_camera)
    app.register_blueprint(blueprint_drills)
+   app.register_blueprint(blueprint_games)
 
    # refer to: https://github.com/miguelgrinberg/python-engineio/issues/142
    # the following magically fixed socketio failures logged on the browser console
