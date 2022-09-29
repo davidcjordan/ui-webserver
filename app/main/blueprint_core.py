@@ -28,13 +28,12 @@ base_settings_dict = {}
 @blueprint_core.route('/favicon.ico')
 def favicon():
    from os import path 
-   return send_from_directory(path.join(main.root_path, 'static'),
+   return send_from_directory(path.join(current_app.root_path, 'static'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
 @blueprint_core.route(MAIN_URL, methods=DEFAULT_METHODS)
 def index():
-   # global html_horizontal_rule
 
    # current_app.logger.debug(f"Test of printing function name: in function: {sys._getframe(0).f_code.co_name}")
 
@@ -97,7 +96,6 @@ def faults():
 
 @blueprint_core.route(SETTINGS_URL, methods=DEFAULT_METHODS)
 def settings():
-   global base_settings_dict 
 
    # value is the label of the button
    onclick_choice_list = [\
@@ -134,6 +132,19 @@ def settings():
       radio_options = settings_radio_options, \
       page_specific_js = page_js, \
       footer_center = display_customization_dict['title'])
+
+
+@blueprint_core.route(DONE_URL, methods=DEFAULT_METHODS)
+def done():
+
+   send_stop_to_base()
+ 
+   return render_template(CHOICE_INPUTS_TEMPLATE, \
+      page_title = "Finished", \
+      installation_icon = display_customization_dict['icon'], \
+      onclick_choices = [{"value": "OK", "onclick_url": MAIN_URL}], \
+      footer_center = display_customization_dict['title'])
+
 
 
 def read_display_customization_file():

@@ -197,7 +197,6 @@ def drill_select_type():
 @blueprint_drills.route(BEEP_SELECTION_URL, methods=DEFAULT_METHODS)
 def beep_selection():
    from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
-   # global beep_mode_choices
 
    # current_app.logger.info(f"beep_mode_choices: {beep_mode_choices}")
 
@@ -240,7 +239,6 @@ def select():
       # parse drill selection criteria to make list of drills:
       if ((drill_type_options.Group.name in request.form) and (request.form[drill_type_options.Group.name] == '1')):
          if (drill_type_options.Lines.name in request.form):
-            # drill_list = globals()[request.form[drill_type_options.Lines.name]]
             drill_list = line_drill_dict[request.form[drill_type_options.Lines.name]]
          else:
             current_app.logger.error(f"request.form missing [drill_type_options.Lines.name]: using 1-line drills")
@@ -290,7 +288,7 @@ def select():
 @blueprint_drills.route(DRILL_URL, methods=DEFAULT_METHODS)
 def drill():
    from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
-   # global beep_mode_choices
+
    global recent_drill_list
 
    '''
@@ -420,7 +418,6 @@ def drill():
 @blueprint_drills.route(THROWER_CALIB_SELECTION_URL, methods=DEFAULT_METHODS)
 def thrower_calib():
    from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
-   # global html_horizontal_rule
 
    # value is the label of the button
    onclick_choice_list = [\
