@@ -547,7 +547,7 @@ def cam_calib_done():
          app.logger.debug(f"POST to CALIB_DONE request.form: {request.form}")
          # example: ImmutableMultiDict([('FBLX', '322'), ('FBLY', '72'), ('FBRX', '612'), ('FBRY', '54'), ('NSLX', '248'), ('NSLY', '328'), ('NSCX', '602'), ('NSCY', '292'), ('NSRX', '904'), ('NSRY', '262'), ('NBLX', '146'), ('NBLY', '686'), ('NBRX', '1244'), ('NBRY', '482')])
          court_point_dict_index = 0
-         if cam_side is cam_side_right_label:
+         if cam_side == cam_side_right_label:
             court_point_dict_index = 1
 
          if len(request.form) > 0:
@@ -566,7 +566,7 @@ def cam_calib_done():
          # do some sanity checking:
          if court_points_dict_list[court_point_dict_index]["NBR"][1] < 1:
             app.logger.error(f"Invalid court_point values: {court_points_dict_list[court_point_dict_index]}")
-            result = f"FAILED: {cam_side} camera court points are invalid."
+            result = f"FAILED: {cam_side} camera court points are invalid"
          else:
             #TODO: move persist values to func_base
             #persist values for base to use to generate correction vectors
@@ -580,13 +580,14 @@ def cam_calib_done():
                for line in lines: # write old content after new
                   outfile.write(line)
 
-            # tell the bbase to regenerate correction vectors; the '1' in the value is not used and is there for completeness
-            rc, code = send_msg(PUT_METHOD, FUNC_RSRC, {FUNC_GEN_CORRECTION_VECTORS: 1} )
+            # tell the bbase to regenerate correction vectors; the value for FUNC_GEN_CORRECTION_VECTORS indicates which camera
+            # app.logger.debug(f"Calling FUNC_GEN_CORRECTION_VECTORS with value={court_point_dict_index}")
+            rc, code = send_msg(PUT_METHOD, FUNC_RSRC, {FUNC_GEN_CORRECTION_VECTORS: court_point_dict_index} )
             if not rc:
                if not code:
                   code = "unknown"
-               app.logger.error("PUT FUNC_GEN_CORRECTION_VECTORS failed, code: {code}")
-               result = f"FAILED: {cam_side} camera correction vector generation failed."
+               app.logger.error(f"PUT FUNC_GEN_CORRECTION_VECTORS failed, code: {code}")
+               result = f"FAILED: {cam_side} camera correction vector generation failed"
 
    page_js = []
    page_js.append(Markup('<script src="/static/js/timed-redirect.js"></script>'))
@@ -594,7 +595,7 @@ def cam_calib_done():
    button_label = "Camera Calibration"
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \
-      page_title = f"{cam_side} Camera Calibration Finished.", \
+      page_title = f"{cam_side} Camera Calibration Finished", \
       installation_icon = customization_dict['icon'], \
       message = result, \
       # UI decision: redirect after seconds  -or-  have user click 'OK'
