@@ -1,20 +1,6 @@
 from flask import Flask
 from flask_socketio import SocketIO
 
-import logging
-gunicorn_logger = logging.getLogger('gunicorn.warning')
-log_level = logging.DEBUG
-# https://betterstack.com/community/guides/logging/how-to-start-logging-with-flask/
-   #  root = os.path.dirname(os.path.abspath(__file__))
-   #  logdir = os.path.join(root, 'logs')
-   #  if not os.path.exists(logdir):
-   #      os.mkdir(logdir)
-   #  log_file = os.path.join(logdir, 'app.log')
-file_handler = logging.FileHandler('/run/shm/ui.log')
-defaultFormatter = logging.Formatter('[%(asctime)s]%(levelname)s in %(module)s: %(message)s')
-file_handler.setFormatter(defaultFormatter)
-file_handler.setLevel(log_level)
-
 import eventlet
 eventlet.monkey_patch()
 # without the following, the following error occurs: RuntimeError: Second simultaneous read on fileno N detected
@@ -31,8 +17,47 @@ def create_app(debug=False):
    from app.main.blueprint_games import blueprint_games
 
    app = Flask(__name__)
-   app.debug = debug
    app.config['SECRET_KEY'] = 'gjr39dkjn344_!67#'
+   
+   import logging
+   # gunicorn_logger = logging.getLogger('gunicorn')
+   # gunicorn_logger.setLevel(logging.DEBUG)
+   # app.logger.handlers = gunicorn_logger.handlers
+
+   # gunicorn_access_logger = logging.getLogger('gunicorn.access')
+   # gunicorn_access_logger.setLevel(logging.DEBUG)
+   # app.logger.handlers = gunicorn_err_logger.handlers
+   #? app.logger.addHandler(gunicorn_logger.handlers)
+
+   # gunicorn_err_logger = logging.getLogger('gunicorn.error')
+   # gunicorn_err_logger.setLevel(logging.INFO)
+   # for handler in gunicorn_err_logger.handlers:
+   #    # removes: <StreamHandler <stderr> (NOTSET)>
+   #    gunicorn_err_logger.removeHandler(handler)
+   # gunicorn_err_file_handler = logging.FileHandler('/run/shm/ui-gunicorn.log')
+   # gunicorn_err_file_handler.setFormatter(defaultFormatter)
+
+   # logger = logging.getLogger() 
+   # # https://betterstack.com/community/guides/logging/how-to-start-logging-with-flask/
+   # app_file_handler = logging.FileHandler('/run/shm/ui.log')
+   # defaultFormatter = logging.Formatter('[%(asctime)s] %(levelname)5s [%(module)17s.%(lineno)3s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+   # app_file_handler.setFormatter(defaultFormatter)
+   # for handler in app.logger.handlers:
+   #    app.logger.removeHandler(handler)
+   # app.logger.addHandler(app_file_handler)
+   app.logger.setLevel(logging.DEBUG)
+
+   # ?? the following removes flask logging to stderr:
+   # from flask.logging import default_handler
+   # app.logger.removeHandler(default_handler)
+
+   import logging_tree
+   # logging_tree.printout()
+   with open('/tmp/log_cfg_tree.txt', 'w') as f:
+      f.write(logging_tree.format.build_description())
+
+
+   app.debug = debug
 
    app.register_blueprint(blueprint_core)
    app.register_blueprint(blueprint_camera)
@@ -43,19 +68,6 @@ def create_app(debug=False):
    # the following magically fixed socketio failures logged on the browser console
    from engineio.payload import Payload
    Payload.max_decode_packets = 64
-
-   # for handler in app.logger.handlers:
-   #    # removes: <StreamHandler <stderr> (NOTSET)>
-   #    app.logger.removeHandler(handler)
-   # from flask.logging import default_handler
-   # app.logger.removeHandler(default_handler)
-
-   app.logger.addHandler(file_handler)
-   app.logger.setLevel(log_level)
-
-   # app.logger.addHandler(gunicorn_logger.handlers)
-   # app.logger.handlers = gunicorn_logger.handlers
-   # app.logger.setLevel(gunicorn_logger.level)
 
    socketio.init_app(app)
    from app.main import events
