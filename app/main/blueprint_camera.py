@@ -61,22 +61,29 @@ def cam_verif():
          court_point_dict_index = 1
          cam_name = CAM_SIDE_RIGHT_LABEL.lower()
  
+   this_page_title = "Check court point locations"
+
    read_ok, temp_dict = read_court_points_file(cam_name)
    if read_ok:
       court_points_dict_list[court_point_dict_index] = temp_dict
-   # current_app.logger.debug(f"cam_verif; court_points={court_points_dict_list}")
+      # current_app.logger.debug(f"cam_verif; court_points={court_points_dict_list}")
+   else:
+      this_page_title = "ERROR: read court point location file failed"
+      # if read failed, then the court_points_dict_list should be what it was initialized to - all zeros
 
-   scp_court_png(side = cam_name)
+   scp_ok = scp_court_png(side = cam_name)
+   if (not scp_ok):
+      this_page_title = "ERROR: getting image from camera failed"
 
    #TODO: handle scp or court_points failure
 
    return render_template(CAM_VERIFICATION_TEMPLATE, \
       home_button = my_home_button, \
-      page_title = "Check court point locations.", \
       installation_icon = display_customization_dict['icon'], \
+      footer_center = display_customization_dict['title'], \
+      page_title = this_page_title, \
       image_path = "/static/" + cam_name + "_court.png", \
-      court_point_coords = court_points_dict_list[court_point_dict_index], \
-      footer_center = display_customization_dict['title'])
+      court_point_coords = court_points_dict_list[court_point_dict_index])
 
 
 def scp_court_png(side='Left', frame='even'):
@@ -86,13 +93,16 @@ def scp_court_png(side='Left', frame='even'):
    # current_app.logger.info(f"BEFORE: scp {source_path} {destination_path}")
    from subprocess import Popen
    # the q is for quiet
-   p = Popen(["scp", "-q", source_path, destination_path], shell=False)
+   p = Popen(["scp", "-q", "-o ConnectTimeout=3",source_path, destination_path], shell=False)
    rc = p.wait()
    stdoutdata, stderrdata = p.communicate()
    if p.returncode != 0:
       current_app.logger.error(f"FAILED: scp {source_path} {destination_path}; error_code={p.returncode}")
+      scp_ok = False
    else:
       current_app.logger.info(f"OK: scp {source_path} {destination_path}")
+      scp_ok = True
+   return scp_ok
 
 
 def read_court_points_file(side_name = 'left'):
