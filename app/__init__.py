@@ -66,8 +66,9 @@ def create_app(debug=False):
 
    # refer to: https://github.com/miguelgrinberg/python-engineio/issues/142
    # the following magically fixed socketio failures logged on the browser console
-   from engineio.payload import Payload
-   Payload.max_decode_packets = 64
+   ## UPDATE: this problem happens when the browser is running (making socketio calls) and the server is not:
+   # from engineio.payload import Payload
+   # Payload.max_decode_packets = 64
 
    socketio.init_app(app)
    from app.main import events

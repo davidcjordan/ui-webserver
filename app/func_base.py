@@ -133,3 +133,11 @@ def send_start_to_base(mode_dict):
          rc, code = send_msg(PUT_METHOD, STRT_RSRC)
          if not rc:
             current_app.logger.error("PUT START failed, code: {}".format(code))
+
+def send_gen_vectors_to_base(cam_side):
+   rc, code = send_msg(PUT_METHOD, FUNC_RSRC, {FUNC_GEN_CORRECTION_VECTORS: cam_side} )
+   if not rc:
+      if not code:
+         code = "unknown"
+      current_app.logger.error("PUT FUNC_GEN_CORRECTION_VECTORS failed, code: {code}")
+   return rc
