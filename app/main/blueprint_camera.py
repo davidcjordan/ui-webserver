@@ -61,6 +61,11 @@ for court_point_id in COURT_POINT_KEYS:
 # unit_lengths are the measurements (A,B,Z) converted to feet, inches and quarter inches
 unit_lengths = [[0 for _ in range(len(Measurement))] for _ in range(len(Units))]
 
+class scp_status(enum.Enum):
+   OK = 0
+   PING_FAILED = 1
+   SCP_FAILED = 2
+
 
 @blueprint_camera.route(CAM_LOCATION_URL, methods=DEFAULT_METHODS)
 def cam_location():
@@ -171,8 +176,6 @@ def cam_calib():
 
    change_from_persisted_measurement = False
 
-   this_page_title = "Enter Court Coordinates"
-
    if request.method=='POST':
       current_app.logger.debug(f"POST to CALIB (location) request.form: {request.form}")
       # example: 
@@ -259,11 +262,14 @@ def cam_calib():
          current_app.logger.debug(f"No change in {cam_side} cam measurements, not updating cam_measurements or cam_location")
 
 
-   # copy the lastest PNG from the camera to the base
-   scp_ok = scp_court_png(side_name = cam_side.lower())
-   if (not scp_ok):
-      this_page_title = "ERROR: getting image from camera failed"
-
+   # copy the lastest PNG from the camera to the base 
+   scp_rc = scp_court_png(side_name = cam_side.lower())
+   if (scp_rc == scp_status.PING_FAILED.value):
+      this_page_title = f"ERROR: cannot connect to the {cam_side.title()} camera"
+   elif (scp_rc == scp_status.SCP_FAILED.value):
+      this_page_title = f"ERROR: transferring image from the {cam_side.title()} camera failed"
+   else:
+      this_page_title = "Enter Court Coordinates"
 
    page_styles = []
    page_styles.append(Markup('<link rel="stylesheet" href="/static/css/cam-calib.css">'))
@@ -282,6 +288,7 @@ def cam_calib():
       court_point_coords = court_points_dict_list[court_point_dict_index], \
       # court_point_coords = COURT_POINT_KEYS_W_AXIS, \
       footer_center = display_customization_dict['title'])
+
 
 
 @blueprint_camera.route(CAM_CALIB_DONE_URL, methods=DEFAULT_METHODS)
@@ -351,9 +358,9 @@ def cam_calib_done():
                   outfile.write(line)
 
             # tell the bbase to regenerate correction vectors; the '1' in the value is not used and is there for completeness
-            rc = send_gen_vectors_to_base(court_point_dict_index)
-            current_app.logger.error(f"send_gen_vectors_to_base() returned: {rc}")
-            if (rc != 0):
+            vec_gen_ok = send_gen_vectors_to_base(court_point_dict_index)
+            # current_app.logger.error(f"send_gen_vectors_to_base() returned: {vec_gen_ok}")
+            if (not vec_gen_ok):
                result = f"FAILED: {cam_side.title()} camera correction vector generation failed."
 
    page_js = []
@@ -387,21 +394,21 @@ def cam_verif():
          court_point_dict_index = 1
          cam_side = CAM_SIDE_RIGHT_LABEL.lower()
  
-   this_page_title = "Check court point locations"
-
    read_ok, temp_dict = read_court_points_file(cam_side)
    if read_ok:
       court_points_dict_list[court_point_dict_index] = temp_dict
       # current_app.logger.debug(f"cam_verif; court_points={court_points_dict_list}")
    else:
-      this_page_title = "ERROR: read court point location file failed"
+      this_page_title = f"ERROR: reading the {CAM_SIDE_LEFT_LABEL.title()} court point location file failed"
       # if read failed, then the court_points_dict_list should be what it was initialized to - all zeros
 
-   scp_ok = scp_court_png(side_name = cam_side)
-   if (not scp_ok):
-      this_page_title = "ERROR: getting image from camera failed"
-
-   #TODO: handle scp or court_points failure
+   scp_rc = scp_court_png(side_name = cam_side)
+   if (scp_rc == scp_status.PING_FAILED.value):
+      this_page_title = f"ERROR: cannot connect to the {cam_side.title()} camera"
+   elif (scp_rc == scp_status.SCP_FAILED.value):
+      this_page_title = f"ERROR: transferring image from the {cam_side.title()} camera failed"
+   else:
+      this_page_title = "Check court point locations"
 
    return render_template(CAM_VERIFICATION_TEMPLATE, \
       home_button = my_home_button, \
@@ -413,22 +420,32 @@ def cam_verif():
 
 
 def scp_court_png(side_name='Left', frame='even'):
+   from subprocess import Popen
+
+   scp_return_code = scp_status.OK.value
+
    # current_app.logger.debug(f"scp_court_png: side_name={side} frame={frame}")
    source_path = f"{side_name.lower()}:/run/shm/frame_{frame}.png"
    destination_path = f"{user_dir}/{boomer_dir}/{side_name.lower()}_court.png"
    # current_app.logger.info(f"BEFORE: scp {source_path} {destination_path}")
-   from subprocess import Popen
-   # the q is for quiet
-   p = Popen(["scp", "-q", "-o ConnectTimeout=3",source_path, destination_path], shell=False)
-   rc = p.wait()
-   stdoutdata, stderrdata = p.communicate()
+
+   p = Popen(["ping", "-c1", "-W1",f"{side_name.lower()}"], shell=False)
+   p.wait()
    if p.returncode != 0:
-      current_app.logger.error(f"FAILED: scp {source_path} {destination_path}; error_code={p.returncode}")
-      scp_ok = False
+      current_app.logger.error(f"FAILED: ping {side_name.lower()}")
+      scp_return_code = scp_status.PING_FAILED.value
    else:
-      current_app.logger.info(f"OK: scp {source_path} {destination_path}")
-      scp_ok = True
-   return scp_ok
+      # the q is for quiet
+      p = Popen(["scp", "-q", "-o ConnectTimeout=3",source_path, destination_path], shell=False)
+      rc = p.wait()
+      stdoutdata, stderrdata = p.communicate()
+      if p.returncode != 0:
+         current_app.logger.error(f"FAILED: scp {source_path} {destination_path}; error_code={p.returncode}")
+         scp_return_code = scp_status.SCP_FAILED.value
+      else:
+         current_app.logger.info(f"OK: scp {source_path} {destination_path}")
+
+   return scp_return_code
 
 
 def read_court_points_file(side_name = 'Left'):
