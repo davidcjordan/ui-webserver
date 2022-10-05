@@ -10,37 +10,29 @@
   </div>
   <div class="calibration_controls">
     <div>
+      <p id="current_point_label"></p>
+      <hr style="height:2px;margin-top:2px;margin-bottom:2px">
       <input type="button" value="&#x21A5;" onclick="move_up()">
       <input type="button" value="&#x21A7;" onclick="move_down()">
       <br>
       <input type="button" value="&#x21A4;" onclick="move_left()">
       <input type="button" value="&#x21A6;" onclick="move_right()">
+      <hr style="height:2px;margin-top:2px;margin-bottom:2px">
       <p id="current_x_y">Current X: ___ Y: ___</p>
-      <input type="button" id="setButton" value="Set ___" onclick="setPoint()">
+      <input type="button" id="setButton" value="Set Point" onclick="setPoint()">
+      <br>
+      <input type="button" id="skipButton" value="Skip Point" onclick="goToNextPoint()">
+      <hr style="height:2px;margin-top:2px;margin-bottom:2px">
       <br>
       <form id="court_coordinates" action="/cam_calib_done" method="POST">
         {%- for coord, value in court_point_coords.items() %}
         <input type="hidden" id="{{coord}}X" name="{{coord}}X" value={{value[0]}}>
         <input type="hidden" id="{{coord}}Y" name="{{coord}}Y" value={{value[1]}}>
         {%- endfor %}
+        <hr style="height:2px;margin-top:2px;margin-bottom:2px">
         <input type="submit" id="submitButton" value="Submit All Points" disabled>
       </form>
       <input type="hidden" id="image_path" value="{{image_path}}">
-    </div>
-    <hr style="height:2px;margin-top:2px;margin-bottom:2px">
-    <div>
-      <p>Key: </p>
-      <p>F=Far; N=Near</p>
-      <p>B=Base Line; S=Service</p>
-      <p>L=Left;R=Right;C=Center</p>
-      <hr style="height:2px;margin-block-start:0.1em;margin-block-end:0.1em">
-      <p id="FBL_X_Y">FBL X: ___ Y: ___</p>
-      <p id="FBR_X_Y">FBR X: ___ Y: ___</p>
-      <p id="NSL_X_Y">NSL X: ___ Y: ___</p>
-      <p id="NSC_X_Y">NSC X: ___ Y: ___</p>
-      <p id="NSR_X_Y">NSR X: ___ Y: ___</p>
-      <p id="NBL_X_Y">NBL X: ___ Y: ___</p>
-      <p id="NBR_X_Y">NBR X: ___ Y: ___</p>
     </div>
   </div>
 </div>
@@ -67,6 +59,7 @@
   var backgroundMax = {};
   var background = {top: 0, left: 0};
   var centerOfZoomed = {x: 16, y: 16};
+  let imgWidth = 1280; //unable to get img.naturalWidth; couldn't figure out the url
  
   // initialize:
   window.addEventListener('load', (event) => {
@@ -83,15 +76,33 @@
     coordinateArray = document.getElementById("court_coordinates").elements;
     // console.dir(coordinateArray, {'maxArrayLength': null});
     currentCoordinate = 0;
-    setPointButtonLabel();
+    setPointLabel();
+    drawCourtLines();
   });
 
-  function setPointButtonLabel() {
+  function setPointLabel() {
     let coordinateId = coordinateArray[currentCoordinate].id
-    // console.log("coordinateId=%s", coordinateId)
-    let label = coordinateId.substring(0, 3).toUpperCase();
-    let setButton = document.getElementById("setButton");
-    setButton.value = `Set ${label}`;
+    var name = [];
+    if (coordinateId[0] === 'F') {
+      name[0] = "Far"
+    } else {
+      name[0] = "Near"
+    }
+    if (coordinateId[1] === 'B') {
+      name[1] = "Baseline"
+    } else {
+      name[1] = "Service Line"
+    }
+    if (coordinateId[2] === 'L') {
+      name[2] = "Left"
+    } else if (coordinateId[2] === 'R'){
+      name[2] = "Right"
+    } else {
+      name[2] = "Center"
+    }
+    // console.log("coordinateId=%s  label= %s %s %s", coordinateId, name[0], name[1], name[2])
+    let label = document.getElementById("current_point_label");
+    label.innerHTML = `${name[0]} ${name[1]} ${name[2]}`;
   }
 
   function imageZoom(targetDivID) {
@@ -146,6 +157,9 @@
       top:  2*(notZoomedDivHeight - lensDiv.offsetHeight + lensDivBorderTotalWidth)
     };
     // console.log("backgroundMax left=%d top=%s ", backgroundMax.left, backgroundMax.top);
+
+    let current_x_y_element = document.getElementById('current_x_y');
+    current_x_y_element.innerText = `Current X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
 
     /* Execute a function when someone moves the cursor over the image: */
     lensDiv.addEventListener("mousedown", moveLensByTouch);
@@ -209,6 +223,16 @@
     moveLensBoundaryCheck();
   }
 
+  function goToNextPoint() {
+    currentCoordinate += 2;
+    if (currentCoordinate >= 13) {
+      currentCoordinate = 0;
+      let submitButton = document.getElementById("submitButton");
+      submitButton.disabled = false;
+    }
+    setPointLabel();
+  }
+
   function setPoint() {
     // the point's X/Y is equal to the center of the zoomed image which is set in moveLensBoundaryCheck()
     // console.log("background left=%d top=%d  centerOfZoomed x=%d y=%d  canvas.width=%d", 
@@ -216,98 +240,14 @@
 
     // console.dir(coordinateArray, {'maxArrayLength': null});
     var coordinateId = coordinateArray[currentCoordinate].id
-    let courtPointElementId = coordinateId.substring(0,3) + "_X_Y"
-    let courtPointElement = document.getElementById(courtPointElementId);
-    courtPointElement.innerText = `${coordinateId.substring(0,3).toUpperCase()}: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
     document.getElementById(coordinateId).value = centerOfZoomed.x;
-    // var coord = {[coordinateId]: centerOfZoomed.x};
-    // socket.emit("coord", coord);
-    // now set y value
-    currentCoordinate++;
-    coordinateId = coordinateArray[currentCoordinate].id
+    coordinateId = coordinateArray[currentCoordinate+1].id
     document.getElementById(coordinateId).value = centerOfZoomed.y;
-    // coord = {[coordinateId]: centerOfZoomed.y};
-    // socket.emit("coord", coord);
 
-    currentCoordinate++;
-    if (currentCoordinate >= 13) {
-      currentCoordinate = 0;
-      // all points are set, so enable submit button
-      let submitButton = document.getElementById("submitButton");
-      submitButton.disabled = false;
-    }
-    // console.log(`currentCoordinate=${currentCoordinate} coordinateArray.length=${coordinateArray.length}` );
-    setPointButtonLabel();
-
+    goToNextPoint();    
     // console.dir(coordinateArray, {'maxArrayLength': null});
-  
-    notZoomedContext.strokeStyle = "Chartreuse";
-    notZoomedContext.lineWidth = 1;
-    // draw lines along court line in non-zoomed canvas
-    if (currentCoordinate == 2) {
-      notZoomedContext.clearRect(0, 0, notZoomedCanvas.width, notZoomedCanvas.height);
-    }
-    else if (currentCoordinate == 4) {
-      notZoomedContext.beginPath(); // FBR to FBL
-      notZoomedContext.moveTo(document.getElementById(coordinateArray[0].id).value/2, 
-                              document.getElementById(coordinateArray[1].id).value/2);
-      notZoomedContext.lineTo(document.getElementById(coordinateArray[2].id).value/2,
-                              document.getElementById(coordinateArray[3].id).value/2);
-      notZoomedContext.stroke();   
-    }
-    else if (currentCoordinate == 6) {
-      notZoomedContext.beginPath();  // FBL to NSL
-      notZoomedContext.moveTo(document.getElementById(coordinateArray[0].id).value/2, 
-                              document.getElementById(coordinateArray[1].id).value/2);
-      notZoomedContext.lineTo(document.getElementById(coordinateArray[4].id).value/2,
-                              document.getElementById(coordinateArray[5].id).value/2);
-      notZoomedContext.stroke();   
-    }
-    else if (currentCoordinate == 8) {
-      notZoomedContext.beginPath();  // NSL to NSC
-      notZoomedContext.moveTo(document.getElementById(coordinateArray[4].id).value/2, 
-                              document.getElementById(coordinateArray[5].id).value/2);
-      notZoomedContext.lineTo(document.getElementById(coordinateArray[6].id).value/2,
-                              document.getElementById(coordinateArray[7].id).value/2);
-      notZoomedContext.stroke();   
-    }
-    else if (currentCoordinate == 10) { 
-      notZoomedContext.beginPath(); // NSC to NSR
-      notZoomedContext.moveTo(document.getElementById(coordinateArray[6].id).value/2, 
-                              document.getElementById(coordinateArray[7].id).value/2);
-      notZoomedContext.lineTo(document.getElementById(coordinateArray[8].id).value/2,
-                              document.getElementById(coordinateArray[9].id).value/2);
-      notZoomedContext.stroke();   
-      notZoomedContext.beginPath(); // FBL to NSR
-      notZoomedContext.moveTo(document.getElementById(coordinateArray[2].id).value/2, 
-                              document.getElementById(coordinateArray[3].id).value/2);
-      notZoomedContext.lineTo(document.getElementById(coordinateArray[8].id).value/2,
-                              document.getElementById(coordinateArray[9].id).value/2);
-      notZoomedContext.stroke();   
-    }
-    else if (currentCoordinate == 12) { 
-      notZoomedContext.beginPath(); // NSL to NBL
-      notZoomedContext.moveTo(document.getElementById(coordinateArray[4].id).value/2, 
-                              document.getElementById(coordinateArray[5].id).value/2);
-      notZoomedContext.lineTo(document.getElementById(coordinateArray[10].id).value/2,
-                              document.getElementById(coordinateArray[11].id).value/2);
-      notZoomedContext.stroke();   
-    }
-    else if (currentCoordinate == 0) { 
-      notZoomedContext.beginPath(); // NBL to NBR
-      notZoomedContext.moveTo(document.getElementById(coordinateArray[10].id).value/2, 
-                              document.getElementById(coordinateArray[11].id).value/2);
-      notZoomedContext.lineTo(document.getElementById(coordinateArray[12].id).value/2,
-                              document.getElementById(coordinateArray[13].id).value/2);
-      notZoomedContext.stroke();   
-      notZoomedContext.beginPath(); // NSR to NBR
-      notZoomedContext.moveTo(document.getElementById(coordinateArray[8].id).value/2, 
-                              document.getElementById(coordinateArray[9].id).value/2);
-      notZoomedContext.lineTo(document.getElementById(coordinateArray[12].id).value/2,
-                              document.getElementById(coordinateArray[13].id).value/2);
-      notZoomedContext.stroke();   
-    }
 
+    drawCourtLines()
   }
 
   // zoomed image (lens) displays the rectangle that has been touched
@@ -391,5 +331,64 @@
     y = y - window.pageYOffset;
     return {x : x, y : y};
   }
+
+  function drawCourtLines() {
+    notZoomedContext.strokeStyle = "Chartreuse";
+    notZoomedContext.lineWidth = 1;
+
+    notZoomedContext.clearRect(0, 0, notZoomedCanvas.width, notZoomedCanvas.height);
+    canvasDivisor = imgWidth/notZoomedDivWidth;
+    
+    // draw outer-court lines (6 of them)
+    var points = 
+      [[parseInt(document.getElementById("FBLX").value/canvasDivisor), 
+        parseInt(document.getElementById("FBLY").value/canvasDivisor)],
+        [parseInt(document.getElementById("FBRX").value/canvasDivisor),
+        parseInt(document.getElementById("FBRY").value/canvasDivisor)],
+        [parseInt(document.getElementById("NSRX").value/canvasDivisor),
+        parseInt(document.getElementById("NSRY").value/canvasDivisor)],
+        [parseInt(document.getElementById("NBRX").value/canvasDivisor),
+        parseInt(document.getElementById("NBRY").value/canvasDivisor)],
+        [parseInt(document.getElementById("NBLX").value/canvasDivisor),
+        parseInt(document.getElementById("NBLY").value/canvasDivisor)],
+        [parseInt(document.getElementById("NSLX").value/canvasDivisor),
+        parseInt(document.getElementById("NSLY").value/canvasDivisor)]];
+
+    for (var this_pt = 0; this_pt < points.length; this_pt++) {
+      var next_pt = this_pt + 1;
+      if (next_pt >= points.length) {next_pt = 0}
+      if ((points[this_pt][0] > 0) && (points[next_pt][0] > 0))
+      {
+        notZoomedContext.beginPath();
+        notZoomedContext.moveTo(points[this_pt][0], points[this_pt][1]);
+        notZoomedContext.lineTo(points[next_pt][0], points[next_pt][1]);
+        notZoomedContext.stroke();   
+      }
+    }
+
+    // draw service line (2 lines)
+    points.length = 3;
+    points[0] = [parseInt(document.getElementById("NSLX").value/canvasDivisor), 
+        parseInt(document.getElementById("NSLY").value/canvasDivisor)];
+
+    points[1] = [parseInt(document.getElementById("NSCX").value/canvasDivisor),
+        parseInt(document.getElementById("NSCY").value/canvasDivisor)];
+    
+    points[2] = [parseInt(document.getElementById("NSRX").value/canvasDivisor),
+        parseInt(document.getElementById("NSRY").value/canvasDivisor)];
+
+    for (var this_pt = 0; this_pt < points.length-1; this_pt++) {
+      var next_pt = this_pt + 1;
+      if ((points[this_pt][0] > 0) && (points[next_pt][0] > 0))
+      {
+        notZoomedContext.beginPath();
+        notZoomedContext.moveTo(points[this_pt][0], points[this_pt][1]);
+        notZoomedContext.lineTo(points[next_pt][0], points[next_pt][1]);
+        notZoomedContext.stroke();   
+      }
+    }
+  }
+
+
 </script>
 {%- endblock %} 
