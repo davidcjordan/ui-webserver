@@ -46,12 +46,16 @@
   // refer to: https://stackoverflow.com/questions/807878/how-to-make-javascript-execute-after-page-load
   var notZoomedDiv;
   var imgFilename;
+  let imgWidth = 1280; //unable to get img.naturalWidth; couldn't figure out the url
 
   // initialize:
   function init() {
     // console.log('The page has fully loaded');
     // console.log('Version 7');
     imgFilename = document.getElementById("image_path").value;
+    // var img = new Image;
+    // img.src = window.URL.createObjectURL(image_path);  <- gets an exception
+    // console.log("imgWidth=%d", img.naturalWidth);
   
     notZoomedDiv = document.getElementById("div_not_zoomed");
     notZoomedDiv.setAttribute("style","width:960px; height:600px");
@@ -83,7 +87,7 @@
       side = 'right';
     }
     socket.emit("refresh_image", {'side': side, 'frame': frame});
-    let sleep_ms = 500
+    let sleep_ms = 1500
     console.log(`Waiting ${sleep_ms} milliseconds...`);
     await new Promise(r => setTimeout(r, sleep_ms));
     var timestamp = new Date().getTime();
@@ -96,44 +100,56 @@
     notZoomedContext.lineWidth = 1;
 
     notZoomedContext.clearRect(0, 0, notZoomedCanvas.width, notZoomedCanvas.height);
+    canvasDivisor = imgWidth/notZoomedDivWidth;
+    
+    // draw outer-court lines (6 of them)
+    var points = 
+      [[parseInt(document.getElementById("FBLX").value/canvasDivisor), 
+        parseInt(document.getElementById("FBLY").value/canvasDivisor)],
+        [parseInt(document.getElementById("FBRX").value/canvasDivisor),
+        parseInt(document.getElementById("FBRY").value/canvasDivisor)],
+        [parseInt(document.getElementById("NSRX").value/canvasDivisor),
+        parseInt(document.getElementById("NSRY").value/canvasDivisor)],
+        [parseInt(document.getElementById("NBRX").value/canvasDivisor),
+        parseInt(document.getElementById("NBRY").value/canvasDivisor)],
+        [parseInt(document.getElementById("NBLX").value/canvasDivisor),
+        parseInt(document.getElementById("NBLY").value/canvasDivisor)],
+        [parseInt(document.getElementById("NSLX").value/canvasDivisor),
+        parseInt(document.getElementById("NSLY").value/canvasDivisor)]];
 
-    /*  Couldn't get the following to work to get the image width
-    https://duckduckgo.com/?q=javascript+get+width+of+background+image&t=osx&ia=web
-    var imageSrc = notZoomedDiv.style.backgroundImage.replace(/url\(|\)$/ig, '');
-    console.log("imageSrc=%s", imageSrc);
-    var image = new Image();
-    image.src = imageSrc;
-    console.log("imageSrc=%s; imgWidth=%d", imageSrc, image.naturalWidth);
-    canvasDivisor = img.naturalWidth/notZoomedDivWidth;
-    */
-    canvasDivisor = 1280/notZoomedDivWidth;
-    // console.log("canvasDivisor=%f", canvasDivisor);
+    for (var this_pt = 0; this_pt < points.length; this_pt++) {
+      var next_pt = this_pt + 1;
+      if (next_pt >= points.length) {next_pt = 0}
+      if ((points[this_pt][0] > 0) && (points[next_pt][0] > 0))
+      {
+        notZoomedContext.beginPath();
+        notZoomedContext.moveTo(points[this_pt][0], points[this_pt][1]);
+        notZoomedContext.lineTo(points[next_pt][0], points[next_pt][1]);
+        notZoomedContext.stroke();   
+      }
+    }
 
-    notZoomedContext.beginPath();
-    notZoomedContext.moveTo(parseInt(document.getElementById("FBLX").value/canvasDivisor), 
-                            parseInt(document.getElementById("FBLY").value/canvasDivisor));
-    notZoomedContext.lineTo(parseInt(document.getElementById("FBRX").value/canvasDivisor),
-                            parseInt(document.getElementById("FBRY").value/canvasDivisor));
-    notZoomedContext.lineTo(parseInt(document.getElementById("NSRX").value/canvasDivisor),
-                            parseInt(document.getElementById("NSRY").value/canvasDivisor));
-    notZoomedContext.lineTo(parseInt(document.getElementById("NBRX").value/canvasDivisor),
-                            parseInt(document.getElementById("NBRY").value/canvasDivisor));
-    notZoomedContext.lineTo(parseInt(document.getElementById("NBLX").value/canvasDivisor),
-                            parseInt(document.getElementById("NBLY").value/canvasDivisor));
-    notZoomedContext.lineTo(parseInt(document.getElementById("NSLX").value/canvasDivisor),
-                            parseInt(document.getElementById("NSLY").value/canvasDivisor));
-    notZoomedContext.lineTo(parseInt(document.getElementById("FBLX").value/canvasDivisor), 
-                            parseInt(document.getElementById("FBLY").value/canvasDivisor));
-    notZoomedContext.stroke();   
+    // draw service line (2 lines)
+    points.length = 3;
+    points[0] = [parseInt(document.getElementById("NSLX").value/canvasDivisor), 
+        parseInt(document.getElementById("NSLY").value/canvasDivisor)];
 
-    notZoomedContext.beginPath();
-    notZoomedContext.moveTo(parseInt(document.getElementById("NSRX").value/canvasDivisor),
-                            parseInt(document.getElementById("NSRY").value/canvasDivisor));
-    notZoomedContext.lineTo(parseInt(document.getElementById("NSCX").value/canvasDivisor),
-                            parseInt(document.getElementById("NSCY").value/canvasDivisor));
-    notZoomedContext.lineTo(parseInt(document.getElementById("NSLX").value/canvasDivisor),
-                            parseInt(document.getElementById("NSLY").value/canvasDivisor));
-    notZoomedContext.stroke();   
+    points[1] = [parseInt(document.getElementById("NSCX").value/canvasDivisor),
+        parseInt(document.getElementById("NSCY").value/canvasDivisor)];
+    
+    points[2] = [parseInt(document.getElementById("NSRX").value/canvasDivisor),
+        parseInt(document.getElementById("NSRY").value/canvasDivisor)];
+
+    for (var this_pt = 0; this_pt < points.length-1; this_pt++) {
+      var next_pt = this_pt + 1;
+      if ((points[this_pt][0] > 0) && (points[next_pt][0] > 0))
+      {
+        notZoomedContext.beginPath();
+        notZoomedContext.moveTo(points[this_pt][0], points[this_pt][1]);
+        notZoomedContext.lineTo(points[next_pt][0], points[next_pt][1]);
+        notZoomedContext.stroke();   
+      }
+    }
   }
 
 </script>
