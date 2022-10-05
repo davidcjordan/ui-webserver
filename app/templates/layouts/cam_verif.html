@@ -7,11 +7,11 @@
   </div>
   <div style="width:220px; display: inline-block;">
     <form method="post" action="{{ url_for('blueprint_camera.cam_verif') }}">
-      <button type="submit" class="submit-button">Other Side</button>
-      <button type="button" class="submit-button" onclick="refreshImage('even')">Reload Even</button>
-      <button type="button" class="submit-button" onclick="refreshImage('odd')">Reload Odd</button>
       <input type="hidden" name="image_path" id="image_path" value="{{image_path}}">
+      <button type="submit" class="submit-button">Other Side</button>
     </form>
+    <button type="button" class="submit-button" onclick="refreshImage('even')">Reload Even</button>
+    <button type="button" class="submit-button" onclick="refreshImage('odd')">Reload Odd</button>
     <button type="submit" onclick="window.location.href='/';" class="submit-button">Done</button>
     {%- for coord, value in court_point_coords.items() %}
     <input type="hidden" id="{{coord}}X" name="{{coord}}X" value={{value[0]}}>
