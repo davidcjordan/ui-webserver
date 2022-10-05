@@ -278,7 +278,11 @@ def cam_calib():
    if cam_side == CAM_LABEL[cam_e.RIGHT.value]:
       court_point_dict_index = 1
 
-   mode_str = f"Court Points"
+   read_ok, temp_dict = read_court_points_file(cam_side)
+   if read_ok:
+      court_points_dict_list[court_point_dict_index] = temp_dict
+
+   # mode_str = f"Court Points"
    return render_template(CAM_CALIBRATION_TEMPLATE, \
       page_specific_styles = page_styles, \
       home_button = my_home_button, \
