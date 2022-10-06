@@ -66,6 +66,9 @@ class scp_status(enum.Enum):
    PING_FAILED = 1
    SCP_FAILED = 2
 
+page_styles = []
+page_styles.append(Markup('<link rel="stylesheet" href="/static/css/cam-calib.css">'))
+
 
 @blueprint_camera.route(CAM_LOCATION_URL, methods=DEFAULT_METHODS)
 def cam_location():
@@ -271,9 +274,6 @@ def cam_calib():
    else:
       this_page_title = "Enter Court Coordinates"
 
-   page_styles = []
-   page_styles.append(Markup('<link rel="stylesheet" href="/static/css/cam-calib.css">'))
-
    court_point_dict_index = 0
    if cam_side == CAM_LABEL[cam_e.RIGHT.value]:
       court_point_dict_index = 1
@@ -415,6 +415,7 @@ def cam_verif():
       this_page_title = "Check court point locations"
 
    return render_template(CAM_VERIFICATION_TEMPLATE, \
+      page_specific_styles = page_styles, \
       home_button = my_home_button, \
       installation_icon = display_customization_dict['icon'], \
       footer_center = display_customization_dict['title'], \

@@ -32,11 +32,10 @@
   position: relative;
   vertical-align: top;
 }
-.div_not_zoomed_class {
+  /* div_not_zoomed_class: width and height are specified in javascript for the webpage */
+  .div_not_zoomed_class {
   display: inline-block;
   border: 1px solid #d4d4d4;
-  width: 640px;
-  height: 400px;
   vertical-align: top;
   image-rendering: pixelated;
 }
