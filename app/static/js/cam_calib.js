@@ -157,6 +157,7 @@ function imageZoom(targetDivID) {
    lensDiv = document.createElement("DIV");
    // lens_class defines the pixel height/width of the lens
    lensDiv.setAttribute("class", "lens_class");
+   lensDiv.setAttribute("style","width:16px; height:16px");
    lensDiv.id = "LENS"
    notZoomedDiv.parentElement.insertBefore(lensDiv, notZoomedDiv);
 
