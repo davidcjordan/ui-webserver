@@ -58,15 +58,12 @@ function init() {
 
    if ( page_id.indexOf( "calib" ) > -1 ) {
       imageZoom("div_zoomed_8")
-      zoomed8Canvas = document.getElementById("canvas_id_zoomed_8");
-      zoomed8Context = zoomed8Canvas.getContext("2d");
       drawCursorInZoom8();
 
       coordinateArray = document.getElementById("court_coordinates").elements;
       // console.log(coordinateArray)
       // the following is the output of the console log:
       // HTMLFormControlsCollection(15) [input#FBLX, input#FBLY, input#FBRX, input#FBRY, input#NSLX, input#NSLY, input#NSCX, input#NSCY, input#NSRX, input#NSRY, input#NBLX, input#NBLY, input#NBRX, input#NBRY, input#submitButton, FBLX: input#FBLX, FBLY: input#FBLY, FBRX: input#FBRX, FBRY: input#FBRY, NSLX: input#NSLX, …]
-      console.log(coordinateArray)
       currentCoordinate = 0;
       setPointLabel();
    }
@@ -167,9 +164,15 @@ function imageZoom(targetDivID) {
    lensDivBorderTotalWidth = (parseInt(lensDivStyle.borderLeftWidth) || 0) * 2;
 
    zoomed8Div = document.getElementById(targetDivID);
+   zoomed8Div.setAttribute("style","width:256px; height:256px");
    zoomed8DivStyle = getComputedStyle(zoomed8Div);
    let zoomed8DivBorderTotalWidth = (parseInt(zoomed8DivStyle.borderLeftWidth) || 0) *2;
    // console.log("lensDivBorderTotalWidth: %d   zoomed8DivBorderTotalWidth: %d", lensDivBorderTotalWidth, zoomed8DivBorderTotalWidth);
+ 
+   zoomed8Canvas = document.getElementById("canvas_id_zoomed_8");
+   zoomed8Canvas.width = zoomed8Div.offsetWidth - zoomed8DivBorderTotalWidth;
+   zoomed8Canvas.height = zoomed8Div.offsetHeight - zoomed8DivBorderTotalWidth;
+   zoomed8Context = zoomed8Canvas.getContext("2d");
 
    // zoomRatio is the ratio of the zoomed8Div and the lens; since the lens is square, only calculate based on width
    zoomRatio = (zoomed8Div.offsetWidth - zoomed8DivBorderTotalWidth) / (lensDiv.offsetWidth - lensDivBorderTotalWidth);
@@ -260,8 +263,6 @@ function imageZoom(targetDivID) {
    document.getElementById(coordinateId).value = centerOfZoomed.y;
 
    goToNextPoint();    
-   // console.dir(coordinateArray, {'maxArrayLength': null});
-
    drawCourtLines()
  }
 
@@ -367,6 +368,7 @@ function imageZoom(targetDivID) {
    // The divide by 16 is to get 1/2 the width/height, and then divide by 8, which is the amount the image is zoomed
    centerOfZoomed.x = background.left + (zoomed8Canvas.width/16);
    centerOfZoomed.y = background.top + (zoomed8Canvas.height/16);
+   console.log('background.left=', background.left, ' zoomed8Canvas.width=', zoomed8Canvas.width, ' centerOfZoomed.x=', centerOfZoomed.x);
    let current_x_y_element = document.getElementById('current_x_y');
    current_x_y_element.innerText = `Current X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
  }
