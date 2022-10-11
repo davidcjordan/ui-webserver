@@ -81,6 +81,10 @@ function drawCourtLines() {
    notZoomedContext.clearRect(0, 0, notZoomedCanvas.width, notZoomedCanvas.height);
    canvasDivisor = imgWidth/notZoomedDivWidth;
    // console.log('canvasDivisor=%f', canvasDivisor);
+
+   // ? could change this to use the coordinateArray to get the coordinate names
+   // and iterate through the pairs of coordinates, but skip certain pairs: FBR to NSL & NSR to NBL
+   // And add other pairs: FBL to NSL, FBR to NSR, NSL to NBL and NSR to NBL
    
    // draw outer-court lines (6 of them); start by loading array of court points
    var points = 
