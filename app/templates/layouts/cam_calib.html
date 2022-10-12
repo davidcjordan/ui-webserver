@@ -12,28 +12,24 @@
   </div>
   <div class="calibration_controls">
     <div>
-      <p id="current_point_label"></p>
-      <hr style="height:2px;margin-top:2px;margin-bottom:2px">
       <input type="button" value="&#x21A5;" onclick="move_up()">
       <input type="button" value="&#x21A7;" onclick="move_down()">
-      <br>
       <input type="button" value="&#x21A4;" onclick="move_left()">
       <input type="button" value="&#x21A6;" onclick="move_right()">
       <hr style="height:2px;margin-top:2px;margin-bottom:2px">
-      <p id="current_x_y">Current X: ___ Y: ___</p>
-      <input type="button" id="setButton" value="Set Point" onclick="setPoint()">
-      <br>
-      <input type="button" id="skipButton" value="Skip Point" onclick="goToNextPoint()">
-      <hr style="height:2px;margin-top:2px;margin-bottom:2px">
+      <p id="current_point_label"></p>
+      <input type="button" id="setButton" value="Set" onclick="setPoint()">
+      <input type="button" id="skipButton" value="Skip" onclick="goToNextPoint()">
       <br>
       <form id="court_coordinates" action="/cam_calib_done" method="POST">
         {%- for coord, value in court_point_coords.items() %}
         <input type="hidden" id="{{coord}}X" name="{{coord}}X" value={{value[0]}}>
         <input type="hidden" id="{{coord}}Y" name="{{coord}}Y" value={{value[1]}}>
         {%- endfor %}
-        <hr style="height:2px;margin-top:2px;margin-bottom:2px">
         <input type="submit" id="submitButton" value="Submit All Points" disabled>
       </form>
+      <hr style="height:2px;margin-top:2px;margin-bottom:2px">
+      <p id="current_x_y">Current X: ___ Y: ___</p>
       <input type="hidden" id="image_path" value="{{image_path}}">
     </div>
   </div>

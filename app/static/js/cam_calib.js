@@ -3,6 +3,11 @@
 
 var imgFilename;
 let imgWidth = 1280; //unable to get img.naturalWidth; couldn't figure out the url
+let imgHeight = 800; //unable to get img.naturalWidth; couldn't figure out the url
+let verifDivSizeMultiplier = 3/4; //scales image to 3/4 size
+let calibDivSizeMultiplier = 1/2;
+let zoomDivSize = 256; //px
+let lensDivSize = 16;
 
 // the image zoom box was taken &  modified from: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_image_zoom
 // the following variables are used by cam_calib, to draw the zoomed image canvas
@@ -33,9 +38,11 @@ function init() {
    notZoomedDiv = document.getElementById("div_not_zoomed");
    page_id = window.location.pathname.split("/").pop();
    if ( page_id.indexOf( "verif" ) > -1 ) {
-      notZoomedDiv.setAttribute("style","width:960px; height:600px");
+      notZoomedDiv.style.width = Math.trunc(imgWidth * verifDivSizeMultiplier) + 'px';
+      notZoomedDiv.style.height = Math.trunc(imgHeight * verifDivSizeMultiplier) + 'px';
    } else {
-      notZoomedDiv.setAttribute("style","width:640px; height:400px");
+      notZoomedDiv.style.width = Math.trunc(imgWidth * calibDivSizeMultiplier) + 'px';
+      notZoomedDiv.style.height = Math.trunc(imgHeight * calibDivSizeMultiplier) + 'px';
    }
 
    notZoomedDivStyle = getComputedStyle(notZoomedDiv);
@@ -155,9 +162,9 @@ async function refreshImage(evenOdd) {
 function imageZoom(targetDivID) {
    // Create & insert lens
    lensDiv = document.createElement("DIV");
-   // lens_class defines the pixel height/width of the lens
-   lensDiv.setAttribute("class", "lens_class");
-   lensDiv.setAttribute("style","width:16px; height:16px");
+   lensDiv.className = "lens_class";
+   lensDiv.style.width = lensDivSize + 'px';
+   lensDiv.style.height = lensDivSize + 'px';
    lensDiv.id = "LENS"
    notZoomedDiv.parentElement.insertBefore(lensDiv, notZoomedDiv);
 
@@ -165,7 +172,8 @@ function imageZoom(targetDivID) {
    lensDivBorderTotalWidth = (parseInt(lensDivStyle.borderLeftWidth) || 0) * 2;
 
    zoomed8Div = document.getElementById(targetDivID);
-   zoomed8Div.setAttribute("style","width:256px; height:256px");
+   zoomed8Div.style.width = zoomDivSize + 'px';
+   zoomed8Div.style.height = zoomDivSize + 'px';
    zoomed8DivStyle = getComputedStyle(zoomed8Div);
    let zoomed8DivBorderTotalWidth = (parseInt(zoomed8DivStyle.borderLeftWidth) || 0) *2;
    // console.log("lensDivBorderTotalWidth: %d   zoomed8DivBorderTotalWidth: %d", lensDivBorderTotalWidth, zoomed8DivBorderTotalWidth);
@@ -289,7 +297,7 @@ function imageZoom(targetDivID) {
    }
    // console.log("coordinateId=%s  label= %s %s %s", coordinateId, name[0], name[1], name[2])
    let label = document.getElementById("current_point_label");
-   label.innerHTML = `${name[0]} ${name[1]} ${name[2]}`;
+   label.innerHTML = `${name[0]} ${name[1]} ${name[2]}: `;
  }
 
  // cursor move functions
@@ -369,9 +377,9 @@ function imageZoom(targetDivID) {
    // The divide by 16 is to get 1/2 the width/height, and then divide by 8, which is the amount the image is zoomed
    centerOfZoomed.x = background.left + (zoomed8Canvas.width/16);
    centerOfZoomed.y = background.top + (zoomed8Canvas.height/16);
-   console.log('background.left=', background.left, ' zoomed8Canvas.width=', zoomed8Canvas.width, ' centerOfZoomed.x=', centerOfZoomed.x);
+   // console.log('background.left=', background.left, ' zoomed8Canvas.width=', zoomed8Canvas.width, ' centerOfZoomed.x=', centerOfZoomed.x);
    let current_x_y_element = document.getElementById('current_x_y');
-   current_x_y_element.innerText = `Current X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
+   current_x_y_element.innerText = `Cursor Position:  X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
  }
 
  // get the rectangle that's been touched coordinates

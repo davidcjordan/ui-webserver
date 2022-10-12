@@ -2,11 +2,13 @@
 /* .invisible {visibility: hidden;} */
 
 .calibration_controls {
-  display: inline-block;
+  /* display: inline-block; */
+  float: right;
   border: 1px solid #d4d4d4;
 }
 .calibration_controls p, label, input[type="number"] {
-  font-size: 24px;
+  display:inline;
+  font-size: 32px;
   color: white;
   background: #555555;
   padding: 1px;
