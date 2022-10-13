@@ -25,8 +25,8 @@ var lensDiv; //this is the square drawn on the image to indicate the zoomed area
 var lensDivBorderTotalWidth;  //set in imageZoom(), used in moveLensByTouch() to not have the lens go outside the image
 
 var zoomRatio;       //since zooming a square, the zoom ratio is the same for both x & y
-var backgroundMax = {}; //the max pixel values for the nonZoomed canvas; used to make sure zoom box is within the canvas
-var background = {}; //the current position of the zoom box in the nonZoomed canvas; used when moving the zoom image, aka move...() functions
+var backgroundLimits = {}; //the max pixel values for the nonZoomed canvas; used to make sure zoom box is within the canvas
+var backgroundPosition = {}; //the current position of the zoom box in the nonZoomed canvas; used when moving the zoom image, aka move...() functions
 var centerOfZoomed = {}; //nonZoomed pixel coordinates of the cursor in the zoomed canvas
 
 function init() {
@@ -197,14 +197,14 @@ function imageZoom(targetDivID) {
 
    // changed to divide offset by 2 in order to allow the center of the rectangle to go all the way to the edge of the image.
    //  also left off the adding the lensDivBorderTotalWidth back in; so it doesn't quite go to the edge
-   backgroundMax = {
+   backgroundLimits = {
      left: 2*(notZoomedDivWidth - (lensDiv.offsetWidth/2)),
      top:  2*(notZoomedDivHeight - (lensDiv.offsetHeight/2))
    };
 
    console.log("zoomed8Div.offsetWidth & Height: %d x %d   lensDiv.offsetWidth & Height: %d x %d",
      zoomed8Div.offsetWidth, zoomed8Div.offsetHeight, lensDiv.offsetWidth, lensDiv.offsetHeight);
-   console.log("zoomRatio=%d   backgroundMax: left=%d top=%d", zoomRatio, backgroundMax.left, backgroundMax.top);
+   console.log("zoomRatio=%d   backgroundLimits: left=%d top=%d", zoomRatio, backgroundLimits.left, backgroundLimits.top);
 
    centerOfZoomed = {x: lensDivSize/2, y: lensDivSize/2}
    let current_x_y_element = document.getElementById('current_x_y');
@@ -304,19 +304,19 @@ function imageZoom(targetDivID) {
 
  // cursor move functions
  function move_down() {
-   background.top += 1;
+   backgroundPosition.top += 1;
    moveLensBoundaryCheck();
  }
  function move_up() {
-   background.top -= 1;
+   backgroundPosition.top -= 1;
    moveLensBoundaryCheck();
  }
  function move_right() {
-   background.left += 1;
+   backgroundPosition.left += 1;
    moveLensBoundaryCheck();
  }
  function move_left() {
-   background.left -= 1;
+   backgroundPosition.left -= 1;
    moveLensBoundaryCheck();
  }
 
@@ -335,8 +335,8 @@ function imageZoom(targetDivID) {
      lensDiv.offsetHeight & Width DO include the border
      Double the pos.x/y to achieve pixel granularity when moving the zoom center using the buttons
    */
-   background.top = (2*pos.y) - (lensDiv.offsetWidth);
-   background.left = (2*pos.x) - (lensDiv.offsetHeight);
+   backgroundPosition.top = (2*pos.y) - (lensDiv.offsetWidth);
+   backgroundPosition.left = (2*pos.x) - (lensDiv.offsetHeight);
    moveLensBoundaryCheck();
  }
 
@@ -346,46 +346,46 @@ function imageZoom(targetDivID) {
       on the other side, have the lens be inside the img.height/widht - the lens size not including the border
    */
 
-   if (background.top < 0) {
-     background.top = 0;
+   if (backgroundPosition.top < 0) {
+     backgroundPosition.top = 0;
    }
-   if (background.top > backgroundMax.top) {
-      console.log("hit background top limit: requested=%d  limit=%d", background.top, backgroundMax.top);
-      background.top = backgroundMax.top;
+   if (backgroundPosition.top > backgroundLimits.top) {
+      console.log("hit background top limit: requested=%d  limit=%d", backgroundPosition.top, backgroundLimits.top);
+      backgroundPosition.top = backgroundLimits.top;
    }
-   if (background.left < 0) {
-     background.left = 0;
+   if (backgroundPosition.left < 0) {
+     backgroundPosition.left = 0;
    }
-   if (background.left > backgroundMax.left) {
-      console.log("hit background top limit: requested=%d  limit=%d", background.left, backgroundMax.left);
-      background.left = backgroundMax.left;
+   if (backgroundPosition.left > backgroundLimits.left) {
+      console.log("hit background top limit: requested=%d  limit=%d", backgroundPosition.left, backgroundLimits.left);
+      backgroundPosition.left = backgroundLimits.left;
    }
 
    //halve the background to position the lens
    // the lensBorderOffset was determined by experimentation on what looked good; lensDivBorderTotalWidth=4 defined in lens_class
    let lensBorderOffset = lensDivBorderTotalWidth/4 - 1;
-   lens_top = background.top/2 + lensBorderOffset;
-   lens_left = background.left/2 + lensBorderOffset;
+   lens_top = backgroundPosition.top/2 + lensBorderOffset;
+   lens_left = backgroundPosition.left/2 + lensBorderOffset;
    // reposition the lens:
    lensDiv.style.left = lens_left + "px";
    lensDiv.style.top = lens_top + "px";
 
    // Display what the lens "sees" by positioning the image position in the background of the DIV
    // console.log("previous background position=%s", zoomed8Div.style.backgroundPosition);
-   //In order to move 1 pixel at time, the zoomRatio needs to be halved since the background.x/y doubled
-   var backgroundCoords = {x: (background.left * zoomRatio/2), y: (background.top * zoomRatio/2)};
+   //In order to move 1 pixel at time, the zoomRatio needs to be halved since the backgroundPosition.x/y doubled
+   var backgroundCoords = {x: (backgroundPosition.left * zoomRatio/2), y: (backgroundPosition.top * zoomRatio/2)};
    zoomed8Div.style.backgroundPosition = "-" + backgroundCoords.x + "px -" + backgroundCoords.y + "px";
-   // console.log("background left=%d  top=%d    lens left: %d  top: %d", background.left, background.top, lens_left, lens_top);
+   // console.log("background left=%d  top=%d    lens left: %d  top: %d", backgroundPosition.left, backgroundPosition.top, lens_left, lens_top);
    // console.log(" updated background position=%s", zoomed8Div.style.backgroundPosition);
 
-   // the 1280x800 image is displayed at 640x400, which is what the background.left/top range is
+   // the 1280x800 image is displayed at 640x400, which is what the backgroundPosition.left/top range is
    // The divide by 16 is to get 1/2 the width/height, and then divide by 8, which is the amount the image is zoomed
    // CHANGE from divide by 16 to divide by zoomRatio
-   centerOfZoomed.x = background.left + (zoomed8Canvas.width/zoomRatio);
-   centerOfZoomed.y = background.top + (zoomed8Canvas.height/zoomRatio);
+   centerOfZoomed.x = backgroundPosition.left + (zoomed8Canvas.width/zoomRatio);
+   centerOfZoomed.y = backgroundPosition.top + (zoomed8Canvas.height/zoomRatio);
 
    console.log("background left=%d top=%d  centerOfZoomed x=%d y=%d", 
-     background.left, background.top, centerOfZoomed.x, centerOfZoomed.y);
+     backgroundPosition.left, backgroundPosition.top, centerOfZoomed.x, centerOfZoomed.y);
 
    let current_x_y_element = document.getElementById('current_x_y');
    current_x_y_element.innerText = `Cursor Position:  X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
