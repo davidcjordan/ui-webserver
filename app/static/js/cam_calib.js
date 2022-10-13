@@ -5,9 +5,11 @@ var imgFilename;
 let imgWidth = 1280; //unable to get img.naturalWidth; couldn't figure out the url
 let imgHeight = 800; //unable to get img.naturalWidth; couldn't figure out the url
 let verifDivSizeMultiplier = 3/4; //scales image to 3/4 size
-let calibDivSizeMultiplier = 1/2;
-let zoomDivSize = 256; //px
-let lensDivSize = 16;
+let calibDivSizeMultiplier = 1/2; //scales image to half size
+// let zoomDivSize = 256; //px
+// let lensDivSize = 16;
+let zoomDivSize = 512; //px
+let lensDivSize = 32;
 
 // the image zoom box was taken &  modified from: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_image_zoom
 // the following variables are used by cam_calib, to draw the zoomed image canvas
@@ -24,8 +26,8 @@ var lensDivBorderTotalWidth;  //set in imageZoom(), used in moveLensByTouch() to
 
 var zoomRatio;       //since zooming a square, the zoom ratio is the same for both x & y
 var backgroundMax = {}; //the max pixel values for the nonZoomed canvas; used to make sure zoom box is within the canvas
-var background = {top: 0, left: 0}; //the current position of the zoom box in the nonZoomed canvas; used when moving the zoom image, aka move...() functions
-var centerOfZoomed = {x: 16, y: 16}; //nonZoomed pixel coordinates of the cursor in the zoomed canvas
+var background = {}; //the current position of the zoom box in the nonZoomed canvas; used when moving the zoom image, aka move...() functions
+var centerOfZoomed = {}; //nonZoomed pixel coordinates of the cursor in the zoomed canvas
 
 function init() {
    // console.log('Version 7');
@@ -185,24 +187,26 @@ function imageZoom(targetDivID) {
 
    // zoomRatio is the ratio of the zoomed8Div and the lens; since the lens is square, only calculate based on width
    zoomRatio = (zoomed8Div.offsetWidth - zoomed8DivBorderTotalWidth) / (lensDiv.offsetWidth - lensDivBorderTotalWidth);
-   // console.log("zoomed8Div.offsetWidth & Height: %d x %d   lensDiv.offsetWidth & Height: %d x %d",
-   //   zoomed8Div.offsetWidth, zoomed8Div.offsetHeight, lensDiv.offsetWidth, lensDiv.offsetHeight);
-   // console.log("zoomRatio=%d", zoomRatio);
 
    // Set background properties for the zoomed8Div !! add timestamp to not have the browser use the cached image
    var timestamp = new Date().getTime();
    zoomed8Div.style.backgroundImage = "url('" + imgFilename + "?t=" + timestamp + "')";
-   // NOTE: the notZoomedDivWidth.width (image.width) and height is 1/2 the full size image, since the div height is set to 400 in the html
+   // NOTE: the notZoomedDivWidth.width (image.width) and height is 1/2 the full size image
    zoomed8Div.style.backgroundSize = (notZoomedDivWidth * zoomRatio) + "px " + (notZoomedDivHeight * zoomRatio) + "px";
    // console.log("img: width=%d height=%d zoomed8Div.backgroundSize=%s", notZoomedDivWidth, notZoomedDivHeight, zoomed8Div.style.backgroundSize);
 
-   //The max is doubled in order to be able to move the center pixel by pixel
+   // changed to divide offset by 2 in order to allow the center of the rectangle to go all the way to the edge of the image.
+   //  also left off the adding the lensDivBorderTotalWidth back in; so it doesn't quite go to the edge
    backgroundMax = {
-     left: 2*(notZoomedDivWidth - lensDiv.offsetWidth + lensDivBorderTotalWidth),
-     top:  2*(notZoomedDivHeight - lensDiv.offsetHeight + lensDivBorderTotalWidth)
+     left: 2*(notZoomedDivWidth - (lensDiv.offsetWidth/2)),
+     top:  2*(notZoomedDivHeight - (lensDiv.offsetHeight/2))
    };
-   // console.log("backgroundMax left=%d top=%s ", backgroundMax.left, backgroundMax.top);
 
+   console.log("zoomed8Div.offsetWidth & Height: %d x %d   lensDiv.offsetWidth & Height: %d x %d",
+     zoomed8Div.offsetWidth, zoomed8Div.offsetHeight, lensDiv.offsetWidth, lensDiv.offsetHeight);
+   console.log("zoomRatio=%d   backgroundMax: left=%d top=%d", zoomRatio, backgroundMax.left, backgroundMax.top);
+
+   centerOfZoomed = {x: lensDivSize/2, y: lensDivSize/2}
    let current_x_y_element = document.getElementById('current_x_y');
    current_x_y_element.innerText = `Current X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
 
@@ -262,8 +266,6 @@ function imageZoom(targetDivID) {
 
  function setPoint() {
    // the point's X/Y is equal to the center of the zoomed image which is set in moveLensBoundaryCheck()
-   // console.log("background left=%d top=%d  centerOfZoomed x=%d y=%d  canvas.width=%d", 
-   //   background.left, background.top, centerOfZoomed.x, centerOfZoomed.y, zoomed8Canvas.width);
 
    // console.dir(coordinateArray, {'maxArrayLength': null});
    var coordinateId = coordinateArray[currentCoordinate].id
@@ -343,17 +345,20 @@ function imageZoom(targetDivID) {
       on the zero sides, allow the lens to overlap the image border - hence limit to -1
       on the other side, have the lens be inside the img.height/widht - the lens size not including the border
    */
+
    if (background.top < 0) {
      background.top = 0;
    }
    if (background.top > backgroundMax.top) {
-     background.top = backgroundMax.top;
+      console.log("hit background top limit: requested=%d  limit=%d", background.top, backgroundMax.top);
+      background.top = backgroundMax.top;
    }
    if (background.left < 0) {
      background.left = 0;
    }
    if (background.left > backgroundMax.left) {
-     background.left = backgroundMax.left;
+      console.log("hit background top limit: requested=%d  limit=%d", background.left, backgroundMax.left);
+      background.left = backgroundMax.left;
    }
 
    //halve the background to position the lens
@@ -375,9 +380,13 @@ function imageZoom(targetDivID) {
 
    // the 1280x800 image is displayed at 640x400, which is what the background.left/top range is
    // The divide by 16 is to get 1/2 the width/height, and then divide by 8, which is the amount the image is zoomed
-   centerOfZoomed.x = background.left + (zoomed8Canvas.width/16);
-   centerOfZoomed.y = background.top + (zoomed8Canvas.height/16);
-   // console.log('background.left=', background.left, ' zoomed8Canvas.width=', zoomed8Canvas.width, ' centerOfZoomed.x=', centerOfZoomed.x);
+   // CHANGE from divide by 16 to divide by zoomRatio
+   centerOfZoomed.x = background.left + (zoomed8Canvas.width/zoomRatio);
+   centerOfZoomed.y = background.top + (zoomed8Canvas.height/zoomRatio);
+
+   console.log("background left=%d top=%d  centerOfZoomed x=%d y=%d", 
+     background.left, background.top, centerOfZoomed.x, centerOfZoomed.y);
+
    let current_x_y_element = document.getElementById('current_x_y');
    current_x_y_element.innerText = `Cursor Position:  X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
  }
