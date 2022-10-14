@@ -45,6 +45,8 @@ function init() {
    } else {
       notZoomedDiv.style.width = Math.trunc(imgWidth * calibDivSizeMultiplier) + 'px';
       notZoomedDiv.style.height = Math.trunc(imgHeight * calibDivSizeMultiplier) + 'px';
+      submitFormDiv = document.getElementById("div_submit_form");
+      submitFormDiv.style.width = (notZoomedDiv.style.width - 20);
    }
 
    notZoomedDivStyle = getComputedStyle(notZoomedDiv);
@@ -208,17 +210,17 @@ function imageZoom(targetDivID) {
 
    centerOfZoomed = {x: lensDivSize/2, y: lensDivSize/2}
    let current_x_y_element = document.getElementById('current_x_y');
-   current_x_y_element.innerText = `Current X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
-
+   current_x_y_element.innerText = `X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
+   
    /* Execute a function when someone moves the cursor over the image: */
    lensDiv.addEventListener("mousedown", moveLensByTouch);
    notZoomedDiv.addEventListener("mousedown", moveLensByTouch);
    /* And also for touch screens: */
    lensDiv.addEventListener("touchmove", moveLensByTouch);
    notZoomedDiv.addEventListener("touchmove", moveLensByTouch);
- }
+}
 
- function drawCursorInZoom8() {
+function drawCursorInZoom8() {
    zoomed8Context.clearRect(0, 0, zoomed8Canvas.width, zoomed8Canvas.height);
    // zoomed8Context.beginPath();
    // // x, y, radius, starting angle, ending angle
@@ -388,7 +390,7 @@ function imageZoom(targetDivID) {
      backgroundPosition.left, backgroundPosition.top, centerOfZoomed.x, centerOfZoomed.y);
 
    let current_x_y_element = document.getElementById('current_x_y');
-   current_x_y_element.innerText = `Cursor Position:  X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
+   current_x_y_element.innerText = `X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
  }
 
  // get the rectangle that's been touched coordinates

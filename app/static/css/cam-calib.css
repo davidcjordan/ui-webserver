@@ -1,41 +1,54 @@
 /* the following is used to faciltate: var coordinateArray = document.getElementsByClassName('invisible'); */
 /* .invisible {visibility: hidden;} */
 
+/* the following is necessary to keep the cancel/submit DIV to be inline with the calibration-controls DIV*/
 .calibration_controls {
-  /* display: inline-block; */
-  float: right;
+  display: inline-block;
   border: 1px solid #d4d4d4;
 }
-.calibration_controls p, label, input[type="number"] {
-  display:inline;
-  font-size: 32px;
-  color: white;
-  background: #555555;
-  padding: 1px;
-  border: 2px solid #494949;
-  margin-top: 0;
-  margin-bottom: 0;
- }
- .calibration_controls input[type="button"], input[type="submit"] {
+
+.calibration_controls p, input[type="button"] {
+  font-size: 40px;
   min-width: 80px;
-  font-size: 32px;
-  color: white;
-  background: #555555;
-  padding: 1px;
-  border: 2px solid #494949;
-  display: inline-block;
 }
 
-.calibration_controls input[type="submit"]:disabled, submit[disabled] {
+.calibration_controls p {
+  margin-top: 0;
+  margin-bottom: 0;
+  background-color: #aaaaaa;
+}
+
+.calibration_controls input[type="submit"] {
+  font-size: 50px;
+ }
+
+.calibration_controls input[type="submit"]:disabled {
   background-color: #333333;
   color: #555555;
 }
+
+.calibration_controls input[type="button"], input[type="submit"] {
+  background: #555555;
+  /* border: 1px white; */
+  border-radius: 16px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+.calibration_controls input[type="submit"], input[type="button"], p {
+  display: inline-block;
+  /* color: white; */
+  /* padding: 1px; */
+  /* border: 2px solid #494949; */
+}
+
 .img-zoom-container {
   position: relative;
   vertical-align: top;
 }
-  /* div_not_zoomed_class: width and height are specified in javascript for the webpage */
-  .div_not_zoomed_class {
+
+/* div_not_zoomed_class: width and height are specified in javascript for the webpage */
+.div_not_zoomed_class {
   display: inline-block;
   border: 1px solid #d4d4d4;
   vertical-align: top;
