@@ -15,7 +15,6 @@
 .calibration_controls p {
   margin-top: 0;
   margin-bottom: 0;
-  background-color: #aaaaaa;
 }
 
 .calibration_controls input[type="submit"] {
@@ -73,4 +72,16 @@
   image-rendering: pixelated;
   /* cursor: crosshair; */
   /* cursor: url('static/cursor-close.png'), auto; */
+}
+
+.blink_me {
+  animation: blinker 1.5s linear infinite;
+  background-color: #666666;
+}
+
+@keyframes blinker {
+  50% {
+    font-size: 38px;
+    /* opacity: 0; */
+  }
 }

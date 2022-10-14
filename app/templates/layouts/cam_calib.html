@@ -28,9 +28,10 @@
       <input type="button" value="&#x21A4;" onclick="move_left()">
       <input type="button" value="&#x21A6;" onclick="move_right()">
       <!-- the 270 width of the current pixel & 462 width of the current point label were set by experiment (font size=40)-->
-      <p id="current_x_y" style="min-width:270px;"></p>
+      <p id="current_x" style="min-width:150px;"></p>
+      <p id="current_y" style="min-width:120px;"></p>
       <hr style="height:2px;margin-top:2px;margin-bottom:2px">
-      <p id="current_point_label" style="min-width:462px;"></p>
+      <p id="current_point_label" style="min-width:462px;" class="blink_me"></p>
       <input type="button" id="setButton" value="Set" onclick="setPoint()">
       <input type="button" id="skipButton" value="Skip" onclick="goToNextPoint()">
     </div>

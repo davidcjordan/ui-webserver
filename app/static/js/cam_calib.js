@@ -209,9 +209,8 @@ function imageZoom(targetDivID) {
    console.log("zoomRatio=%d   backgroundLimits: left=%d top=%d", zoomRatio, backgroundLimits.left, backgroundLimits.top);
 
    centerOfZoomed = {x: lensDivSize/2, y: lensDivSize/2}
-   let current_x_y_element = document.getElementById('current_x_y');
-   current_x_y_element.innerText = `X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
-   
+   setCurrentPixelText();
+      
    /* Execute a function when someone moves the cursor over the image: */
    lensDiv.addEventListener("mousedown", moveLensByTouch);
    notZoomedDiv.addEventListener("mousedown", moveLensByTouch);
@@ -256,7 +255,7 @@ function drawCursorInZoom8() {
    zoomed8Context.stroke();   
  }
 
- function goToNextPoint() {
+function goToNextPoint() {
    currentCoordinate += 2;
    if (currentCoordinate >= 13) {
      currentCoordinate = 0;
@@ -264,7 +263,7 @@ function drawCursorInZoom8() {
      submitButton.disabled = false;
    }
    setPointLabel();
- }
+}
 
  function setPoint() {
    // the point's X/Y is equal to the center of the zoomed image which is set in moveLensBoundaryCheck()
@@ -277,9 +276,14 @@ function drawCursorInZoom8() {
 
    goToNextPoint();    
    drawCourtLines()
- }
+}
 
- function setPointLabel() {
+function setCurrentPixelText() {
+   document.getElementById('current_x').innerText = `X: ${centerOfZoomed.x}`;
+   document.getElementById('current_y').innerText = `Y: ${centerOfZoomed.y}`;
+}
+
+function setPointLabel() {
    let coordinateId = coordinateArray[currentCoordinate].id
    var name = [];
    if (coordinateId[0] === 'F') {
@@ -302,7 +306,7 @@ function drawCursorInZoom8() {
    // console.log("coordinateId=%s  label= %s %s %s", coordinateId, name[0], name[1], name[2])
    let label = document.getElementById("current_point_label");
    label.innerHTML = `${name[0]} ${name[1]} ${name[2]}: `;
- }
+}
 
  // cursor move functions
  function move_down() {
@@ -329,7 +333,7 @@ function drawCursorInZoom8() {
    e.preventDefault();
    /* Get the cursor's x and y positions: */
    pos = getCursorPos(e);
-   console.log("touch cursor x=%d  y=%d", pos.x, pos.y);
+   // console.log("touch cursor x=%d  y=%d", pos.x, pos.y);
 
    /* Calculate the top & left of the lens - placing the cursor at the center of the lens
       x -> horizontal left to right, e.g. Width.
@@ -386,11 +390,10 @@ function drawCursorInZoom8() {
    centerOfZoomed.x = backgroundPosition.left + (zoomed8Canvas.width/zoomRatio);
    centerOfZoomed.y = backgroundPosition.top + (zoomed8Canvas.height/zoomRatio);
 
-   console.log("background left=%d top=%d  centerOfZoomed x=%d y=%d", 
-     backgroundPosition.left, backgroundPosition.top, centerOfZoomed.x, centerOfZoomed.y);
+   // console.log("background left=%d top=%d  centerOfZoomed x=%d y=%d", 
+   //   backgroundPosition.left, backgroundPosition.top, centerOfZoomed.x, centerOfZoomed.y);
 
-   let current_x_y_element = document.getElementById('current_x_y');
-   current_x_y_element.innerText = `X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
+   setCurrentPixelText();
  }
 
  // get the rectangle that's been touched coordinates
