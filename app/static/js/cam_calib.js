@@ -143,6 +143,15 @@ function drawCourtLines() {
          notZoomedContext.stroke();   
       }
    }
+   // draw a vertical hash mark on NSC to show where the center is
+   let nsc_crosshair_half_length = 20
+   if ((points[this_pt][1] > 0) && (points[next_pt][1] > 0))
+   {
+      notZoomedContext.beginPath();
+      notZoomedContext.moveTo(points[1][0], points[1][1]-nsc_crosshair_half_length);
+      notZoomedContext.lineTo(points[1][0], points[1][1]+nsc_crosshair_half_length);
+      notZoomedContext.stroke();   
+   }
 }
 
 // used on cam_verif:
