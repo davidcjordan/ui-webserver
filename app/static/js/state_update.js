@@ -104,3 +104,23 @@ var pollingVar = setInterval(pollingTimer, 350);
 function pollingTimer() {
   socket.emit("get_updates", JSON.stringify(data_get_update));
 }
+
+// for faults page:
+socket.on('faults_update', function(faults) {
+  // console.log("received faults: " + faults)
+  let table = document.getElementById("fault_table");
+  // clear table before adding updated fault rows
+  for (let i = (table.rows.length-1); i > 0; i--) { 
+     // console.log("deleteRow: " + i)
+     table.deleteRow(i);
+  }
+  for (let element of JSON.parse(faults)) {
+     let row = table.insertRow();
+     for (key in element) {
+        let cell = row.insertCell();
+        let text = document.createTextNode(element[key]);
+        cell.appendChild(text);
+        cell.className = 'Cell';
+     }
+  }
+});

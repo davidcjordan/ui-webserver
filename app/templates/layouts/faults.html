@@ -1,14 +1,6 @@
 {% extends "layouts/base.html" %}
 
 {% block selections %} 
-<!-- The following is not necessary: state_updates send fault table
-<script>
-   document.addEventListener('DOMContentLoaded',() => {
-      // console.log("faults onload")
-      socket.emit("fault_request");
-});
-</script> -->
-
 <table style="font-size:0.8em" id="fault_table" class="Table">
    <caption class="Title">Boomer Problems</caption>
    <thead>
@@ -34,26 +26,4 @@
       // console.log("emitted fault_request")
    }, false);
 </script> -->
-
-<script>
-   socket.on('faults_update', function(faults) {
-      // console.log("received faults: " + faults)
-      let table = document.getElementById("fault_table");
-      // clear table before adding updated fault rows
-      for (let i = (table.rows.length-1); i > 0; i--) { 
-         // console.log("deleteRow: " + i)
-         table.deleteRow(i);
-      }
-      for (let element of JSON.parse(faults)) {
-         let row = table.insertRow();
-         for (key in element) {
-            let cell = row.insertCell();
-            let text = document.createTextNode(element[key]);
-            cell.appendChild(text);
-            cell.className = 'Cell';
-         }
-      }
-   });
-</script>
-
 {% endblock %} 
