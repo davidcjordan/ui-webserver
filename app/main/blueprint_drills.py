@@ -135,17 +135,13 @@ def recents():
 
    # current_app.logger.debug(f"drills_dict={drills_dict}")
 
-   page_js = []
-   page_js.append(Markup('<script src="/static/js/get_drill_info.js"></script>'))
-
    return render_template(SELECT_TEMPLATE, \
       home_button = my_home_button, \
       page_title = "Select Drill", \
       installation_icon = display_customization_dict['icon'], \
       footer_center = display_customization_dict['title'], \
       url_for_post = DRILL_URL, \
-      choices = selection_list, \
-      page_specific_js = page_js
+      choices = selection_list
    )
 
 
@@ -271,8 +267,6 @@ def select():
          else:
             current_app.logger.error(f"DRL{drill_id_str} missing from drill_dict; not including in choices")
 
-   page_js = [Markup('<script src="/static/js/get_drill_info.js"></script>')]
-
    return render_template(SELECT_TEMPLATE, \
       home_button = my_home_button, \
       page_title = page_title_str, \
@@ -281,8 +275,7 @@ def select():
       # the following doesn't work: the query parameter is now stripped by the browser.  TODO: remove from template
       # post_param = select_post_param, \
       choices = selection_list, \
-      footer_center = display_customization_dict['title'], \
-      page_specific_js = page_js
+      footer_center = display_customization_dict['title']
    )
  
 @blueprint_drills.route(DRILL_URL, methods=DEFAULT_METHODS)
