@@ -46,7 +46,7 @@ function init() {
       notZoomedDiv.style.width = Math.trunc(imgWidth * calibDivSizeMultiplier) + 'px';
       notZoomedDiv.style.height = Math.trunc(imgHeight * calibDivSizeMultiplier) + 'px';
       submitFormDiv = document.getElementById("div_submit_form");
-      submitFormDiv.style.width = (notZoomedDiv.style.width - 20);
+      submitFormDiv.style.width = (notZoomedDiv.style.width - 30);
    }
 
    notZoomedDivStyle = getComputedStyle(notZoomedDiv);
