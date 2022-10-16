@@ -270,7 +270,7 @@ def cam_calib():
    if (scp_rc == scp_status.PING_FAILED.value):
       this_page_title = f"ERROR: cannot connect to the {cam_side.title()} camera"
    elif (scp_rc == scp_status.SCP_FAILED.value):
-      this_page_title = f"ERROR: transferring image from the {cam_side.title()} camera failed"
+      this_page_title = f"ERROR: image transfer from {cam_side.title()} camera failed"
    else:
       this_page_title = "Enter Court Coordinates"
 
