@@ -17,9 +17,12 @@ def create_app(debug=False):
    from app.main.blueprint_games import blueprint_games
 
    app = Flask(__name__)
-   app.config['SECRET_KEY'] = 'gjr39dkjn344_!67#'
+   # secret key configured un gunicorn.conf.py
+   # app.config['SECRET_KEY'] = 'gjr39dkjn344_!67#'
    
    import logging
+   # the following attempts were replaced by gunicorn_log.conf:
+
    # gunicorn_logger = logging.getLogger('gunicorn')
    # gunicorn_logger.setLevel(logging.DEBUG)
    # app.logger.handlers = gunicorn_logger.handlers
@@ -45,18 +48,18 @@ def create_app(debug=False):
    # for handler in app.logger.handlers:
    #    app.logger.removeHandler(handler)
    # app.logger.addHandler(app_file_handler)
-   app.logger.setLevel(logging.DEBUG)
 
    # ?? the following removes flask logging to stderr:
    # from flask.logging import default_handler
    # app.logger.removeHandler(default_handler)
 
-   import logging_tree
-   # logging_tree.printout()
-   with open('/tmp/log_cfg_tree.txt', 'w') as f:
-      f.write(logging_tree.format.build_description())
+   output_logging_tree = False
+   if output_logging_tree:
+      import logging_tree
+      with open('/tmp/log_cfg_tree.txt', 'w') as f:
+         f.write(logging_tree.format.build_description())
 
-
+   app.logger.setLevel(logging.DEBUG)
    app.debug = debug
 
    app.register_blueprint(blueprint_core)
