@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block selections %} 
+{%- block selections %} 
 <table style="font-size:0.8em" id="fault_table" class="Table">
    <caption class="Title">Boomer Problems</caption>
    <thead>
@@ -13,17 +13,21 @@
    <tbody>
    </tbody>
 </table>
-{% endblock %} 
+{%- endblock %} 
 
-{% block control %} 
+{%- block control %} 
 <!-- <button type="button" id="test">Test</button> -->
-{% endblock %} 
+{%- endblock %} 
 
-{% block page_specific_js %} 
+{%- block page_specific_styles %} 
+   <link rel="stylesheet" href="/static/css/tables.css">
+{%- endblock %} 
+
+{%- block page_specific_js %} 
 <!-- <script">
    document.getElementById("test").addEventListener("click", function (e) {
       socket.emit("fault_request");
       // console.log("emitted fault_request")
    }, false);
 </script> -->
-{% endblock %} 
+{%- endblock %} 

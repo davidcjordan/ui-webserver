@@ -1,8 +1,6 @@
 {% extends "layouts/base.html" %}
 
 {%- block selections %}
-<script src="/static/js/cam_calib.js" defer></script>
-
 <div class="img-zoom-container">
   <div id="div_not_zoomed" class="div_not_zoomed_class">
     <canvas id="canvas_not_zoomed"></canvas>
@@ -38,3 +36,11 @@
   </div>
 </div>
 {%- endblock %}
+
+{%- block page_specific_styles %} 
+   <link rel="stylesheet" href="/static/css/cam-calib.css">
+{%- endblock %} 
+
+{%- block page_specific_js %} 
+  <script src="/static/js/cam_calib.js" defer></script>
+{%- endblock %} 

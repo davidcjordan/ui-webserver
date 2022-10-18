@@ -48,6 +48,9 @@ drills_dict = {} # holds copies of drills read in from DRLxxx.csv files; keys ar
 workouts_dict = {} #as above, but using WORKxxx.csv files
 recent_drill_list = []
 
+radio_button_disable_js = [Markup('<script src="/static/js/radio-button-disable.js defer"></script>')]
+get_drill_info_js = [Markup('<script src="/static/js/get_drill_info.js" defer></script>')]
+
 #TODO: generate the dict by parsing the name in the drill description in the file
 # thrower_calib_drill_dict = {"ROTARY":(THROWER_CALIB_DRILL_NUMBER_START), "ELEVATOR": (THROWER_CALIB_DRILL_NUMBER_START+1)}
 thrower_calib_drill_dict = {"ROTARY":(THROWER_CALIB_DRILL_NUMBER_START)}
@@ -141,7 +144,8 @@ def recents():
       installation_icon = display_customization_dict['icon'], \
       footer_center = display_customization_dict['title'], \
       url_for_post = DRILL_URL, \
-      choices = selection_list
+      choices = selection_list, \
+      page_specific_js = get_drill_info_js \
    )
 
 
@@ -177,8 +181,6 @@ def drill_select_type():
       ]}, \
    ]
 
-   page_js = [Markup('<script src="/static/js/radio-button-disable.js"></script>')]
-
    return render_template(GAME_OPTIONS_TEMPLATE, \
       home_button = my_home_button, \
       page_title = "Select Type of Drill", \
@@ -186,7 +188,7 @@ def drill_select_type():
       radio_options = drill_type_choices, \
       url_for_post = SELECT_URL, \
       footer_center = display_customization_dict['title'], \
-      page_specific_js = page_js \
+      page_specific_js = radio_button_disable_js \
    )
 
 
@@ -196,16 +198,13 @@ def beep_selection():
 
    # current_app.logger.info(f"beep_mode_choices: {beep_mode_choices}")
 
-   page_js = []
-   page_js.append(Markup('<script src="/static/js/radio-button-disable.js"></script>'))
-
    return render_template(GAME_OPTIONS_TEMPLATE,
       home_button = my_home_button, \
       page_title = "Select Type of Beep Drill", \
       installation_icon = display_customization_dict['icon'], \
       radio_options = beep_mode_choices, \
       url_for_post = DRILL_URL, \
-      page_specific_js = page_js, \
+      page_specific_js = radio_button_disable_js, \
       footer_center = display_customization_dict['title'])
 
 
@@ -275,7 +274,8 @@ def select():
       # the following doesn't work: the query parameter is now stripped by the browser.  TODO: remove from template
       # post_param = select_post_param, \
       choices = selection_list, \
-      footer_center = display_customization_dict['title']
+      footer_center = display_customization_dict['title'], \
+      page_specific_js = get_drill_info_js \
    )
  
 @blueprint_drills.route(DRILL_URL, methods=DEFAULT_METHODS)

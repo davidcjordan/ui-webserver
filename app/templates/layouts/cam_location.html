@@ -24,25 +24,28 @@
   <button type="submit" class="submit-button">Submit</button>
   </div>
 </form>
+{%- endblock %}
 
-<style>
-  table {
-    font-family: arial, sans-serif;
-    border-collapse: collapse;
-    table-layout: fixed;
-    /* width:1240px */
-  }
-  td, th {
-    border: 1px solid #dddddd;
-    /* text-align: left; */
-    padding: 8px;
-  }
-  tr:nth-child(even) {
-    background-color: #999999;
-  }
-</style>
-{% endblock %}
+{%- block page_specific_styles %} 
+  <link rel="stylesheet" href="/static/css/number-picker-2.css">
+  <style>
+    table {
+      font-family: arial, sans-serif;
+      border-collapse: collapse;
+      table-layout: fixed;
+      /* width:1240px */
+    }
+    td, th {
+      border: 1px solid #dddddd;
+      /* text-align: left; */
+      padding: 8px;
+    }
+    tr:nth-child(even) {
+      background-color: #999999;
+    }
+  </style>
+{%- endblock %} 
 
-{% block page_specific_js %} 
-<script src="/static/js/number-picker-2.js"></script>
-{% endblock %} 
+{%- block page_specific_js %} 
+  <script src="/static/js/number-picker-2.js" defer></script>
+{%- endblock %} 

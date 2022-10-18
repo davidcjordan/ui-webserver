@@ -284,7 +284,6 @@ def cam_calib():
 
    # mode_str = f"Court Points"
    return render_template(CAM_CALIBRATION_TEMPLATE, \
-      page_specific_styles = page_styles, \
       home_button = my_home_button, \
       page_title = this_page_title, \
       installation_icon = display_customization_dict['icon'], \
@@ -415,7 +414,6 @@ def cam_verif():
       this_page_title = "Check court point locations"
 
    return render_template(CAM_VERIFICATION_TEMPLATE, \
-      page_specific_styles = page_styles, \
       home_button = my_home_button, \
       installation_icon = display_customization_dict['icon'], \
       footer_center = display_customization_dict['title'], \

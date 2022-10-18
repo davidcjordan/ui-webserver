@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
   <!-- refer to https://jinja.palletsprojects.com/en/3.0.x/templates/# for info on jinja templates -->
+  <!--  the minus sign after the <% below keeps ninja2 from emitting a newline   -->
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Boomer-Control</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/boomer.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/number-picker-2.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/radio-slider.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/tables.css') }}">
     {%- block page_specific_styles %} 
       {%- for line in page_specific_styles %}
         {{line}}
@@ -16,6 +14,11 @@
     {%- endblock %} 
     <script src="/static/js/socket.io.js" defer></script>
     <script src="/static/js/state_update.js" defer></script>
+    {%- block page_specific_js %} 
+      {%- for line in page_specific_js %}
+        {{line}}
+      {%- endfor %}
+    {%- endblock %} 
   </head>
   <body>
     <div class="container">
@@ -43,9 +46,4 @@
       </div>
     </div>
   </body>
-  {%- block page_specific_js %} 
-    {%- for line in page_specific_js %}
-      {{line}}
-    {%- endfor %}
-  {%- endblock %} 
 </html>
