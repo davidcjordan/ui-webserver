@@ -43,12 +43,11 @@ THROWER_CALIB_WORKOUT_ID = 2
 MODE_DRILL_SELECTED = "Drill #"
 MODE_WORKOUT_SELECTED = "Workout #"
 
-
 drills_dict = {} # holds copies of drills read in from DRLxxx.csv files; keys are the drill numbers
 workouts_dict = {} #as above, but using WORKxxx.csv files
 recent_drill_list = []
 
-radio_button_disable_js = [Markup('<script src="/static/js/radio-button-disable.js defer"></script>')]
+radio_button_disable_js = [Markup('<script src="/static/js/radio-button-disable.js" defer></script>')]
 get_drill_info_js = [Markup('<script src="/static/js/get_drill_info.js" defer></script>')]
 
 #TODO: generate the dict by parsing the name in the drill description in the file
