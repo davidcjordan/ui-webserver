@@ -16,6 +16,12 @@ except:
    current_app.logger.error("Problems with 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
    exit()
 
+import logging
+try:
+   logging.getLogger("ops").info('User Interface launched')
+except:
+   current_app.logger.error("Couldn't get logger 'ops'")
+
 previous_base_state = base_state_e.BASE_STATE_NONE
 faults_table_when_base_not_accessible = None
 
