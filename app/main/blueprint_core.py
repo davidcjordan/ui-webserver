@@ -122,7 +122,7 @@ def settings():
    settings_radio_options[0]['buttons'][base_settings_dict[GRUNTS_PARAM]]['checked'] = 1
    settings_radio_options[1]['buttons'][base_settings_dict[TRASHT_PARAM]]['checked'] = 1
    
-   page_js = [Markup('<script src="/static/js/radio-button-emit.js"></script>')]
+   page_js = [Markup('<script src="/static/js/radio-button-emit.js" defer></script>')]
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       home_button = my_home_button, \

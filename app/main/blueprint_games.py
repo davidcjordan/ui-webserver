@@ -41,7 +41,7 @@ def game_options():
    game_radio_options[1]['buttons'][base_settings_dict[TIEBREAKER_PARAM]]['checked'] = 1
    # app.logger.debug(f"game_radio_options= {game_radio_options}")
 
-   page_js = [Markup('<script src="/static/js/radio-button-emit.js"></script>')]
+   page_js = [Markup('<script src="/static/js/radio-button-emit.js" defer></script>')]
 
    return render_template(GAME_OPTIONS_TEMPLATE, \
       home_button = my_home_button, \

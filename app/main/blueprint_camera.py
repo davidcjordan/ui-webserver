@@ -367,7 +367,7 @@ def cam_calib_done():
                result = f"FAILED: {cam_side.title()} camera correction vector generation failed."
 
    page_js = []
-   page_js.append(Markup('<script src="/static/js/timed-redirect.js"></script>'))
+   page_js.append(Markup('<script src="/static/js/timed-redirect.js" defer></script>'))
  
    button_label = "Camera Calibration"
    return render_template(CHOICE_INPUTS_TEMPLATE, \
