@@ -5,6 +5,7 @@ base interaction: check status, update base_settings; this should be the only mo
 from flask import current_app
 import time
 import subprocess
+import copy
 
 from .main.defines import user_dir, repos_dir, GAME_URL
 import sys
@@ -22,10 +23,9 @@ try:
 except:
    current_app.logger.error("Couldn't get logger 'ops'")
 
-class base_vars:
+class static_vars:
    previous_base_state = base_state_e.BASE_STATE_NONE            
    faults_table_when_base_not_accessible = None           
-static_vars = base_vars()
 
 def check_base():
    # current_app.logger.debug(f'previous_base_state={static_vars.previous_base_state}')
@@ -97,28 +97,11 @@ def check_base():
    if base_state != static_vars.previous_base_state:
       current_app.logger.info(f"Base state change: {base_state_e(static_vars.previous_base_state).name} -> {base_state_e(base_state).name}")
 
-   copy_base_state(base_state)
+   # have to do a copy, otherwise it's a reference to base_state
+   static_vars.previous_base_state = copy.copy(base_state)
    # current_app.logger.debug(f' after copy: new base_state={base_state}  previous={static_vars.previous_base_state}')
 
    return base_state, soft_fault_status, faults_table
-
-
-def copy_base_state(state):
-   if state == base_state_e.BASE_STATE_NONE:
-     static_vars.previous_base_state = base_state_e.BASE_STATE_NONE
-   elif state == base_state_e.IDLE:
-     static_vars.previous_base_state = base_state_e.IDLE
-   elif state == base_state_e.ACTIVE:
-     static_vars.previous_base_state = base_state_e.ACTIVE
-   elif state == base_state_e.PAUSED:
-     static_vars.previous_base_state = base_state_e.PAUSED
-   elif state == base_state_e.FAULTED:
-     static_vars.previous_base_state = base_state_e.FAULTED
-   elif state == base_state_e.OUTOFBALLS:
-     static_vars.previous_base_state = base_state_e.OUTOFBALLS
-   else:
-      current_app.logger.error(f'base_state did not match an enum')
-      exit()
 
 
 def send_stop_to_base():
@@ -175,3 +158,10 @@ def send_gen_vectors_to_base(cam_side):
          code = "unknown"
       current_app.logger.error("PUT FUNC_GEN_CORRECTION_VECTORS failed, code: {code}")
    return rc
+
+def get_game_state():
+   game_state = None
+   rc, game_state = send_msg(GET_METHOD, SCOR_RSRC)
+   if not rc:
+      current_app.logger.error("GET GAME SCORE failed, score= {}".format(game_state))
+   return game_state
