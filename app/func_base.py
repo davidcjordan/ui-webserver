@@ -28,10 +28,7 @@ class base_vars:
 static_vars = base_vars()
 
 def check_base():
-  soft_fault_status = None
-
    # current_app.logger.debug(f'previous_base_state={static_vars.previous_base_state}')
-
    p = subprocess.run(['pgrep', 'bbase'], capture_output=True)
    if p.returncode == 0: 
       base_pid = p.stdout

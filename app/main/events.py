@@ -75,7 +75,7 @@ def handle_get_updates(data):
       if ((base_state != base_state_e.FAULTED) and (current_page == FAULTS_URL)):
          update_dict['new_url'] = MAIN_URL
  
-      if (current_page == FAULTS_URL):
+      if ((base_state == base_state_e.FAULTED) and (current_page == FAULTS_URL)):
          #TODO: if (len(faults_table) != len(previous_faults_table)):
          emit('faults_update', json.dumps(textify_faults_table(faults_table)))
 
