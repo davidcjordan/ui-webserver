@@ -5,7 +5,7 @@ from .. import socketio
 import json
 
 from app.main.defines import *
-from app.func_base import check_base, send_pause_resume_to_base, send_settings_to_base
+from app.func_base import check_base, send_pause_resume_to_base, send_settings_to_base, get_game_state
 from app.main.blueprint_core import write_base_settings_to_file
 from app.func_drills import get_drill_info, get_workout_info
 from app.main.blueprint_camera import scp_court_png
@@ -83,16 +83,14 @@ def handle_get_updates(data):
          (base_state == base_state_e.IDLE)):
          update_dict['new_url'] = DONE_URL
 
-      elif (current_page is GAME_URL):
-         msg_ok, game_state = send_msg(GET_METHOD, SCOR_RSRC)
-         if not msg_ok:
-            current_app.logger.error("GET GAME SCORE failed, score= {}".format(game_state))
-         else:
-            # current_app.logger.info(f"score= {game_state}")
+      if (current_page is GAME_URL):
+         game_state = get_game_state()
+         if game_state is not None:
+            # current_app.logger.info(f"sending score={game_state}")
             # score= {'time': 36611, 'server': 'b', 'b_sets': 0, 'p_sets': 0, 'b_games': 0, 'p_games': 0, 'b_pts': 0, 'p_pts': 0, 'b_t_pts': 0, 'p_t_pts': 0}
             update_dict["game_state"] = game_state
    else:
-      current_app.logger.error(f"page not in get_update data= {json_data}")
+      current_app.logger.error(f"'page' not in get_update data= {json_data}")
 
    if (soft_fault_status is not None):
       update_dict['soft_fault'] = soft_fault_e(soft_fault_status).value
