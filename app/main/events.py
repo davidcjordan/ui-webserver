@@ -91,6 +91,8 @@ def handle_get_updates(data):
             # current_app.logger.info(f"score= {game_state}")
             # score= {'time': 36611, 'server': 'b', 'b_sets': 0, 'p_sets': 0, 'b_games': 0, 'p_games': 0, 'b_pts': 0, 'p_pts': 0, 'b_t_pts': 0, 'p_t_pts': 0}
             update_dict["game_state"] = game_state
+   else:
+      current_app.logger.error(f"page not in get_update data= {json_data}")
 
    if (soft_fault_status is not None):
       update_dict['soft_fault'] = soft_fault_e(soft_fault_status).value
