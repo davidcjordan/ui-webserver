@@ -22,30 +22,35 @@ try:
 except:
    current_app.logger.error("Couldn't get logger 'ops'")
 
-previous_base_state = base_state_e.BASE_STATE_NONE
-faults_table_when_base_not_accessible = None
+class base_vars:
+   previous_base_state = base_state_e.BASE_STATE_NONE            
+   faults_table_when_base_not_accessible = None           
+static_vars = base_vars()
 
 def check_base():
-   global previous_base_state
-   global faults_table_when_base_not_accessible
-   soft_fault_status = None
+  soft_fault_status = None
 
-   base_pid = None
+   # current_app.logger.debug(f'previous_base_state={static_vars.previous_base_state}')
+
    p = subprocess.run(['pgrep', 'bbase'], capture_output=True)
    if p.returncode == 0: 
       base_pid = p.stdout
-      # current_app.logger.debug(f'bbase pid={base_pid}')
    else:
       base_pid = None
 
+   # soft_fault_status & faults_table need to be defined since they are included in the return, and may not
+   # get set in the code below
+   soft_fault_status = None
+   faults_table = None
+   new_faults_table = None
    base_state = base_state_e.BASE_STATE_NONE
    base_fault = None
-   faults_table = None
 
+   # current_app.logger.debug(f'base_pid={base_pid}')
    if base_pid is not None:
       # verify responding to FIFO
-      # current_app.logger.info("Getting status message")
       msg_ok, status_msg = send_msg()
+      # current_app.logger.info(f"get_status: msg_ok={msg_ok} status={status_msg}")
       if not msg_ok:
          base_fault = fault_e.CONTROL_PROGRAM_FAILED.value
          base_state = base_state_e.FAULTED
@@ -60,11 +65,12 @@ def check_base():
             if (HARD_FAULT_PARAM in status_msg and status_msg[HARD_FAULT_PARAM] > 0):
                #! NOT USED YET:  previous_fault_table = copy.deepcopy(faults_table)
                # current_app.logger.info("Getting fault table")
-               msg_ok, faults_table = send_msg(GET_METHOD, FLTS_RSRC)
+               msg_ok, new_faults_table = send_msg(GET_METHOD, FLTS_RSRC)
                if not msg_ok:
                   current_app.logger.error("msg status not OK when getting fault table")
                   base_fault = fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED.value
                   base_state = base_state_e.FAULTED
+                  new_faults_table = None
 
             if (SOFT_FAULT_PARAM in status_msg):
                soft_fault_status = soft_fault_e(status_msg[SOFT_FAULT_PARAM])
@@ -77,20 +83,45 @@ def check_base():
       base_fault = fault_e.CONTROL_PROGRAM_NOT_RUNNING.value
       base_state = base_state_e.FAULTED
 
-   if base_state != previous_base_state:
-      current_app.logger.info(f"Base state change: {base_state_e(previous_base_state).name} -> {base_state_e(base_state).name}")
-
    if base_state == base_state_e.FAULTED:
-      if faults_table is None:
+      if new_faults_table is None:
+         # current_app.logger.debug(f'new_faults_table is None')
          # didn't get faults_tabe from base, so use existing or generate a new one:
-         if faults_table_when_base_not_accessible is None:
-            faults_table_when_base_not_accessible = [{FLT_CODE_PARAM: base_fault, FLT_LOCATION_PARAM: net_device_e.BASE, FLT_TIMESTAMP_PARAM: time.time()}]
-         faults_table = faults_table_when_base_not_accessible
+         if static_vars.faults_table_when_base_not_accessible is None:
+            static_vars.faults_table_when_base_not_accessible = [{FLT_CODE_PARAM: base_fault, FLT_LOCATION_PARAM: net_device_e.BASE, FLT_TIMESTAMP_PARAM: time.time()}]
+         faults_table = static_vars.faults_table_when_base_not_accessible
+      else:
+         faults_table = new_faults_table
    else:
-      faults_table_when_base_not_accessible = None
+      # current_app.logger.debug(f'base_state is not faulted')
+      static_vars.faults_table_when_base_not_accessible = None
 
-   previous_base_state = base_state
+   # current_app.logger.debug(f'before copy: new base_state={base_state}  previous={static_vars.previous_base_state}')
+   if base_state != static_vars.previous_base_state:
+      current_app.logger.info(f"Base state change: {base_state_e(static_vars.previous_base_state).name} -> {base_state_e(base_state).name}")
+
+   copy_base_state(base_state)
+   # current_app.logger.debug(f' after copy: new base_state={base_state}  previous={static_vars.previous_base_state}')
+
    return base_state, soft_fault_status, faults_table
+
+
+def copy_base_state(state):
+   if state == base_state_e.BASE_STATE_NONE:
+     static_vars.previous_base_state = base_state_e.BASE_STATE_NONE
+   elif state == base_state_e.IDLE:
+     static_vars.previous_base_state = base_state_e.IDLE
+   elif state == base_state_e.ACTIVE:
+     static_vars.previous_base_state = base_state_e.ACTIVE
+   elif state == base_state_e.PAUSED:
+     static_vars.previous_base_state = base_state_e.PAUSED
+   elif state == base_state_e.FAULTED:
+     static_vars.previous_base_state = base_state_e.FAULTED
+   elif state == base_state_e.OUTOFBALLS:
+     static_vars.previous_base_state = base_state_e.OUTOFBALLS
+   else:
+      current_app.logger.error(f'base_state did not match an enum')
+      exit()
 
 
 def send_stop_to_base():
