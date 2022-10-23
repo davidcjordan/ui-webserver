@@ -3,6 +3,7 @@ from flask_socketio import emit
 
 from .. import socketio
 import json
+import time
 
 from app.main.defines import *
 from app.func_base import check_base, send_pause_resume_to_base, send_settings_to_base, get_game_state
@@ -56,7 +57,11 @@ def handle_get_updates(data):
    # current_app.logger.info(f"get_update data= {json_data}")
 
    base_state, soft_fault_status, faults_table = check_base()
-   base_state_text = base_state_e(base_state).name.title() #title changes it from uppercase to capital for 1st char
+   try:
+      base_state_text = base_state_e(base_state).name.title() #title changes it from uppercase to capital for 1st char
+   except:
+      current_app.logger.error(f"base_state_e to name failed")
+      base_state_text = "unknown"
    update_dict = {"base_state": base_state_text}
 
    if ("page" in json_data):
@@ -93,7 +98,10 @@ def handle_get_updates(data):
       current_app.logger.error(f"'page' not in get_update data= {json_data}")
 
    if (soft_fault_status is not None):
-      update_dict['soft_fault'] = soft_fault_e(soft_fault_status).value
+      try:
+         update_dict['soft_fault'] = soft_fault_e(soft_fault_status).value
+      except:
+         current_app.logger.error(f"soft_fault enum to value failed")
 
    if ("new_url" in update_dict):
       current_app.logger.info(f"Changing URL from '{current_page}' to {update_dict['new_url']} since base_state={base_state_e(base_state).name}")
@@ -137,9 +145,21 @@ def textify_faults_table(faults_table):
       for fault in faults_table:
          # print(f"fault: {fault}")
          row_dict = {}
-         row_dict[FLT_CODE_PARAM] = fault_e(fault[FLT_CODE_PARAM]).name
-         row_dict[FLT_LOCATION_PARAM] = net_device_e(fault[FLT_LOCATION_PARAM]).name
-         timestamp = datetime.datetime.fromtimestamp(fault[FLT_TIMESTAMP_PARAM])
+         try:
+            row_dict[FLT_CODE_PARAM] = fault_e(fault[FLT_CODE_PARAM]).name
+         except:
+            current_app.logger.error(f"hard_fault enum to name failed")
+            row_dict[FLT_CODE_PARAM] = "lookup err"
+         try:
+            row_dict[FLT_LOCATION_PARAM] = net_device_e(fault[FLT_LOCATION_PARAM]).name
+         except:
+            current_app.logger.error(f"net_device enum to name failed")
+            row_dict[FLT_LOCATION_PARAM] = "lookup err"
+         try:
+            timestamp = datetime.datetime.fromtimestamp(fault[FLT_TIMESTAMP_PARAM])
+         except:
+            current_app.logger.error(f"get fault timestamp failed")
+            timestamp = time.time()
          #TODO: compare date and put "yesterday" or "days ago"
          row_dict[FLT_TIMESTAMP_PARAM] = timestamp.strftime("%H:%M:%S")
          textified_faults_table.append(row_dict)
