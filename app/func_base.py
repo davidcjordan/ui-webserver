@@ -30,7 +30,7 @@ except:
 class static_vars:
    previous_base_state = base_state_e.BASE_STATE_NONE            
    faults_table_when_base_not_accessible = None
-   previous_base_fault = fault_e.FAULT_BEGIN
+   previous_base_comms_fault = fault_e.FAULT_BEGIN
 
 def check_base():
    # current_app.logger.debug(f'previous_base_state={static_vars.previous_base_state}')
@@ -46,7 +46,7 @@ def check_base():
    faults_table = None
    new_faults_table = None
    base_state = base_state_e.BASE_STATE_NONE
-   base_fault = fault_e.FAULT_BEGIN
+   base_comms_fault = fault_e.FAULT_BEGIN
 
    # current_app.logger.debug(f'base_pid={base_pid}')
    if base_pid is not None:
@@ -54,14 +54,14 @@ def check_base():
       msg_ok, status_msg = send_msg()
       # current_app.logger.info(f"get_status: msg_ok={msg_ok} status={status_msg}")
       if not msg_ok:
-         base_fault = fault_e.CONTROL_PROGRAM_FAILED
+         base_comms_fault = fault_e.CONTROL_PROGRAM_FAILED
          base_state = base_state_e.FAULTED
       else:
          if (status_msg is not None):
             if (STATUS_PARAM in status_msg):
                base_state = base_state_e(status_msg[STATUS_PARAM])
             else:
-               base_fault = fault_e.CONTROL_PROGRAM_FAILED
+               base_comms_fault = fault_e.CONTROL_PROGRAM_FAILED
                base_state = base_state_e.FAULTED
 
             if (HARD_FAULT_PARAM in status_msg and status_msg[HARD_FAULT_PARAM] > 0):
@@ -70,7 +70,7 @@ def check_base():
                msg_ok, new_faults_table = send_msg(GET_METHOD, FLTS_RSRC)
                if not msg_ok:
                   current_app.logger.error("msg status not OK when getting fault table")
-                  base_fault = fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED
+                  base_comms_fault = fault_e.CONTROL_PROGRAM_GET_STATUS_FAILED
                   base_state = base_state_e.FAULTED
                   new_faults_table = None
 
@@ -79,10 +79,10 @@ def check_base():
             # current_app.logger.info(f"faults: {faults_table[0]}")
          else:
             current_app.logger.error("received None as status message")
-            base_fault = fault_e.CONTROL_PROGRAM_NOT_RUNNING
+            base_comms_fault = fault_e.CONTROL_PROGRAM_NOT_RUNNING
             base_state = base_state_e.FAULTED
    else:
-      base_fault = fault_e.CONTROL_PROGRAM_NOT_RUNNING
+      base_comms_fault = fault_e.CONTROL_PROGRAM_NOT_RUNNING
       base_state = base_state_e.FAULTED
 
    if base_state == base_state_e.FAULTED:
@@ -90,7 +90,7 @@ def check_base():
          # current_app.logger.debug(f'new_faults_table is None')
          # didn't get faults_tabe from base, so use existing or generate a new one:
          if static_vars.faults_table_when_base_not_accessible is None:
-            static_vars.faults_table_when_base_not_accessible = [{FLT_CODE_PARAM: base_fault, FLT_LOCATION_PARAM: net_device_e.BASE, FLT_TIMESTAMP_PARAM: time.time()}]
+            static_vars.faults_table_when_base_not_accessible = [{FLT_CODE_PARAM: base_comms_fault, FLT_LOCATION_PARAM: net_device_e.BASE, FLT_TIMESTAMP_PARAM: time.time()}]
          faults_table = static_vars.faults_table_when_base_not_accessible
       else:
          faults_table = new_faults_table
@@ -98,30 +98,31 @@ def check_base():
       # current_app.logger.debug(f'base_state is not faulted')
       static_vars.faults_table_when_base_not_accessible = None
 
-   # current_app.logger.debug(f'previous_base_state={static_vars.previous_base_state} base_state={base_state}')
-   # current_app.logger.debug(f'previous_base_fault={static_vars.previous_base_fault} base_fault={base_fault}')
+   if 0:
+      current_app.logger.debug(f'previous_base_state={static_vars.previous_base_state} base_state={base_state}')
+      current_app.logger.debug(f'previous_base_comms_fault={static_vars.previous_base_comms_fault} base_fault={base_comms_fault}')
 
    base_changed_to_not_faulted = False
    base_changed_to_faulted = False
-   if (base_fault != static_vars.previous_base_fault):
-      try:
-         # current_app.logger.info(f"Base fault change: {static_vars.previous_base_fault.name} -> {base_fault.name}")
-         current_app.logger.info(f"Base fault change: {static_vars.previous_base_fault.name} to:")
-      except:
-         current_app.logger.error(f"previous_base_fault enum failed: {static_vars.previous_base_fault}")
-      try:
-         # current_app.logger.info(f"Base fault change: {static_vars.previous_base_fault.name} -> {base_fault.name}")
-         current_app.logger.info(f"                                                        {base_fault.name}")
-      except:
-         current_app.logger.error(f"base_fault enum failed: {base_fault}")
+   if (base_comms_fault != static_vars.previous_base_comms_fault):
+      if 0:
+         try:
+            current_app.logger.info(f"previous_base_comms_fault change: {static_vars.previous_base_comms_fault.name} to:")
+         except:
+            current_app.logger.error(f"previous_base_fault enum failed: {static_vars.previous_base_comms_fault}")
+         try:
+            current_app.logger.info(f"                                                        {base_comms_fault.name}")
+         except:
+            current_app.logger.error(f"base_comms_fault enum failed: {base_comms_fault}")
 
-      if (static_vars.previous_base_fault == fault_e.FAULT_BEGIN):
+      if (static_vars.previous_base_comms_fault == fault_e.FAULT_BEGIN):
          base_changed_to_faulted = True
-      if (base_fault == fault_e.FAULT_BEGIN):
+      if (base_comms_fault == fault_e.FAULT_BEGIN):
          base_changed_to_not_faulted = True
 
    # current_app.logger.debug(f'before base_state != previous')
    if (base_state != static_vars.previous_base_state) or base_changed_to_faulted or base_changed_to_not_faulted:
+      #ensure the states are set to something to avoid a logger failure
       previous_state = "unknown"
       current_state = "unknown"
       try:
@@ -136,15 +137,15 @@ def check_base():
 
       if base_changed_to_not_faulted:
          try:
-            previous_state =  f"{static_vars.previous_base_fault.name}"
+            previous_state =  f"{static_vars.previous_base_comms_fault.name}"
          except:
-            current_app.logger.error(f"base_fault enum to name failed")
+            current_app.logger.error(f"previous_base_comms_fault enum to name failed")
 
       if base_changed_to_faulted:
          try:
-            current_state =  f"{base_fault.name}"
+            current_state =  f"{base_comms_fault.name}"
          except:
-            current_app.logger.error(f"base_fault enum to name failed")
+            current_app.logger.error(f"base_comms_fault enum to name failed")
 
       current_app.logger.info(f"Base state change: {previous_state} -> {current_state}")
       if ops_logger is not None:
@@ -159,7 +160,7 @@ def check_base():
    # current_app.logger.debug(f' after copy: new base_state={base_state}  previous={static_vars.previous_base_state}')
    # ?? copy fails if the variable is None and the function terminates!
    try:
-      static_vars.previous_base_fault = copy.copy(base_fault)
+      static_vars.previous_base_comms_fault = copy.copy(base_comms_fault)
    except:
       current_app.logger.error("copy if base_fault failed")
 
