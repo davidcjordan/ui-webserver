@@ -99,8 +99,8 @@ def check_base():
       static_vars.faults_table_when_base_not_accessible = None
 
    if 0:
-      current_app.logger.debug(f'previous_base_state={static_vars.previous_base_state} base_state={base_state}')
-      current_app.logger.debug(f'previous_base_comms_fault={static_vars.previous_base_comms_fault} base_fault={base_comms_fault}')
+      current_app.logger.debug(f'previous_base_state={static_vars.previous_base_state} base_state={base_state} ' \
+         f'previous_base_comms_fault={static_vars.previous_base_comms_fault} base_fault={base_comms_fault}')
 
    base_changed_to_not_faulted = False
    base_changed_to_faulted = False
@@ -146,10 +146,18 @@ def check_base():
             current_state =  f"{base_comms_fault.name}"
          except:
             current_app.logger.error(f"base_comms_fault enum to name failed")
+      if base_state == base_state_e.FAULTED and not base_changed_to_faulted:
+         try:
+            fault_name = fault_e(faults_table[0][FLT_CODE_PARAM]).name
+         except:
+            fault_name = ""
+         current_state = f"{current_state}: {fault_name}"
 
-      current_app.logger.info(f"Base state change: {previous_state} -> {current_state}")
+      # if base_state == base_state_e.PAUSED or base_state == base_state_e.ACTIVE:
+
+      current_app.logger.info(f"Base state change: {previous_state : <16} -> {current_state}")
       if ops_logger is not None:
-         ops_logger.info(f"Boomer Controller state change from '{previous_state}' to '{current_state}'")
+         ops_logger.info(f"Controller state change from {previous_state : <16} to {current_state}")
 
    # current_app.logger.debug(f'before copy: new base_state={base_state}  previous={static_vars.previous_base_state}')
    # have to do a copy, otherwise it's a reference to base_state
