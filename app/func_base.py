@@ -104,7 +104,6 @@ def check_base():
    base_changed_to_not_faulted = False
    base_changed_to_faulted = False
    if (base_fault != static_vars.previous_base_fault):
-      # base_fault_code_changed = True
       try:
          # current_app.logger.info(f"Base fault change: {static_vars.previous_base_fault.name} -> {base_fault.name}")
          current_app.logger.info(f"Base fault change: {static_vars.previous_base_fault.name} to:")
@@ -120,8 +119,6 @@ def check_base():
          base_changed_to_faulted = True
       if (base_fault == fault_e.FAULT_BEGIN):
          base_changed_to_not_faulted = True
-   # else:
-   #    base_fault_code_changed = False
 
    # current_app.logger.debug(f'before base_state != previous')
    if (base_state != static_vars.previous_base_state) or base_changed_to_faulted or base_changed_to_not_faulted:
@@ -137,19 +134,17 @@ def check_base():
       except:
          current_app.logger.error(f"base_state enum to name failed")
 
-      # if base_changed_to_not_faulted:
-      #    try:
-      #       previous_state =  f"{static_vars.previous_base_fault.name}"
-      #    except:
-      #       current_app.logger.error(f"base_fault enum to name failed")
-      #       previous_state =  f"Unknown"
+      if base_changed_to_not_faulted:
+         try:
+            previous_state =  f"{static_vars.previous_base_fault.name}"
+         except:
+            current_app.logger.error(f"base_fault enum to name failed")
 
-      # if base_changed_to_faulted:
-      #    try:
-      #       current_state =  f"{base_fault.name}"
-      #    except:
-      #       current_app.logger.error(f"base_fault enum to name failed")
-      #       current_state =  f"Base Fault"
+      if base_changed_to_faulted:
+         try:
+            current_state =  f"{base_fault.name}"
+         except:
+            current_app.logger.error(f"base_fault enum to name failed")
 
       current_app.logger.info(f"Base state change: {previous_state} -> {current_state}")
       if ops_logger is not None:
