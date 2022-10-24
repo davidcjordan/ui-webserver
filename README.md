@@ -17,10 +17,22 @@ A mouse and keyboard will not be available - the only input will be the touchscr
 
 For development using VS Code, install the Microsoft Python Extension in order to run under VScode control.
 
-git clone https://github.com/manningt/ui-webserver  (this will be moved to Dave's repo)
+git clone https://github.com/davidcjordan/ui-webserver
 
-Currently another repository has to be cloned: https://github.com/manningt/control_ipc_utils should be cloned to /home/pi/repos.  web-ctrl.py uses python scripts in this repository to send messages to the base in order to set/get information.
+Currently another repository has to be cloned: https://github.com/davidcjordan/control_ipc_utils 
 
+should be cloned to /home/pi/repos.  web-ctrl.py uses python scripts in this repository to send messages to the base in order to set/get information.
+
+NEW (using gunicorn within a virtual environment):
+```
+python3 -m venv venv
+. venv/bin/activate
+python3 -m pip install gunicorn==20.1.0 eventlet==0.30.2
+python3 -m pip install flask
+#python3 -m pip install flask-socketio <-appears to be included with flask
+```
+
+OLD (using waitress):
 The following python packages have to be installed:
 ```
 python3 -m pip install flask-socketio
@@ -36,12 +48,13 @@ For more info:  https://flask-socketio.readthedocs.io/en/latest/intro.html
 
 The socket.io client needs to be installed in order to run not connected to the net.
 For development, I used:
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script> -->
+`<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+`
 
 Couldn't get the following to work, so instead installed socket.io client using npm and copied to repository
-    <script src="/socket.io/socket.io.js"></script>
+   `<script src="/socket.io/socket.io.js"></script>`
 So now it's:
-   <script src="/static/js/socket.io.js"></script>
+   `<script src="/static/js/socket.io.js"></script>`
  
 To install the client, the following was done:
 ```
@@ -51,8 +64,6 @@ cd ~/repos/ui-webserver/app/static/js
 cp /home/pi/node_modules/socket.io-client/dist/socket.io.js .
 cp /home/pi/node_modules/socket.io-client/dist/socket.io.js.map .
 ```
-
-Note: the javascript <scripts> were in (or after) the html body - they didn't work when in the header.
 
 
 # Other dependencies:
