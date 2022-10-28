@@ -189,6 +189,10 @@ def send_stop_to_base():
    rc, code = send_msg(PUT_METHOD, STOP_RSRC)
    if not rc:
       current_app.logger.error(f"function '{sys._getframe(0).f_code.co_name}': PUT STOP failed, code: {code}")
+   # set the mode to nothing:
+   rc, code = send_msg(PUT_METHOD, MODE_RSRC, {MODE_PARAM: 0})
+   if not rc:
+      current_app.logger.error(f"PUT Mode 0 failed, code: {code}")
 
 def send_pause_resume_to_base():
    rc, code = send_msg(PUT_METHOD, PAUS_RSRC)
