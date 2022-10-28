@@ -72,11 +72,18 @@ git clone https://github.com/davidcjordan/drills to ~/boomer should have already
 
 # Implementation notes:
 
-## templates
-The base template has a section for page specific javascript.  This is used on the following pages:
-* select.html: whether to enable filtrify (or not); NOT include
-* game and drill.html: enable pause_resume, number-picker
-* choice_inputs: enable emits per radio button
+## Starting the web server using gunicorn:
+Use the following to start it from shell:
+```
+gunicorn  --config gunicorn.conf.py --log-config gunicorn_log.conf "app:create_app()"
+```
+Use the following to start it using systemd: ~/.config/systemd/user/base_gui.service
+```
+ExecStart=/bin/bash -c 'PATH=/home/pi/repos/ui-webserver/venv/bin:$PATH exec gunicorn --config gunicorn.conf.py --log-config gunicorn_log.conf "app:create_app()"'
+```
+
+## Templates
+The base template has a section for page specific javascripts & css, as well as js required on all pages (socketio and state_update).  The base template is inherited on all other pages/templates.
 
 ## Flow
 ###

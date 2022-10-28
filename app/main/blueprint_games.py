@@ -67,7 +67,7 @@ def game():
    # app.logger.debug(f"GAME_URL request_form: {request.form}")
    #ImmutableMultiDict([('wServes', '0'), ('tiebreaker', '0')])
 
-   base_mode_dict = {MODE_PARAM: base_mode_e.WORKOUT.value}
+   base_mode_dict = {MODE_PARAM: base_mode_e.GAME.value}
    from app.main.blueprint_core import base_settings_dict
    send_settings_to_base(base_settings_dict)
    send_start_to_base(base_mode_dict)
