@@ -88,7 +88,7 @@ def handle_get_updates(data):
          (base_state == base_state_e.IDLE)):
          update_dict['new_url'] = DONE_URL
 
-      if (current_page is GAME_URL):
+      if (current_page == GAME_URL):
          game_state = get_game_state()
          if game_state is not None:
             # current_app.logger.info(f"sending score={game_state}")
