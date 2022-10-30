@@ -1,16 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
   <!-- refer to https://jinja.palletsprojects.com/en/3.0.x/templates/# for info on jinja templates -->
+  <!--  the minus sign after the <% below keeps ninja2 from emitting a newline   -->
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Boomer-Control</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/boomer.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/number-picker-2.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/radio-slider.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/tables.css') }}">
     {%- block page_specific_styles %} 
       {%- for line in page_specific_styles %}
+        {{line}}
+      {%- endfor %}
+    {%- endblock %} 
+    <script src="/static/js/socket.io.js" defer></script>
+    <script src="/static/js/state_update.js" defer></script>
+    {%- block page_specific_js %} 
+      {%- for line in page_specific_js %}
         {{line}}
       {%- endfor %}
     {%- endblock %} 
@@ -41,28 +46,4 @@
       </div>
     </div>
   </body>
-  
-  <script src="/static/js/socket.io.js"></script>
-  <script>
-    var socket = io();
-    var socket = io.connect('http://' + document.domain + ':' + location.port);
-    var data_get_update = {};
-    // pop takes the last element of an array/
-    data_get_update["page"] = window.location.pathname.split("/").pop();
-    // console.log("data_get_update=", data_get_update);
-    if (data_get_update["page"] === "") {
-      data_get_update["page"] = "home"
-    }
-
-    socket.on('connect', function() {
-      console.log("Sending client_connected from page: " + data_get_update["page"])
-      socket.emit('client_connected', JSON.stringify(data_get_update));
-    });
-  </script>  
-  <script src="/static/js/state_update.js"></script>
-  {%- block page_specific_js %} 
-    {%- for line in page_specific_js %}
-      {{line}}
-    {%- endfor %}
-  {%- endblock %} 
 </html>

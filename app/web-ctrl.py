@@ -21,7 +21,11 @@ import logging
 
 app = Flask(__name__)
 from waitress import serve
-app.config['SECRET_KEY'] = 'secret!'
+try:
+   app.config.from_pyfile('config.py', silent=False)
+except:
+   app.config['SECRET_KEY'] = 'secret!'
+print(f"app.config['SECRET_KEY']={app.config['SECRET_KEY']}")
 # didn't find how to have multiple allowed origins
 # socketio = SocketIO(app, cors_allowed_origins="https://cdnjs.cloudflare.com http://localhost")
 # socketio = SocketIO(app, cors_allowed_origins="http://localhost")

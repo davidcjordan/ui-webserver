@@ -1,7 +1,6 @@
 {% extends "layouts/base.html" %}
 
-<!--  the minus sigh after the <% below keeps ninja2 from emitting a newline   -->
-{% block selections %}
+{%- block selections %}
 <form method="post" action="{{url_for_post}}"{%- if post_param|length > 0 %}?{{post_param['name']}}={{post_param['value']}}{%- endif %}>
   <div class="selections_90percent">
     <div id="placeHolder"> </div>
@@ -19,13 +18,13 @@
       {% endfor %}
     </fieldset>
   </div>
-{% endblock %}
+{%- endblock %}
 
-{% block control %}
+{%- block control %}
   <div class="start-stop">
     <button type="submit">
       <img src="/static/start.png">
     </button>
   </div>
 </form>
-{% endblock %}
+{%- endblock %}

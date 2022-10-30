@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block stats %} 
+{%- block stats %} 
 <div class="statistics-display">
   <p class="para-nomargin" id="server">TBD's serve</p>
   <div class="Table">
@@ -60,9 +60,9 @@
     </div>
   </div>
 </div>
-{% endblock %} 
+{%- endblock %} 
 
-{% block selections %}
+{%- block selections %}
 <div class="selections_45percent">
   <div class="stepper">
     <label for="level">Level:</label>
@@ -71,19 +71,24 @@
     <button type="button">+</button>
   </div>
 </div>
- {% endblock %}
+{%- endblock %}
 
-{% block control %}
+{%- block control %}
 <div class="start-stop">
   <button type="button" id="pause-resume" class="pause-resume-button resume">
   </button>
-  <button type="submit" onclick="window.location.href='{{ url_for('index') }}';">
+  <button type="submit" onclick="window.location.href='{{ url_for('blueprint_core.done') }}';">
     <img src="/static/stop.png">
   </button>
 </div>
-{% endblock %}
-      
-{% block page_specific_js %} 
-<script src="/static/js/pause_resume.js"></script>
-<script src="/static/js/number-picker-2.js"></script>
-{% endblock %} 
+{%- endblock %}
+
+{%- block page_specific_styles %} 
+  <link rel="stylesheet" href="/static/css/tables.css">
+  <link rel="stylesheet" href="/static/css/number-picker-2.css">
+{%- endblock %} 
+
+{%- block page_specific_js %} 
+  <script src="/static/js/number-picker-2.js" defer ></script>
+  <script src="/static/js/pause_resume.js" defer></script>
+{%- endblock %} 

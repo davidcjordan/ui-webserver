@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block selections %}
+{%- block selections %}
 <div>
   {%- for choice in onclick_choices %}
     {%-if choice['html_before'] %}
@@ -24,8 +24,8 @@
         <label for="{{fieldset['name']}}_{{button['label']}}">{{button['label']}}</label>
         {%- endfor %}
     </fieldset>
-  {%- endfor %}
-{%- endif %}
+    {%- endfor %}
+  {%- endif %}
 
   {%- if url_for_post is defined %}
   <form method="post" action="{{url_for_post}}">
@@ -35,4 +35,12 @@
   </form>
   {%- endif %}
 </div>
-{% endblock %}
+{%- endblock %}
+
+{%- block page_specific_styles %} 
+   <link rel="stylesheet" href="/static/css/radio-slider.css">
+{%- endblock %} 
+
+{%- block page_specific_js %} 
+  <script src="/static/js/radio-button-emit.js" defer></script>
+{%- endblock %} 

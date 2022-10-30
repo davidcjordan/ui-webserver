@@ -4,41 +4,10 @@ drill class definitions, and read drill files
 '''
 from flask import current_app
 
-# global user_dir, boomer_dir
-# drills_dir = f'{user_dir}/{boomer_dir}/drills'
+#TODO: use defines.py:
 drills_dir = "/home/pi/boomer/drills"
 drill_file_prefix = "DRL"
 workout_file_prefix = "WORK"
-
-drills_dict = {} # holds copies of drills read in from DRLxxx.csv files; keys are the drill numbers
-workouts_dict = {} #as above, but using WORKxxx.csv files
-
-def fetch_into_drills_dict(drill_id_str):
-   global drills_dict
-   # get name from drills_dict, or read the drill file and populate the drills_dict
-   if (drill_id_str not in drills_dict):
-      this_drill_info = get_drill_info(drill_id_str)
-      if ('name' in this_drill_info):
-         drills_dict[drill_id_str] = this_drill_info
-
-   if ((drill_id_str in drills_dict) and ('name' in drills_dict[drill_id_str])):
-      return True
-   else:
-      return False
-
-
-def fetch_into_workout_dict(id_str):
-   global workouts_dict
-   # get name from drills_dict, or read the drill file and populate the drills_dict
-   if (id_str not in workouts_dict):
-      this_workout_info = get_workout_info(id_str)
-      if ('name' in this_workout_info):
-         workouts_dict[id_str] = this_workout_info
-
-   if ((id_str in workouts_dict) and ('name' in workouts_dict[id_str])):
-      return True
-   else:
-      return False
 
 def get_drill_info(drill_id):
    drill_info = {}

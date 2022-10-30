@@ -1,7 +1,24 @@
-// javascript to update base state: Idle, Active, etc
+// javascript:
+//  invoke socketio
+//  poll to get state updates
+// update base state: Idle, Active, etc
 // update data format is: {"base_state": "state"}
 
-// var socket = io();
+var socket = io();
+var socket = io.connect('http://' + document.domain + ':' + location.port);
+var data_get_update = {};
+// pop takes the last element of an array/
+data_get_update["page"] = window.location.pathname.split("/").pop();
+// console.log("data_get_update=", data_get_update);
+if (data_get_update["page"] === "") {
+  data_get_update["page"] = "home"
+}
+
+socket.on('connect', function() {
+  console.log("Sending client_connected from page: " + data_get_update["page"])
+  socket.emit('client_connected', JSON.stringify(data_get_update));
+});
+
 socket.on('state_update', function(data) {
   // console.log("Data:" + JSON.stringify(data, null, 1))
   // console.log("window.location.href=" + window.location.href);
@@ -81,8 +98,29 @@ socket.on('state_update', function(data) {
     }
   })
 });
-// the following used to be in base.html; moved here in order to be invoked after the handle_updates is defined.
+
+// start polling for state changes after the handle_updates is defined.
 var pollingVar = setInterval(pollingTimer, 350);
 function pollingTimer() {
   socket.emit("get_updates", JSON.stringify(data_get_update));
 }
+
+// for faults page:
+socket.on('faults_update', function(faults) {
+  // console.log("received faults: " + faults)
+  let table = document.getElementById("fault_table");
+  // clear table before adding updated fault rows
+  for (let i = (table.rows.length-1); i > 0; i--) { 
+     // console.log("deleteRow: " + i)
+     table.deleteRow(i);
+  }
+  for (let element of JSON.parse(faults)) {
+     let row = table.insertRow();
+     for (key in element) {
+        let cell = row.insertCell();
+        let text = document.createTextNode(element[key]);
+        cell.appendChild(text);
+        cell.className = 'Cell';
+     }
+  }
+});

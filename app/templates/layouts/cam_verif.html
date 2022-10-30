@@ -6,12 +6,12 @@
     <canvas id="canvas_not_zoomed"></canvas>
   </div>
   <div style="width:220px; display: inline-block;">
-    <form method="post" action="{{ url_for('cam_verif') }}">
-      <button type="submit" class="submit-button">Other Side</button>
-      <button type="button" class="submit-button" onclick="refreshImage('even')">Reload Even</button>
-      <button type="button" class="submit-button" onclick="refreshImage('odd')">Reload Odd</button>
+    <form method="post" action="{{ url_for('blueprint_camera.cam_verif') }}">
       <input type="hidden" name="image_path" id="image_path" value="{{image_path}}">
+      <button type="submit" class="submit-button">Other Side</button>
     </form>
+    <button type="button" class="submit-button" onclick="refreshImage('even')">Reload Even</button>
+    <button type="button" class="submit-button" onclick="refreshImage('odd')">Reload Odd</button>
     <button type="submit" onclick="window.location.href='/';" class="submit-button">Done</button>
     {%- for coord, value in court_point_coords.items() %}
     <input type="hidden" id="{{coord}}X" name="{{coord}}X" value={{value[0]}}>
@@ -19,122 +19,12 @@
     {%- endfor %}
   </div>
 </div>
-
-<style media="all">
-/* input[type="button"], input[type="submit"] {
-  min-width: 80px;
-  font-size: 32px;
-  color: white;
-  background: #555555;
-  padding: 1px;
-  border: 2px solid #494949;
-} */
-.div_not_zoomed_class {
-  display: inline-block;
-  border: 1px solid #d4d4d4;
-  vertical-align: top;
-  image-rendering: pixelated;
-}
-</style>
 {%- endblock %}
 
-{%- block control %}
-{%- endblock %}
+{%- block page_specific_styles %} 
+   <link rel="stylesheet" href="/static/css/cam-calib.css">
+{%- endblock %} 
 
 {%- block page_specific_js %} 
-<script defer> 
-  // refer to: https://stackoverflow.com/questions/807878/how-to-make-javascript-execute-after-page-load
-  var notZoomedDiv;
-  var imgFilename;
-
-  // initialize:
-  function init() {
-    // console.log('The page has fully loaded');
-    // console.log('Version 7');
-    imgFilename = document.getElementById("image_path").value;
-  
-    notZoomedDiv = document.getElementById("div_not_zoomed");
-    notZoomedDiv.setAttribute("style","width:960px; height:600px");
-    notZoomedDivStyle = getComputedStyle(notZoomedDiv);
-    notZoomedDivBorderTotalWidth = (parseInt(notZoomedDivStyle.borderLeftWidth) || 0) * 2;
-    // console.log("notZoomedDivBorderTotalWidth=%d", notZoomedDivBorderTotalWidth);
-    notZoomedDivWidth = notZoomedDiv.offsetWidth - notZoomedDivBorderTotalWidth
-    notZoomedDivHeight = notZoomedDiv.offsetHeight - notZoomedDivBorderTotalWidth
-
-    // add timestamp to not have the browser use the cached image
-    var timestamp = new Date().getTime();
-    notZoomedDiv.style.backgroundImage = "url('" + imgFilename + "?t=" + timestamp + "')";
-    notZoomedDiv.style.backgroundSize = (notZoomedDivWidth) + "px " + (notZoomedDivHeight) + "px";
-
-    notZoomedCanvas = document.getElementById("canvas_not_zoomed");
-    notZoomedCanvas.width = notZoomedDivWidth;
-    notZoomedCanvas.height = notZoomedDivHeight;
-    notZoomedContext = notZoomedCanvas.getContext("2d");
-
-    drawCourtLines();
-  };
-
-  init();
-
-  async function refreshImage(evenOdd) {
-    var frame = evenOdd || "even"; //handle frame as an option
-    var side = 'left';
-    if (imgFilename.indexOf('ight') !== -1) {
-      side = 'right';
-    }
-    socket.emit("refresh_image", {'side': side, 'frame': frame});
-    let sleep_ms = 500
-    console.log(`Waiting ${sleep_ms} milliseconds...`);
-    await new Promise(r => setTimeout(r, sleep_ms));
-    var timestamp = new Date().getTime();
-    notZoomedDiv.style.backgroundImage = "url('" + imgFilename + "?t=" + timestamp + "')";
-    drawCourtLines();
-  }
-
-  function drawCourtLines() {
-    notZoomedContext.strokeStyle = "Chartreuse";
-    notZoomedContext.lineWidth = 1;
-
-    notZoomedContext.clearRect(0, 0, notZoomedCanvas.width, notZoomedCanvas.height);
-
-    /*  Couldn't get the following to work to get the image width
-    https://duckduckgo.com/?q=javascript+get+width+of+background+image&t=osx&ia=web
-    var imageSrc = notZoomedDiv.style.backgroundImage.replace(/url\(|\)$/ig, '');
-    console.log("imageSrc=%s", imageSrc);
-    var image = new Image();
-    image.src = imageSrc;
-    console.log("imageSrc=%s; imgWidth=%d", imageSrc, image.naturalWidth);
-    canvasDivisor = img.naturalWidth/notZoomedDivWidth;
-    */
-    canvasDivisor = 1280/notZoomedDivWidth;
-    // console.log("canvasDivisor=%f", canvasDivisor);
-
-    notZoomedContext.beginPath();
-    notZoomedContext.moveTo(parseInt(document.getElementById("FBLX").value/canvasDivisor), 
-                            parseInt(document.getElementById("FBLY").value/canvasDivisor));
-    notZoomedContext.lineTo(parseInt(document.getElementById("FBRX").value/canvasDivisor),
-                            parseInt(document.getElementById("FBRY").value/canvasDivisor));
-    notZoomedContext.lineTo(parseInt(document.getElementById("NSRX").value/canvasDivisor),
-                            parseInt(document.getElementById("NSRY").value/canvasDivisor));
-    notZoomedContext.lineTo(parseInt(document.getElementById("NBRX").value/canvasDivisor),
-                            parseInt(document.getElementById("NBRY").value/canvasDivisor));
-    notZoomedContext.lineTo(parseInt(document.getElementById("NBLX").value/canvasDivisor),
-                            parseInt(document.getElementById("NBLY").value/canvasDivisor));
-    notZoomedContext.lineTo(parseInt(document.getElementById("NSLX").value/canvasDivisor),
-                            parseInt(document.getElementById("NSLY").value/canvasDivisor));
-    notZoomedContext.lineTo(parseInt(document.getElementById("FBLX").value/canvasDivisor), 
-                            parseInt(document.getElementById("FBLY").value/canvasDivisor));
-    notZoomedContext.stroke();   
-
-    notZoomedContext.beginPath();
-    notZoomedContext.moveTo(parseInt(document.getElementById("NSRX").value/canvasDivisor),
-                            parseInt(document.getElementById("NSRY").value/canvasDivisor));
-    notZoomedContext.lineTo(parseInt(document.getElementById("NSCX").value/canvasDivisor),
-                            parseInt(document.getElementById("NSCY").value/canvasDivisor));
-    notZoomedContext.lineTo(parseInt(document.getElementById("NSLX").value/canvasDivisor),
-                            parseInt(document.getElementById("NSLY").value/canvasDivisor));
-    notZoomedContext.stroke();   
-  }
-
-</script>
+  <script src="/static/js/cam_calib.js" defer></script>
 {%- endblock %} 

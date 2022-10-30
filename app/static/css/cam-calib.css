@@ -1,42 +1,55 @@
 /* the following is used to faciltate: var coordinateArray = document.getElementsByClassName('invisible'); */
 /* .invisible {visibility: hidden;} */
 
+/* the following is necessary to keep the cancel/submit DIV to be inline with the calibration-controls DIV*/
 .calibration_controls {
   display: inline-block;
   border: 1px solid #d4d4d4;
 }
-.calibration_controls p, label, input[type="number"] {
-  font-size: 24px;
-  color: white;
-  background: #555555;
-  padding: 1px;
-  border: 2px solid #494949;
-  margin-top: 0;
-  margin-bottom: 0;
- }
- .calibration_controls input[type="button"], input[type="submit"] {
+
+.calibration_controls p, input[type="button"] {
+  font-size: 40px;
   min-width: 80px;
-  font-size: 32px;
-  color: white;
-  background: #555555;
-  padding: 1px;
-  border: 2px solid #494949;
-  display: inline-block;
 }
 
-.calibration_controls input[type="submit"]:disabled, submit[disabled] {
+.calibration_controls p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.calibration_controls input[type="submit"] {
+  font-size: 46px;
+ }
+
+.calibration_controls input[type="submit"]:disabled {
   background-color: #333333;
   color: #555555;
 }
+
+.calibration_controls input[type="button"], input[type="submit"] {
+  background: #555555;
+  /* border: 1px white; */
+  border-radius: 16px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+.calibration_controls input[type="submit"], input[type="button"], p {
+  display: inline-block;
+  /* color: white; */
+  /* padding: 1px; */
+  /* border: 2px solid #494949; */
+}
+
 .img-zoom-container {
   position: relative;
   vertical-align: top;
 }
+
+/* div_not_zoomed_class: width and height are specified in javascript for the webpage */
 .div_not_zoomed_class {
   display: inline-block;
   border: 1px solid #d4d4d4;
-  width: 640px;
-  height: 400px;
   vertical-align: top;
   image-rendering: pixelated;
 }
@@ -44,18 +57,31 @@
   position: absolute;
   /* border: 1px solid #d4d4d4; */
   border: 2px solid #702727;
-  /*set the size of the lens:*/
-  width: 16px;
-  height: 16px;
+  /* the following are set in javascript: */
+  /* width: 16px; */
+  /* height: 16px; */
 }
 .div_zoomed_8_class {
   vertical-align: top;
   display: inline-block;
   border: 1px solid #d4d4d4;
-  width: 256px;
-  height: 256px;
+  /* the following are set in javascript */
+  /* width: 256px; */
+  /* height: 256px; */
   cursor: None;
   image-rendering: pixelated;
   /* cursor: crosshair; */
   /* cursor: url('static/cursor-close.png'), auto; */
+}
+
+.blink_me {
+  animation: blinker 1.5s linear infinite;
+  background-color: #666666;
+}
+
+@keyframes blinker {
+  50% {
+    font-size: 38px;
+    /* opacity: 0; */
+  }
 }

@@ -3,393 +3,44 @@
 {%- block selections %}
 <div class="img-zoom-container">
   <div id="div_not_zoomed" class="div_not_zoomed_class">
-    <canvas id="canvas_not_zoomed" width="640" height="400"></canvas>
+    <canvas id="canvas_not_zoomed"></canvas>
   </div>
   <div id="div_zoomed_8" class="div_zoomed_8_class">
-    <canvas id="canvas_id_zoomed_8" width="256" height="256" ></canvas>
+    <canvas id="canvas_id_zoomed_8"></canvas>
+  </div>
+  <div id="div_submit_form" class="calibration_controls">
+    <form id="court_coordinates" action="/cam_calib_done" method="POST">
+      {%- for coord, value in court_point_coords.items() %}
+      <input type="hidden" id="{{coord}}X" name="{{coord}}X" value={{value[0]}}>
+      <input type="hidden" id="{{coord}}Y" name="{{coord}}Y" value={{value[1]}}>
+      {%- endfor %}
+    </form>
+    <input type="submit" value="Cancel" onclick="window.location.href='/';">
+    <input type="submit" id="submitButton" form="court_coordinates" value="Submit All Points" disabled>
+    <input type="hidden" id="image_path" value="{{image_path}}">
   </div>
   <div class="calibration_controls">
     <div>
       <input type="button" value="&#x21A5;" onclick="move_up()">
       <input type="button" value="&#x21A7;" onclick="move_down()">
-      <br>
       <input type="button" value="&#x21A4;" onclick="move_left()">
       <input type="button" value="&#x21A6;" onclick="move_right()">
-      <p id="current_x_y">Current X: ___ Y: ___</p>
-      <input type="button" id="setButton" value="Set ___" onclick="setPoint()">
-      <br>
-      <form id="court_coordinates" action="/cam_calib_done" method="POST">
-        {%- for coord, value in court_point_coords.items() %}
-        <input type="hidden" id="{{coord}}X" name="{{coord}}X" value={{value[0]}}>
-        <input type="hidden" id="{{coord}}Y" name="{{coord}}Y" value={{value[1]}}>
-        {%- endfor %}
-        <input type="submit" id="submitButton" value="Submit All Points" disabled>
-      </form>
-      <input type="hidden" id="image_path" value="{{image_path}}">
-    </div>
-    <hr style="height:2px;margin-top:2px;margin-bottom:2px">
-    <div>
-      <p>Key: </p>
-      <p>F=Far; N=Near</p>
-      <p>B=Base Line; S=Service</p>
-      <p>L=Left;R=Right;C=Center</p>
-      <hr style="height:2px;margin-block-start:0.1em;margin-block-end:0.1em">
-      <p id="FBL_X_Y">FBL X: ___ Y: ___</p>
-      <p id="FBR_X_Y">FBR X: ___ Y: ___</p>
-      <p id="NSL_X_Y">NSL X: ___ Y: ___</p>
-      <p id="NSC_X_Y">NSC X: ___ Y: ___</p>
-      <p id="NSR_X_Y">NSR X: ___ Y: ___</p>
-      <p id="NBL_X_Y">NBL X: ___ Y: ___</p>
-      <p id="NBR_X_Y">NBR X: ___ Y: ___</p>
+      <!-- the 270 width of the current pixel & 462 width of the current point label were set by experiment (font size=40)-->
+      <p id="current_x" style="min-width:150px;"></p>
+      <p id="current_y" style="min-width:120px;"></p>
+      <hr style="height:2px;margin-top:2px;margin-bottom:2px">
+      <p id="current_point_label" style="min-width:462px;" class="blink_me"></p>
+      <input type="button" id="setButton" value="Set" onclick="setPoint()">
+      <input type="button" id="skipButton" value="Skip" onclick="goToNextPoint()">
     </div>
   </div>
 </div>
-
 {%- endblock %}
 
-{%- block control %}
-{%- endblock %}
+{%- block page_specific_styles %} 
+   <link rel="stylesheet" href="/static/css/cam-calib.css">
+{%- endblock %} 
 
 {%- block page_specific_js %} 
-
-<script>
-  // modified from: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_image_zoom
-  var zoomed8Div; //where the zoomed canvas is displayed; the canvas has the image zoomed as a background, plus a cursor
-  var zoomed8Canvas;   //used in moveLensBoundaryCheck()
-  var zoomed8Context;  //used in drawCursorInZoom8()
-  var currentCoordinate;
-  var coordinateArray;
-
-  var lensDiv; //this is the square drawn on the image to indicate the zoomed area
-  var lensDivBorderTotalWidth;  //set in imageZoom(), used in moveLensByTouch() to not have the lens go outside the image
-
-  var zoomRatio; //since zooming a square, the zoom ratio is the same for both x & y
-  var backgroundMax = {};
-  var background = {top: 0, left: 0};
-  var centerOfZoomed = {x: 16, y: 16};
- 
-  // initialize:
-  window.addEventListener('load', (event) => {
-    // console.log('The page has fully loaded');
-    // console.log('Version 7');
-    // imageZoom("img_not_zoomed", "div_zoomed_8");
-    imageZoom("div_zoomed_8");
-    zoomed8Canvas = document.getElementById("canvas_id_zoomed_8");
-    zoomed8Context = zoomed8Canvas.getContext("2d");
-
-    drawCursorInZoom8();
-
-    // coordinateArray = document.getElementsByClassName('invisible');
-    coordinateArray = document.getElementById("court_coordinates").elements;
-    // console.dir(coordinateArray, {'maxArrayLength': null});
-    currentCoordinate = 0;
-    setPointButtonLabel();
-  });
-
-  function setPointButtonLabel() {
-    let coordinateId = coordinateArray[currentCoordinate].id
-    // console.log("coordinateId=%s", coordinateId)
-    let label = coordinateId.substring(0, 3).toUpperCase();
-    let setButton = document.getElementById("setButton");
-    setButton.value = `Set ${label}`;
-  }
-
-  function imageZoom(targetDivID) {
-    image_source = document.getElementById("image_path").value
-
-    notZoomedDiv = document.getElementById("div_not_zoomed");
-    notZoomedCanvas = document.getElementById("canvas_not_zoomed");
-    notZoomedContext = notZoomedCanvas.getContext("2d");
-
-    notZoomedDivStyle = getComputedStyle(notZoomedDiv);
-    notZoomedDivBorderTotalWidth = (parseInt(notZoomedDivStyle.borderLeftWidth) || 0) * 2;
-    notZoomedDivWidth = notZoomedDiv.offsetWidth - notZoomedDivBorderTotalWidth
-    notZoomedDivHeight = notZoomedDiv.offsetHeight - notZoomedDivBorderTotalWidth
-
-    // add timestamp to not have the browser use the cached image
-    var timestamp = new Date().getTime();
-    notZoomedDiv.style.backgroundImage = "url('" + image_source + "?t=" + timestamp + "')";
-    notZoomedDiv.style.backgroundSize = (notZoomedDiv.offsetWidth-2) + "px " + (notZoomedDiv.offsetHeight-2) + "px";
-    // console.log("notZoomedDiv: width=%d height=%d backgroundSize=%s", notZoomedDiv.offsetWidth, notZoomedDiv.offsetHeight, notZoomedDiv.style.backgroundSize);
- 
-    // Create & insert lens
-    lensDiv = document.createElement("DIV");
-    // lens_class defines the pixel height/width of the lens
-    lensDiv.setAttribute("class", "lens_class");
-    lensDiv.id = "LENS"
-    notZoomedDiv.parentElement.insertBefore(lensDiv, notZoomedDiv);
-
-    lensDivStyle = getComputedStyle(lensDiv);
-    lensDivBorderTotalWidth = (parseInt(lensDivStyle.borderLeftWidth) || 0) * 2;
-
-    zoomed8Div = document.getElementById(targetDivID);
-    zoomed8DivStyle = getComputedStyle(zoomed8Div);
-    let zoomed8DivBorderTotalWidth = (parseInt(zoomed8DivStyle.borderLeftWidth) || 0) *2;
-    // console.log("lensDivBorderTotalWidth: %d   zoomed8DivBorderTotalWidth: %d", lensDivBorderTotalWidth, zoomed8DivBorderTotalWidth);
-
-    // zoomRatio is the ratio of the zoomed8Div and the lens; since the lens is square, only calculate based on width
-    zoomRatio = (zoomed8Div.offsetWidth - zoomed8DivBorderTotalWidth) / (lensDiv.offsetWidth - lensDivBorderTotalWidth);
-    // console.log("zoomed8Div.offsetWidth & Height: %d x %d   lensDiv.offsetWidth & Height: %d x %d",
-    //   zoomed8Div.offsetWidth, zoomed8Div.offsetHeight, lensDiv.offsetWidth, lensDiv.offsetHeight);
-    // console.log("zoomRatio=%d", zoomRatio);
-
-    // Set background properties for the zoomed8Div !! add timestamp to not have the browser use the cached image
-    var timestamp = new Date().getTime();
-    zoomed8Div.style.backgroundImage = "url('" + image_source + "?t=" + timestamp + "')";
-    // NOTE: the notZoomedDivWidth.width (image.width) and height is 1/2 the full size image, since the div height is set to 400 in the html
-    zoomed8Div.style.backgroundSize = (notZoomedDivWidth * zoomRatio) + "px " + (notZoomedDivHeight * zoomRatio) + "px";
-    // console.log("img: width=%d height=%d zoomed8Div.backgroundSize=%s", notZoomedDivWidth, notZoomedDivHeight, zoomed8Div.style.backgroundSize);
-
-    //The max is doubled in order to be able to move the center pixel by pixel
-    backgroundMax = {
-      left: 2*(notZoomedDivWidth - lensDiv.offsetWidth + lensDivBorderTotalWidth),
-      top:  2*(notZoomedDivHeight - lensDiv.offsetHeight + lensDivBorderTotalWidth)
-    };
-    // console.log("backgroundMax left=%d top=%s ", backgroundMax.left, backgroundMax.top);
-
-    /* Execute a function when someone moves the cursor over the image: */
-    lensDiv.addEventListener("mousedown", moveLensByTouch);
-    notZoomedDiv.addEventListener("mousedown", moveLensByTouch);
-    /* And also for touch screens: */
-    lensDiv.addEventListener("touchmove", moveLensByTouch);
-    notZoomedDiv.addEventListener("touchmove", moveLensByTouch);
-  }
-
-  function drawCursorInZoom8() {
-    zoomed8Context.clearRect(0, 0, zoomed8Canvas.width, zoomed8Canvas.height);
-    // zoomed8Context.beginPath();
-    // // x, y, radius, starting angle, ending angle
-    // zoomed8Context.arc((x_px_selector-3), (y_px_selector-3), 6, 0, 2 * Math.PI);
-    // zoomed8Context.lineWidth = 3;
-    // zoomed8Context.strokeStyle = "Chartreuse";
-    // zoomed8Context.setLineDash([2]);
-    // zoomed8Context.stroke();
-    let len_half_line = 8;
-    zoomed8Context.beginPath();
-    // zoomed8Context.setLineDash([2]);
-
-    /*
-      with a square 'lens' of 256x256, and the cursor always being in the middle, then there is no 'x/y_px_selector'
-      Instead the one can use center.x and center.y, where these are locals = 'zoomed8Canvas.width/2'
-    */
-    cursorPosition = {x: zoomed8Canvas.width/2, y: zoomed8Canvas.height/2}
-    zoomed8Context.strokeStyle = "Chartreuse";
-    zoomed8Context.lineWidth = 1;
-    zoomed8Context.moveTo(cursorPosition.x-len_half_line, cursorPosition.y);
-    zoomed8Context.lineTo(cursorPosition.x+len_half_line, cursorPosition.y);
-    zoomed8Context.moveTo(cursorPosition.x, cursorPosition.y-len_half_line);
-    zoomed8Context.lineTo(cursorPosition.x, cursorPosition.y+len_half_line);
-    zoomed8Context.stroke();   
-
-    zoomed8Context.beginPath();
-    zoomed8Context.strokeStyle = "DarkGreen";
-    zoomed8Context.lineWidth = 1;
-    zoomed8Context.moveTo(cursorPosition.x-len_half_line, cursorPosition.y-len_half_line);
-    zoomed8Context.lineTo(cursorPosition.x+len_half_line, cursorPosition.y+len_half_line);
-    zoomed8Context.moveTo(cursorPosition.x-len_half_line, cursorPosition.y+len_half_line);
-    zoomed8Context.lineTo(cursorPosition.x+len_half_line, cursorPosition.y-len_half_line);
-    zoomed8Context.stroke();   
-  }
-
-  // cursor move functions
-  function move_down() {
-    background.top += 1;
-    moveLensBoundaryCheck();
-  }
-  function move_up() {
-    background.top -= 1;
-    moveLensBoundaryCheck();
-  }
-  function move_right() {
-    background.left += 1;
-    moveLensBoundaryCheck();
-  }
-  function move_left() {
-    background.left -= 1;
-    moveLensBoundaryCheck();
-  }
-
-  function setPoint() {
-    // the point's X/Y is equal to the center of the zoomed image which is set in moveLensBoundaryCheck()
-    // console.log("background left=%d top=%d  centerOfZoomed x=%d y=%d  canvas.width=%d", 
-    //   background.left, background.top, centerOfZoomed.x, centerOfZoomed.y, zoomed8Canvas.width);
-
-    // console.dir(coordinateArray, {'maxArrayLength': null});
-    var coordinateId = coordinateArray[currentCoordinate].id
-    let courtPointElementId = coordinateId.substring(0,3) + "_X_Y"
-    let courtPointElement = document.getElementById(courtPointElementId);
-    courtPointElement.innerText = `${coordinateId.substring(0,3).toUpperCase()}: X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
-    document.getElementById(coordinateId).value = centerOfZoomed.x;
-    // var coord = {[coordinateId]: centerOfZoomed.x};
-    // socket.emit("coord", coord);
-    // now set y value
-    currentCoordinate++;
-    coordinateId = coordinateArray[currentCoordinate].id
-    document.getElementById(coordinateId).value = centerOfZoomed.y;
-    // coord = {[coordinateId]: centerOfZoomed.y};
-    // socket.emit("coord", coord);
-
-    currentCoordinate++;
-    if (currentCoordinate >= 13) {
-      currentCoordinate = 0;
-      // all points are set, so enable submit button
-      let submitButton = document.getElementById("submitButton");
-      submitButton.disabled = false;
-    }
-    // console.log(`currentCoordinate=${currentCoordinate} coordinateArray.length=${coordinateArray.length}` );
-    setPointButtonLabel();
-
-    // console.dir(coordinateArray, {'maxArrayLength': null});
-  
-    notZoomedContext.strokeStyle = "Chartreuse";
-    notZoomedContext.lineWidth = 1;
-    // draw lines along court line in non-zoomed canvas
-    if (currentCoordinate == 2) {
-      notZoomedContext.clearRect(0, 0, notZoomedCanvas.width, notZoomedCanvas.height);
-    }
-    else if (currentCoordinate == 4) {
-      notZoomedContext.beginPath(); // FBR to FBL
-      notZoomedContext.moveTo(document.getElementById(coordinateArray[0].id).value/2, 
-                              document.getElementById(coordinateArray[1].id).value/2);
-      notZoomedContext.lineTo(document.getElementById(coordinateArray[2].id).value/2,
-                              document.getElementById(coordinateArray[3].id).value/2);
-      notZoomedContext.stroke();   
-    }
-    else if (currentCoordinate == 6) {
-      notZoomedContext.beginPath();  // FBL to NSL
-      notZoomedContext.moveTo(document.getElementById(coordinateArray[0].id).value/2, 
-                              document.getElementById(coordinateArray[1].id).value/2);
-      notZoomedContext.lineTo(document.getElementById(coordinateArray[4].id).value/2,
-                              document.getElementById(coordinateArray[5].id).value/2);
-      notZoomedContext.stroke();   
-    }
-    else if (currentCoordinate == 8) {
-      notZoomedContext.beginPath();  // NSL to NSC
-      notZoomedContext.moveTo(document.getElementById(coordinateArray[4].id).value/2, 
-                              document.getElementById(coordinateArray[5].id).value/2);
-      notZoomedContext.lineTo(document.getElementById(coordinateArray[6].id).value/2,
-                              document.getElementById(coordinateArray[7].id).value/2);
-      notZoomedContext.stroke();   
-    }
-    else if (currentCoordinate == 10) { 
-      notZoomedContext.beginPath(); // NSC to NSR
-      notZoomedContext.moveTo(document.getElementById(coordinateArray[6].id).value/2, 
-                              document.getElementById(coordinateArray[7].id).value/2);
-      notZoomedContext.lineTo(document.getElementById(coordinateArray[8].id).value/2,
-                              document.getElementById(coordinateArray[9].id).value/2);
-      notZoomedContext.stroke();   
-      notZoomedContext.beginPath(); // FBL to NSR
-      notZoomedContext.moveTo(document.getElementById(coordinateArray[2].id).value/2, 
-                              document.getElementById(coordinateArray[3].id).value/2);
-      notZoomedContext.lineTo(document.getElementById(coordinateArray[8].id).value/2,
-                              document.getElementById(coordinateArray[9].id).value/2);
-      notZoomedContext.stroke();   
-    }
-    else if (currentCoordinate == 12) { 
-      notZoomedContext.beginPath(); // NSL to NBL
-      notZoomedContext.moveTo(document.getElementById(coordinateArray[4].id).value/2, 
-                              document.getElementById(coordinateArray[5].id).value/2);
-      notZoomedContext.lineTo(document.getElementById(coordinateArray[10].id).value/2,
-                              document.getElementById(coordinateArray[11].id).value/2);
-      notZoomedContext.stroke();   
-    }
-    else if (currentCoordinate == 0) { 
-      notZoomedContext.beginPath(); // NBL to NBR
-      notZoomedContext.moveTo(document.getElementById(coordinateArray[10].id).value/2, 
-                              document.getElementById(coordinateArray[11].id).value/2);
-      notZoomedContext.lineTo(document.getElementById(coordinateArray[12].id).value/2,
-                              document.getElementById(coordinateArray[13].id).value/2);
-      notZoomedContext.stroke();   
-      notZoomedContext.beginPath(); // NSR to NBR
-      notZoomedContext.moveTo(document.getElementById(coordinateArray[8].id).value/2, 
-                              document.getElementById(coordinateArray[9].id).value/2);
-      notZoomedContext.lineTo(document.getElementById(coordinateArray[12].id).value/2,
-                              document.getElementById(coordinateArray[13].id).value/2);
-      notZoomedContext.stroke();   
-    }
-
-  }
-
-  // zoomed image (lens) displays the rectangle that has been touched
-  function moveLensByTouch(e) {
-    var pos, x, y;
-    /* Prevent any other actions that may occur when moving over the image */
-    e.preventDefault();
-    /* Get the cursor's x and y positions: */
-    pos = getCursorPos(e);
-    console.log("touch cursor x=%d  y=%d", pos.x, pos.y);
-
-    /* Calculate the top & left of the lens - placing the cursor at the center of the lens
-       x -> horizontal left to right, e.g. Width.
-      img.width & height do NOT include the border
-      lensDiv.offsetHeight & Width DO include the border
-      Double the pos.x/y to achieve pixel granularity when moving the zoom center using the buttons
-    */
-    background.top = (2*pos.y) - (lensDiv.offsetWidth);
-    background.left = (2*pos.x) - (lensDiv.offsetHeight);
-    moveLensBoundaryCheck();
-  }
-
-  function moveLensBoundaryCheck() {
-      /* Prevent the lens from being positioned outside the image:  (BUT: OK to have lens border outside the image
-       on the zero sides, allow the lens to overlap the image border - hence limit to -1
-       on the other side, have the lens be inside the img.height/widht - the lens size not including the border
-    */
-    if (background.top < 0) {
-      background.top = 0;
-    }
-    if (background.top > backgroundMax.top) {
-      background.top = backgroundMax.top;
-    }
-    if (background.left < 0) {
-      background.left = 0;
-    }
-    if (background.left > backgroundMax.left) {
-      background.left = backgroundMax.left;
-    }
-
-    //halve the background to position the lens
-    // the lensBorderOffset was determined by experimentation on what looked good; lensDivBorderTotalWidth=4 defined in lens_class
-    let lensBorderOffset = lensDivBorderTotalWidth/4 - 1;
-    lens_top = background.top/2 + lensBorderOffset;
-    lens_left = background.left/2 + lensBorderOffset;
-    // reposition the lens:
-    lensDiv.style.left = lens_left + "px";
-    lensDiv.style.top = lens_top + "px";
-
-    // Display what the lens "sees" by positioning the image position in the background of the DIV
-    // console.log("previous background position=%s", zoomed8Div.style.backgroundPosition);
-    //In order to move 1 pixel at time, the zoomRatio needs to be halved since the background.x/y doubled
-    var backgroundCoords = {x: (background.left * zoomRatio/2), y: (background.top * zoomRatio/2)};
-    zoomed8Div.style.backgroundPosition = "-" + backgroundCoords.x + "px -" + backgroundCoords.y + "px";
-    // console.log("background left=%d  top=%d    lens left: %d  top: %d", background.left, background.top, lens_left, lens_top);
-    // console.log(" updated background position=%s", zoomed8Div.style.backgroundPosition);
-
-    // the 1280x800 image is displayed at 640x400, which is what the background.left/top range is
-    // The divide by 16 is to get 1/2 the width/height, and then divide by 8, which is the amount the image is zoomed
-    centerOfZoomed.x = background.left + (zoomed8Canvas.width/16);
-    centerOfZoomed.y = background.top + (zoomed8Canvas.height/16);
-    let current_x_y_element = document.getElementById('current_x_y');
-    current_x_y_element.innerText = `Current X: ${centerOfZoomed.x} Y: ${centerOfZoomed.y}`;
-  }
-
-  // get the rectangle that's been touched coordinates
-  function getCursorPos(e) {
-    var a, x = 0, y = 0;
-    e = e || window.event;
-    /* Get the x and y positions of the image: */
-    a = notZoomedDiv.getBoundingClientRect();
-
-    // console.log("getBoundingClientRect: %s", JSON.stringify(a));
-    // "{\"x\":16,\"y\":106,\"width\":642,\"height\":402,\"top\":106,\"right\":658,\"bottom\":508,\"left\":16}"
-    // console.log("e.page X=%d Y=%d  a left=%d top=%d  window.pageOffset X=%d Y=%d", e.pageX, e.pageY, a.left, a.top, window.pageXOffset, window.pageYOffset);
-    // Calculate the cursor's x and y current_x_y, relative to the image:
-    x = e.pageX - a.left;
-    y = e.pageY - a.top;
-    // Consider any page scrolling: for Boomer, these should always be zero
-    x = x - window.pageXOffset;
-    y = y - window.pageYOffset;
-    return {x : x, y : y};
-  }
-</script>
+  <script src="/static/js/cam_calib.js" defer></script>
 {%- endblock %} 
