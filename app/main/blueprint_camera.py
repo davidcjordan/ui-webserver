@@ -133,23 +133,23 @@ def cam_location():
                # the fence should be 21 ft from the baseline, but allowing smaller
                if cam_side == CAM_LABEL[cam_e.LEFT.value]:
                   # A should be short; B should be long for on LEFT side
-                  position_options[main_key]["min"] = 10
-                  position_options[main_key]["max"] = 30
+                  position_options[main_key]["min"] = 0
+                  position_options[main_key]["max"] = 40
                else:
-                  position_options[main_key]["min"] = 20
-                  position_options[main_key]["max"] = 70
+                  position_options[main_key]["min"] = 0
+                  position_options[main_key]["max"] = 80
             if i == Measurement(1):
                position_options[main_key]["start_div"] = "B"
                if cam_side == CAM_LABEL[cam_e.RIGHT.value]:
                   # A should be short; B should be long for on RIGHT side
-                  position_options[main_key]["min"] = 10
+                  position_options[main_key]["min"] = 0
                   position_options[main_key]["max"] = 30
                else:
-                  position_options[main_key]["min"] = 20
-                  position_options[main_key]["max"] = 70
+                  position_options[main_key]["min"] = 0
+                  position_options[main_key]["max"] = 80
             if i == Measurement(2):
                position_options[main_key]["start_div"] = "Height"
-               position_options[main_key]["min"] = 7
+               position_options[main_key]["min"] = 6
                position_options[main_key]["max"] = 20
          if j == Units(1):
                position_options[main_key]["min"] = 0
