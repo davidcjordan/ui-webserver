@@ -221,7 +221,7 @@ def send_start_to_base(mode_dict):
    #  {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: id}
    #  {MODE_PARAM: base_mode_e.WORKOUT.value, ID_PARAM: id}
    #  {MODE_PARAM: base_mode_e.GAME.value}
-   #  {MODE_PARAM: base_mode_e.CREEP_CALIBRATION.value, ID_PARAM: id}
+   #  {MODE_PARAM: base_mode_e.CALIBRATION.value, ID_PARAM: id}
    
    try:
       static_vars.mode_dict = copy.deepcopy(mode_dict)
@@ -232,8 +232,8 @@ def send_start_to_base(mode_dict):
    if not rc:
       current_app.logger.error(f"PUT Mode {mode_dict} failed, code: {code}")
    else:
-      if mode_dict[MODE_PARAM] == base_mode_e.CREEP_CALIBRATION.value:
-         rc, code = send_msg(PUT_METHOD, FUNC_RSRC, {FUNC_CREEP: mode_dict[ID_PARAM]})
+      if mode_dict[MODE_PARAM] == base_mode_e.CALIBRATION.value:
+         rc, code = send_msg(PUT_METHOD, FUNC_RSRC, {FUNC_CALIB: mode_dict[ID_PARAM]})
          if not rc:
             current_app.logger.error(f"function '{sys._getframe(0).f_code.co_name}': PUT Function failed, code: {code}")
       else:

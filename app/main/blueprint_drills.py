@@ -34,7 +34,7 @@ except:
 
 WORKOUT_ID = 'workout_id'
 DRILL_ID = 'drill_id' # indicates drill_id for thrower calibration, which doesn't use a POST
-CREEP_ID = "creep_type"
+CALIB_ID = "motor_type"
 ONCLICK_MODE_KEY = 'mode'
 ONCLICK_MODE_WORKOUT_VALUE = 'workouts'
 
@@ -412,10 +412,12 @@ def thrower_calib():
    from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
 
    # value is the label of the button
+   # !!NOTE: the label (value) is different than the param_value for ROTARY/ELEVATOR
    onclick_choice_list = [\
-      {"html_before": "Motor Creep:", \
-         "value": ROTARY_CALIB_NAME.title(), "onclick_url": CREEP_CALIB_URL, "param_name": CREEP_ID,"param_value": ROTARY_CALIB_NAME}, \
-      {"value": ELEVATOR_CALIB_NAME.title(), "onclick_url": CREEP_CALIB_URL, "param_name": CREEP_ID,"param_value": ELEVATOR_CALIB_NAME, \
+      {"html_before": "Motor:", \
+         "value": UI_ROTARY_CALIB_NAME.title(), "onclick_url": MOTOR_CALIB_URL, "param_name": CALIB_ID,"param_value": ROTARY_CALIB_NAME}, \
+      {"value": UI_ELEVATOR_CALIB_NAME.title(), "onclick_url": MOTOR_CALIB_URL, "param_name": CALIB_ID,"param_value": ELEVATOR_CALIB_NAME}, \
+      {"value": UI_WHEEL_CALIB_NAME.title(), "onclick_url": MOTOR_CALIB_URL, "param_name": CALIB_ID,"param_value": UI_WHEEL_CALIB_NAME, \
           "html_after": html_horizontal_rule}, \
       {"value": "All", "onclick_url": DRILL_URL, "param_name": WORKOUT_ID,"param_value": THROWER_CALIB_WORKOUT_ID} \
    ]
@@ -431,28 +433,28 @@ def thrower_calib():
       footer_center = display_customization_dict['title'])
 
 
-@blueprint_drills.route(CREEP_CALIB_URL, methods=DEFAULT_METHODS)
-def creep_calib():
+@blueprint_drills.route(MOTOR_CALIB_URL, methods=DEFAULT_METHODS)
+def motor_calib():
    # enter page from thrower calibration page
    # extract which button was pushed (rotary or elevator and issue command)
 
    from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
 
    # app.logger.debug(f"select request: {request}")
-   creep_type = request.args.get(CREEP_ID)
-   current_app.logger.debug(f"request for creep; type: {creep_type}")
+   motor_type = request.args.get(CALIB_ID)
+   current_app.logger.debug(f"request for motor; type: {motor_type}")
 
-   if creep_type is None:
-      current_app.logger.error(f"request for creep; type is None")
+   if motor_type is None:
+      current_app.logger.error(f"request for motor; type is None")
       #TODO: do a redirect to an error page
 
-   base_mode_dict = {MODE_PARAM: base_mode_e.CREEP_CALIBRATION.value, ID_PARAM: creep_type}
+   base_mode_dict = {MODE_PARAM: base_mode_e.CALIBRATION.value, ID_PARAM: motor_type}
    send_start_to_base(base_mode_dict)
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       page_title = "Motor Calibration", \
       installation_icon = display_customization_dict['icon'], \
-      message = f"{creep_type.title()} creep calibration in progress.", \
+      message = f"{motor_type.title()} motor calibration in progress.", \
       footer_center = display_customization_dict['title'])
 
 

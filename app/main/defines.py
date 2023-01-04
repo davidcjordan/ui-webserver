@@ -10,7 +10,7 @@ CAM_CALIB_DONE_URL = '/cam_calib_done'
 SETTINGS_URL = '/settings'
 FAULTS_URL = '/faults'
 THROWER_CALIB_SELECTION_URL = '/thrower_calibration'
-CREEP_CALIB_URL = '/creep_calib'
+MOTOR_CALIB_URL = '/motor_calib'
 BEEP_SELECTION_URL = '/beep_selection'
 CAM_VERIF_URL = '/cam_verif'
 DONE_URL = '/done'
@@ -41,6 +41,10 @@ CAM_SIDE_ID = "cam_side"
 CAM_SIDE_LEFT_LABEL = 'Left'
 CAM_SIDE_RIGHT_LABEL = 'Right'
 
+#ELEVATOR & ROTARY_CALIB_NAME are defined in calc_ball
+UI_WHEEL_CALIB_NAME = "WHEELS"
+UI_ROTARY_CALIB_NAME = "ROTARY"
+UI_ELEVATOR_CALIB_NAME = "ELEVATOR"
 
 user_dir = '/home/pi'
 boomer_dir = 'boomer'

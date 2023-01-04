@@ -23,17 +23,16 @@ Currently another repository has to be cloned: https://github.com/davidcjordan/c
 
 should be cloned to /home/pi/repos.  web-ctrl.py uses python scripts in this repository to send messages to the base in order to set/get information.
 
-NEW (using gunicorn within a virtual environment):
+NEW (using gunicorn within a virtual environment) - THIS IS DONE by after_boot.sh (boomer_supporting_files
 ```
 python3 -m venv venv
 . venv/bin/activate
 python3 -m pip install gunicorn==20.1.0 eventlet==0.30.2
 python3 -m pip install flask
-#python3 -m pip install flask-socketio <-appears to be included with flask
+python3 -m pip install flask-socketio <-appears to be included with flask
 ```
 
 OLD (using waitress):
-The following python packages have to be installed:
 ```
 python3 -m pip install flask-socketio
 python3 -m pip install eventlet
