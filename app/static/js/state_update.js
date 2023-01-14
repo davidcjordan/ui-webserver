@@ -33,18 +33,32 @@ socket.on('state_update', function(data) {
     }
     else if (key === 'base_state') {
       var IdToUpdate = document.getElementById(key);
+      var Idmessage = document.getElementById("header-mess"); //!! TODO - renable
 
       if (IdToUpdate == null) {
         console.log("error: element=" + key + " was not found on page")
       } else {
-        IdToUpdate.innerHTML = "Status: " + data[key];
+        if (data[key] == 'Outofballs') {
+          IdToUpdate.innerHTML = "Status: Out Of Balls";
+          if (Idmessage != null) {
+            Idmessage.innerHTML = "Add balls to hopper";
+          }
+          // } else {
+          //   console.log("No header-message element")
+          // }
+        } else {
+          IdToUpdate.innerHTML = "Status: " + data[key];
+          if (Idmessage != null) {
+            Idmessage.innerHTML = "";
+          }
+        }
         // set pause/resume icon on game/drill/workout active pages
         var IdPauseResume = document.getElementById("pause-resume");
         if (IdPauseResume != null)
         {
           var classPauseResume = document.getElementById("pause-resume").className;
           // console.log('classPauseResume:' + classPauseResume)
-          if (data[key] == 'Paused') {
+          if ((data[key] == 'Paused') || (data[key] == 'Outofballs')) {
             if (classPauseResume.endsWith("pause")) {
               IdPauseResume.classList.toggle("pause") //removes paused
               IdPauseResume.classList.toggle("resume") //adds resume
