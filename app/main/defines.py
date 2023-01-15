@@ -53,4 +53,5 @@ site_data_dir = 'this_boomers_data'
 settings_dir = f'{user_dir}/{boomer_dir}/{site_data_dir}'
 execs_dir = f"{user_dir}/{boomer_dir}/execs"
 recents_filename = "recents.json"
+custom_drill_list_filename = "custom_drill_list.json"
 settings_filename = "drill_game_settings.json"

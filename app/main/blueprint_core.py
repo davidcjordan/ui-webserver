@@ -5,6 +5,7 @@
 
 from flask import render_template, request, Markup, send_from_directory, Blueprint, current_app #, url_for
 import json
+import os.path
 
 # print(f"blueprint_core_name={__name__}") = app.main.blueprint_core
 blueprint_core = Blueprint('blueprint_core', __name__)
@@ -65,10 +66,15 @@ def index():
    # TODO: fix disable CSS
    # onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL, "disabled": 1, "id": "Done"}], \
 
+   if (os.path.exists(f'{settings_dir}/{custom_drill_list_filename}')):
+      drill_list_button_title = "My Drills"
+   else:
+      drill_list_button_title = "Recents"
+
    onclick_choice_list = [\
       {"html_before": "Game:", "value": "Play", "onclick_url": GAME_URL, "id": "game_button"},\
       {"value": "Options", "onclick_url": GAME_OPTIONS_URL, "id": "game_button", "html_after": html_horizontal_rule},\
-      {"html_before": "Drill:", "value": "Recents", "onclick_url": RECENTS_URL},\
+      {"html_before": "Drill:", "value": drill_list_button_title, "onclick_url": RECENTS_URL},\
       {"value": "Select", "onclick_url": DRILL_SELECT_TYPE_URL},\
       {"value": "Beep", "onclick_url": BEEP_SELECTION_URL, "html_after": html_horizontal_rule},\
       {"value": "Workouts", "onclick_url": SELECT_URL, \

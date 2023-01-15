@@ -46,6 +46,7 @@ MODE_WORKOUT_SELECTED = "Workout #"
 drills_dict = {} # holds copies of drills read in from DRLxxx.csv files; keys are the drill numbers
 workouts_dict = {} #as above, but using WORKxxx.csv files
 recent_drill_list = []
+custom_drill_list = []
 
 radio_button_disable_js = [Markup('<script src="/static/js/radio-button-disable.js" defer></script>')]
 get_drill_info_js = [Markup('<script src="/static/js/get_drill_info.js" defer></script>')]
@@ -120,12 +121,16 @@ def recents():
    selection_list = []
 
    try:
-      with open(f'{settings_dir}/{recents_filename}') as f:
+      with open(f'{settings_dir}/{custom_drill_list_filename}') as f:
          recent_drill_list = json.load(f)
    except:
-      current_app.logger.error(f"Error reading '{settings_dir}/{recents_filename}'; using defaults")
-      #TODO: read a factory defaults from drill directory
-      recent_drill_list = default_recents_drill_list
+      try:
+         with open(f'{settings_dir}/{recents_filename}') as f:
+            recent_drill_list = json.load(f)
+      except:
+         current_app.logger.error(f"Error reading '{settings_dir}/{recents_filename}'; using defaults")
+         #TODO: read a factory defaults from drill directory
+         recent_drill_list = default_recents_drill_list
 
    for drill_id in recent_drill_list:
       drill_id_str = f"{drill_id:03}"
