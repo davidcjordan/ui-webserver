@@ -83,10 +83,10 @@ beep_mode_choices = [\
       {'label': stroke_category.Mini_Tennis.name.replace("_","-"), 'value': stroke_category.Mini_Tennis.value, 'enable': 0} \
    ], 'disables': beep_options.Stroke.name}, \
    {'name': beep_options.Stroke.name, 'legend':beep_options.Stroke.name, 'buttons':[ \
-      {'label': balltype_e.FLAT.name.title(), 'value': 0, 'checked' : 1}, \
-      {'label': balltype_e.LOOP.name.title(), 'value': 1}, \
-      {'label': balltype_e.CHIP.name.title(), 'value': 2}, \
-      {'label': balltype_e.TOPSPIN.name.title(), 'value': 3}, \
+      {'label': balltype_e.TOPSPIN .name.title(), 'value': 0, 'checked' : 1}, \
+      {'label': balltype_e.FLAT.name.title(), 'value': 1}, \
+      {'label': balltype_e.LOOP.name.title(), 'value': 2}, \
+      {'label': balltype_e.CHIP.name.title(), 'value': 3}, \
       {'label': "Random", 'value': 4} \
    ]}, \
    {'name': beep_options.Difficulty.name,'legend':beep_options.Difficulty.name, 'buttons':[ \
@@ -325,10 +325,11 @@ def drill():
       # for key in request.form:
       #    current_app.logger.info(f"Beep choice {key} = {request.form[key]}")
       # example beep drill ranges - consult the drills repository for the real thing:
-      #mini-tennis: 901-905; volley: 906-910; 911-915 flat, 916-920 loop, 921-925 chip, 926-930 topspin, 931-935 random
+      #OLD: mini-tennis: 901-905; volley: 906-910; 911-915 flat, 916-920 loop, 921-925 chip, 926-930 topspin, 931-935 random
+      #NEW: mini-tennis: 901-905; volley=906; flat=907 loop=908 chip=909 topspin=910 random=911
       #set defaults if missing keys in form:
       stroke_type_offset = 0 #default to mini-tennis
-      difficulty_offset = 2
+      difficulty_offset = 0 # only mini-tennis uses difficulty
 
       if beep_options.Difficulty.name in request.form:
          difficulty_offset = int(request.form[beep_options.Difficulty.name])
@@ -337,15 +338,17 @@ def drill():
          current_app.logger.warning(f"Beep drill option: {beep_options.Difficulty.name} not in request.form")
 
       if beep_type_value is stroke_category.Volley.value:
+         difficulty_offset = 0
          stroke_type_offset = 5
 
       if beep_type_value is stroke_category.Ground.value:
+         difficulty_offset = 0
          if beep_options.Stroke.name in request.form:
             stroke_type = int(request.form[beep_options.Stroke.name])
          else:
             current_app.logger.warning(f"Beep drill option: {beep_options.Stroke.name} not in request.form")
             stroke_type = 1
-         stroke_type_offset = (stroke_type * 5) + 10
+         stroke_type_offset = stroke_type + 6
          # current_app.logger.info(f"Ground beep type, so using stroke_type={beep_stroke(stroke_type).name}")
 
       id = BEEP_DRILL_NUMBER_START + difficulty_offset + stroke_type_offset
