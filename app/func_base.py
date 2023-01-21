@@ -17,6 +17,7 @@ except:
    current_app.logger.error("Problems with 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
    exit()
 
+
 ops_logger = None
 base_launched_time = None
 
@@ -201,6 +202,10 @@ def send_pause_resume_to_base():
 
 
 def send_settings_to_base(settings_dict):
+   if LEVEL_PARAM not in settings_dict:
+      current_app.logger.error(f"function '{sys._getframe(0).f_code.co_name}': invalid settings_dict")
+      return
+
    rc, code = send_msg(PUT_METHOD, BCFG_RSRC, \
       {LEVEL_PARAM: settings_dict[LEVEL_PARAM], \
          GRUNTS_PARAM: settings_dict[GRUNTS_PARAM], \
