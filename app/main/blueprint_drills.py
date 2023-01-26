@@ -87,7 +87,8 @@ beep_mode_choices = [\
       {'label': balltype_e.FLAT.name.title(), 'value': 1}, \
       {'label': balltype_e.LOOP.name.title(), 'value': 2}, \
       {'label': balltype_e.CHIP.name.title(), 'value': 3}, \
-      {'label': "Random", 'value': 4} \
+      {'label': "Random", 'value': 4}, \
+      {'label': "Net", 'value': 5} \
    ]}, \
    {'name': beep_options.Difficulty.name,'legend':beep_options.Difficulty.name, 'buttons':[ \
       {'label': beep_difficulty.Very_Easy.name.replace("_","-"), 'value': beep_difficulty.Very_Easy.value}, \
