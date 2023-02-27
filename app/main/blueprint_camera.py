@@ -93,7 +93,7 @@ def cam_location():
          # previous_cam_measurement_mm = json.load(infile)
    except:
       current_app.logger.warning(f"using default values for cam_location; couldn't read {cam_measurements_filepath}")
-      if cam_side == CAM_LABEL[cam_e.LEFT.value]:
+      if cam_side.upper() == CAM_LABEL[cam_e.LEFT.value]:
          previous_cam_measurement_mm = [6402, 12700, 2440]
       else:
          previous_cam_measurement_mm = [12700, 6402, 2440]
@@ -131,19 +131,19 @@ def cam_location():
             if i == Measurement(0):
                position_options[main_key]["start_div"] = "A"
                # the fence should be 21 ft from the baseline, but allowing smaller
-               if cam_side == CAM_LABEL[cam_e.LEFT.value]:
+               if cam_side.upper() == CAM_LABEL[cam_e.LEFT.value]:
                   # A should be short; B should be long for on LEFT side
                   position_options[main_key]["min"] = 0
-                  position_options[main_key]["max"] = 40
+                  position_options[main_key]["max"] = 70
                else:
                   position_options[main_key]["min"] = 0
                   position_options[main_key]["max"] = 80
             if i == Measurement(1):
                position_options[main_key]["start_div"] = "B"
-               if cam_side == CAM_LABEL[cam_e.RIGHT.value]:
+               if cam_side.upper() == CAM_LABEL[cam_e.RIGHT.value]:
                   # A should be short; B should be long for on RIGHT side
                   position_options[main_key]["min"] = 0
-                  position_options[main_key]["max"] = 30
+                  position_options[main_key]["max"] = 75
                else:
                   position_options[main_key]["min"] = 0
                   position_options[main_key]["max"] = 80
@@ -275,7 +275,7 @@ def cam_calib():
       this_page_title = "Enter Court Coordinates"
 
    court_point_dict_index = 0
-   if cam_side == CAM_LABEL[cam_e.RIGHT.value]:
+   if cam_side.upper() == CAM_LABEL[cam_e.RIGHT.value]:
       court_point_dict_index = 1
 
    read_ok, temp_dict = read_court_points_file(cam_side)
@@ -327,7 +327,7 @@ def cam_calib_done():
          current_app.logger.debug(f"POST to CALIB_DONE request.form: {request.form}")
          # example: ImmutableMultiDict([('FBLX', '322'), ('FBLY', '72'), ('FBRX', '612'), ('FBRY', '54'), ('NSLX', '248'), ('NSLY', '328'), ('NSCX', '602'), ('NSCY', '292'), ('NSRX', '904'), ('NSRY', '262'), ('NBLX', '146'), ('NBLY', '686'), ('NBRX', '1244'), ('NBRY', '482')])
          court_point_dict_index = 0
-         if cam_side == CAM_LABEL[cam_e.RIGHT.value]:
+         if cam_side.upper() == CAM_LABEL[cam_e.RIGHT.value]:
             court_point_dict_index = 1
 
          if len(request.form) > 0:
