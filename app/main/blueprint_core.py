@@ -73,7 +73,7 @@ def index():
 
    onclick_choice_list = [\
       {"html_before": "Game:", "value": "Play", "onclick_url": GAME_URL, "id": "game_button"},\
-      {"value": "Options", "onclick_url": GAME_OPTIONS_URL, "id": "game_button", "html_after": html_horizontal_rule},\
+      {"value": "Settings", "onclick_url": GAME_OPTIONS_URL, "id": "game_button", "html_after": html_horizontal_rule},\
       {"html_before": "Drill:", "value": drill_list_button_title, "onclick_url": RECENTS_URL},\
       {"value": "Select", "onclick_url": DRILL_SELECT_TYPE_URL},\
       {"value": "Beep", "onclick_url": BEEP_SELECTION_URL, "html_after": html_horizontal_rule},\
@@ -82,11 +82,19 @@ def index():
       {"value": "Settings", "onclick_url": SETTINGS_URL}
    ]
 
-   return render_template(CHOICE_INPUTS_TEMPLATE, \
-      page_title = "Welcome to Boomer", \
-      installation_icon = display_customization_dict['icon'], \
-      onclick_choices = onclick_choice_list, \
-      footer_center = display_customization_dict['title'])
+   # added try/except because sometimes the display_custom_dict seems to be missing - this is a workaround to avoid a web server fault
+   try:
+      this_template = render_template(CHOICE_INPUTS_TEMPLATE, \
+         page_title = "Welcome to Boomer", \
+         installation_icon = display_customization_dict['icon'], \
+         onclick_choices = onclick_choice_list, \
+         footer_center = display_customization_dict['title'])
+   except:
+      this_template = render_template(CHOICE_INPUTS_TEMPLATE, \
+         page_title = "Welcome to Boomer", \
+         onclick_choices = onclick_choice_list)
+      
+   return this_template
 
 
 @blueprint_core.route(FAULTS_URL, methods=DEFAULT_METHODS)
@@ -95,9 +103,9 @@ def faults():
       read_display_customization_file()
 
    return render_template(FAULTS_TEMPLATE, \
-      page_title = "Problems Detected", \
-      installation_icon = display_customization_dict['icon'], \
-      footer_center = display_customization_dict['title'])
+      page_title = "Problems Detected")
+      # installation_icon = display_customization_dict['icon'], \
+      # footer_center = display_customization_dict['title'])
 
 
 @blueprint_core.route(SETTINGS_URL, methods=DEFAULT_METHODS)
