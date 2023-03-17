@@ -133,8 +133,20 @@ def settings():
    ]} \
    ]
 
-   settings_radio_options[0]['buttons'][base_settings_dict[GRUNTS_PARAM]]['checked'] = 1
-   settings_radio_options[1]['buttons'][base_settings_dict[TRASHT_PARAM]]['checked'] = 1
+   # intermittently, the code will get here without the reading the base_settings being loaded.
+   # so the following are defensive, in addition to the try/except around the 'checked' statements
+   if GRUNTS_PARAM not in base_settings_dict or ELEVATION_MOD_PARAM not in base_settings_dict:
+      current_app.logger.warning(f"GRUNTS_PARAM not in base_settings_dict; re-reading base_settings")
+      read_base_settings_from_file()
+
+   if GRUNTS_PARAM not in base_settings_dict:
+      current_app.logger.error(f"GRUNTS_PARAM not in base_settings_dict AFTER re-reading base_settings")
+
+   try:
+      settings_radio_options[0]['buttons'][base_settings_dict[GRUNTS_PARAM]]['checked'] = 1
+      settings_radio_options[1]['buttons'][base_settings_dict[TRASHT_PARAM]]['checked'] = 1
+   except:
+      pass
    
    page_js = [Markup('<script src="/static/js/radio-button-emit.js" defer></script>')]
 
