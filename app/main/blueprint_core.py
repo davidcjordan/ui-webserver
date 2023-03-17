@@ -22,8 +22,30 @@ except:
    current_app.logger.error("Problems with 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
    exit()
 
-display_customization_dict = {}
-base_settings_dict = {}
+
+def read_display_customization_file():
+   try:
+      with open(f'{settings_dir}/ui_customization.json') as f:
+         customization_dict = json.load(f)
+   except:
+      customization_dict = {"title": "Boomer #1", "icon": "/static/favicon.ico"}
+   return customization_dict
+
+def read_base_settings_from_file():
+   try:
+      with open(f'{settings_dir}/{settings_filename}') as f:
+         settings_dict = json.load(f)
+         # current_app.logger.debug(f"Settings restored: {settings_dict}")
+   except:
+      current_app.logger.warning(f"Settings file read failed; using defaults.")
+      settings_dict = {GRUNTS_PARAM: 0, TRASHT_PARAM: 0, LEVEL_PARAM: LEVEL_DEFAULT, \
+            SERVE_MODE_PARAM: 1, TIEBREAKER_PARAM: 0, \
+            SPEED_MOD_PARAM: SPEED_MOD_DEFAULT, DELAY_MOD_PARAM: DELAY_MOD_DEFAULT, \
+            ELEVATION_MOD_PARAM: ELEVATION_ANGLE_MOD_DEFAULT}
+   return settings_dict
+
+display_customization_dict = read_display_customization_file()
+base_settings_dict = read_base_settings_from_file()
 
 
 @blueprint_core.route('/favicon.ico')
@@ -170,30 +192,6 @@ def done():
       installation_icon = display_customization_dict['icon'], \
       onclick_choices = [{"value": "OK", "onclick_url": MAIN_URL}], \
       footer_center = display_customization_dict['title'])
-
-
-
-def read_display_customization_file():
-   try:
-      with open(f'{settings_dir}/ui_customization.json') as f:
-         customization_dict = json.load(f)
-   except:
-      customization_dict = {"title": "Boomer #1", "icon": "/static/favicon.ico"}
-   return customization_dict
-
-
-def read_base_settings_from_file():
-   try:
-      with open(f'{settings_dir}/{settings_filename}') as f:
-         settings_dict = json.load(f)
-         # current_app.logger.debug(f"Settings restored: {settings_dict}")
-   except:
-      current_app.logger.warning(f"Settings file read failed; using defaults.")
-      settings_dict = {GRUNTS_PARAM: 0, TRASHT_PARAM: 0, LEVEL_PARAM: LEVEL_DEFAULT, \
-            SERVE_MODE_PARAM: 1, TIEBREAKER_PARAM: 0, \
-            SPEED_MOD_PARAM: SPEED_MOD_DEFAULT, DELAY_MOD_PARAM: DELAY_MOD_DEFAULT, \
-            ELEVATION_MOD_PARAM: ELEVATION_ANGLE_MOD_DEFAULT}
-   return settings_dict
 
 
 def write_base_settings_to_file():
