@@ -389,8 +389,18 @@ def drill():
       else:
          base_mode_dict = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: id}
          mode_string = f"{MODE_DRILL_SELECTED}{id}"
-      
+
+      continuous_option = [ \
+         {'name': CONTINUOUS_MOD_PARAM, 'legend': "Continous Mode", 'buttons':[ \
+            {'label': "Off", 'value': 0}, \
+            {'label': "On", 'value': 1} \
+         ] } ]
+
       from app.main.blueprint_core import base_settings_dict
+      # if CONTINUOUS_MOD_PARAM==1 the On label (button 1) will be checked, else button 0 will be checked
+      continuous_option[0]['buttons'][base_settings_dict[CONTINUOUS_MOD_PARAM]]['checked'] = 1
+      # current_app.logger.debug(f"continuous_option= {continuous_option}")
+
       send_settings_to_base(base_settings_dict)
       send_start_to_base(base_mode_dict)
 
@@ -413,6 +423,7 @@ def drill():
       page_title = f"Running {mode_string}", \
       installation_icon = display_customization_dict['icon'], \
       stepper_options = drill_stepper_options, \
+      radio_options = continuous_option, \
       footer_center = display_customization_dict['title'])
 
 
@@ -449,7 +460,7 @@ def motor_calib():
 
    from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
 
-   # app.logger.debug(f"select request: {request}")
+   # current_app.logger.debug(f"select request: {request}")
    motor_type = request.args.get(CALIB_ID)
    current_app.logger.debug(f"request for motor; type: {motor_type}")
 

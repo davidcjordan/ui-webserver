@@ -214,7 +214,8 @@ def send_settings_to_base(settings_dict):
    rc, code = send_msg(PUT_METHOD, DCFG_RSRC, \
       {SPEED_MOD_PARAM: settings_dict[SPEED_MOD_PARAM], \
          DELAY_MOD_PARAM: settings_dict[DELAY_MOD_PARAM], \
-         ELEVATION_MOD_PARAM: settings_dict[ELEVATION_MOD_PARAM]})
+         ELEVATION_MOD_PARAM: settings_dict[ELEVATION_MOD_PARAM], \
+         CONTINUOUS_MOD_PARAM: settings_dict[CONTINUOUS_MOD_PARAM]})
 
    rc, code = send_msg(PUT_METHOD, GCFG_RSRC, \
       {SERVE_MODE_PARAM: settings_dict[SERVE_MODE_PARAM], \
