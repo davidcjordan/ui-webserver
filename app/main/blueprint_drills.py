@@ -78,10 +78,10 @@ class beep_difficulty(enum.Enum):
 # having the name seperate from the legend allows the name to be a parameter name instead of what is on the screen
 beep_mode_choices = [\
    {'name': beep_options.Type.name, 'legend':beep_options.Type.name, 'buttons':[ \
-      {'label': stroke_category.Ground.name, 'value': stroke_category.Ground.value, 'enable': 1, 'checked' : 1}, \
-      {'label': stroke_category.Volley.name, 'value': stroke_category.Volley.value, 'enable': 0}, \
-      {'label': stroke_category.Mini_Tennis.name.replace("_","-"), 'value': stroke_category.Mini_Tennis.value, 'enable': 0} \
-   ], 'disables': beep_options.Stroke.name}, \
+      {'label': stroke_category.Ground.name, 'value': stroke_category.Ground.value, 'disables': beep_options.Difficulty.name, 'checked' : 1}, \
+      {'label': stroke_category.Volley.name, 'value': stroke_category.Volley.value, 'disables': beep_options.Stroke.name}, \
+      {'label': stroke_category.Mini_Tennis.name.replace("_","-"), 'value': stroke_category.Mini_Tennis.value, 'disables': beep_options.Stroke.name} \
+   ]}, \
    {'name': beep_options.Stroke.name, 'legend':beep_options.Stroke.name, 'buttons':[ \
       {'label': balltype_e.TOPSPIN .name.title(), 'value': 0, 'checked' : 1}, \
       {'label': balltype_e.FLAT.name.title(), 'value': 1}, \
@@ -164,22 +164,22 @@ def drill_select_type():
    #  for each button, add 'enable' to the button dictionary.
    drill_type_choices = [\
       {'name': drill_type_options.Group.name, 'legend': "Type", 'buttons':[ \
-         {'label': group_options.Individual.name, 'value': group_options.Individual.value, 'enable': 0, 'checked' : 1}, \
-         {'label': group_options.Group.name, 'value': group_options.Group.value, 'enable': 1}, \
-      ], 'disables': drill_type_options.Lines.name}, \
+         {'label': group_options.Individual.name, 'value': group_options.Individual.value, 'checked': 1, 'disables': drill_type_options.Lines.name}, \
+         {'label': group_options.Group.name, 'value': group_options.Group.value}, \
+      ]}, \
       {'name': drill_type_options.Lines.name, 'legend':drill_type_options.Lines.name, 'buttons':[ \
          {'label': "1-Line", 'value': "1-line"}, \
          {'label': "2-Lines", 'value':"2-line"}, \
          {'label': "3-Lines", 'value': "3-line"}, \
          {'label': "Mini-Tennis", 'value': "mini"}, \
-      ], 'disabled': 1}, \
+      ]}, \
       {'name': drill_type_options.Focus.name,'legend':drill_type_options.Focus.name, 'buttons':[ \
-         {'label': focus_options.Development.name, 'value': focus_options.Development.value, 'enable': 1, 'checked' : 1}, \
-         {'label': focus_options.Situational.name, 'value': focus_options.Situational.value, 'enable': 0}, \
-         {'label': focus_options.Movement.name, 'value': focus_options.Movement.value, 'enable': 0}, \
-      ], 'disables': beep_options.Stroke.name}, \
+         {'label': focus_options.Development.name, 'value': focus_options.Development.value, 'checked': 1}, \
+         {'label': focus_options.Situational.name, 'value': focus_options.Situational.value, 'disables': beep_options.Stroke.name}, \
+         {'label': focus_options.Movement.name, 'value': focus_options.Movement.value,'disables': beep_options.Stroke.name}, \
+      ]}, \
       {'name': beep_options.Stroke.name, 'legend':beep_options.Stroke.name, 'buttons':[ \
-         {'label': stroke_category.Ground.name.title(), 'value': stroke_category.Ground.name.lower(), 'checked' : 1}, \
+         {'label': stroke_category.Ground.name.title(), 'value': stroke_category.Ground.name.lower(), 'checked': 1}, \
          {'label': stroke_category.Volley.name.title(), 'value': stroke_category.Volley.name.lower()}, \
          {'label': stroke_category.Net.name.title(), 'value': stroke_category.Net.name.lower()}, \
          {'label': "Overhead", 'value': balltype_e.LOB.name.lower()}, \

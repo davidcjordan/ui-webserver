@@ -14,7 +14,7 @@
           <legend>{{fieldset['legend']}}:</legend>
             {%- for button in fieldset['buttons'] %}
               <input type="radio" id="{{fieldset['name']}}_{{button['label']}}" name="{{fieldset['name']}}" value={{button['value']}}
-                {%- if fieldset['disables'] is defined %} data-disables_field="{{fieldset['disables']}}" data-enable="{{button['enable']}}" {%- endif %}
+                {%- if button['disables'] is defined %} data-disables_field="{{button['disables']}}" {%- endif %}
                 {%- if button['checked'] is defined %} checked{%- endif %}>
               <label for="{{fieldset['name']}}_{{button['label']}}">{{button['label']}}</label>
             {%- endfor %}
