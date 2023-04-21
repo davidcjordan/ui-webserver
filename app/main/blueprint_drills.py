@@ -356,68 +356,70 @@ def drill():
       current_app.logger.info(f"drill_id={id}: {stroke_category(beep_type_value).name}, difficulty_offset={difficulty_offset}, stroke_type_offset={stroke_type_offset}")
    else:
       current_app.logger.error("DRILL_URL - no drill or workout id!")
-      mode_string = f"ERROR: no drill selected"
+   
+   # handle case where it gets to this page without a drill ID
+   if id is None:
+      id = 1
 
    drill_stepper_options = {}
-   if id is not None:
-      if not is_workout and beep_type_value is None:
-         # save to recents file
-         if (len(recent_drill_list) < 6):
-            current_app.logger.error(f"recent_drill_list only had {len(recent_drill_list)} drills; restoring with defaults.")
-            recent_drill_list = default_recents_drill_list
-         # move to beginning of list
-         if id in recent_drill_list:
-            recent_drill_list.remove(id)
-         recent_drill_list.insert(0,id)
-         while len(recent_drill_list) > 10:
-            recent_drill_list = recent_drill_list[:-1] #remove oldest drill_id
-         # re-write recents file putting drill at top
-         current_app.logger.debug(f"Updating '{recents_filename}' with {len(recent_drill_list)} drill ids.")
-         try:
-            with open(f'{settings_dir}/{recents_filename}', 'w') as f:
-               json.dump(recent_drill_list, f)
-         except:
-            current_app.logger.error(f"Error writing '{settings_dir}/{recents_filename}'")
+   if not is_workout and beep_type_value is None:
+      # save to recents file
+      if (len(recent_drill_list) < 6):
+         current_app.logger.error(f"recent_drill_list only had {len(recent_drill_list)} drills; restoring with defaults.")
+         recent_drill_list = default_recents_drill_list
+      # move to beginning of list
+      if id in recent_drill_list:
+         recent_drill_list.remove(id)
+      recent_drill_list.insert(0,id)
+      while len(recent_drill_list) > 10:
+         recent_drill_list = recent_drill_list[:-1] #remove oldest drill_id
+      # re-write recents file putting drill at top
+      current_app.logger.debug(f"Updating '{recents_filename}' with {len(recent_drill_list)} drill ids.")
+      try:
+         with open(f'{settings_dir}/{recents_filename}', 'w') as f:
+            json.dump(recent_drill_list, f)
+      except:
+         current_app.logger.error(f"Error writing '{settings_dir}/{recents_filename}'")
 
-      if is_workout:
-         base_mode_dict = {MODE_PARAM: base_mode_e.WORKOUT.value, ID_PARAM: id}
-         mode_string = f"{MODE_WORKOUT_SELECTED}{id}"
+   if is_workout:
+      base_mode_dict = {MODE_PARAM: base_mode_e.WORKOUT.value, ID_PARAM: id}
+      mode_string = f"{MODE_WORKOUT_SELECTED}{id}"
 
-      #TODO: test BEEP enum: currently beep drills are using the DRILL enum
-      # elif beep_type_value is not None:
-      #    base_mode_dict = {MODE_PARAM: base_mode_e.BEEP.value, ID_PARAM: id}
-      else:
-         base_mode_dict = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: id}
-         mode_string = f"{MODE_DRILL_SELECTED}{id}"
+   #TODO: test BEEP enum: currently beep drills are using the DRILL enum
+   # elif beep_type_value is not None:
+   #    base_mode_dict = {MODE_PARAM: base_mode_e.BEEP.value, ID_PARAM: id}
+   else:
+      base_mode_dict = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: id}
+      mode_string = f"{MODE_DRILL_SELECTED}{id}"
 
-      continuous_option = [ \
-         {'name': CONTINUOUS_MOD_PARAM, 'legend': "Continous Mode", 'buttons':[ \
-            {'label': "Off", 'value': 0}, \
-            {'label': "On", 'value': 1} \
-         ] } ]
+   continuous_option = [ \
+      {'name': CONTINUOUS_MOD_PARAM, 'legend': "Continous Mode", 'buttons':[ \
+         {'label': "Off", 'value': 0}, \
+         {'label': "On", 'value': 1} \
+      ] } ]
 
-      from app.main.blueprint_core import base_settings_dict
-      # if CONTINUOUS_MOD_PARAM==1 the On label (button 1) will be checked, else button 0 will be checked
-      continuous_option[0]['buttons'][base_settings_dict[CONTINUOUS_MOD_PARAM]]['checked'] = 1
-      # current_app.logger.debug(f"continuous_option= {continuous_option}")
+   from app.main.blueprint_core import base_settings_dict
+   # if CONTINUOUS_MOD_PARAM==1 the On label (button 1) will be checked, else button 0 will be checked
+   continuous_option[0]['buttons'][base_settings_dict[CONTINUOUS_MOD_PARAM]]['checked'] = 1
+   # current_app.logger.debug(f"continuous_option= {continuous_option}")
 
-      send_settings_to_base(base_settings_dict)
-      send_start_to_base(base_mode_dict)
+   send_settings_to_base(base_settings_dict)
+   send_start_to_base(base_mode_dict)
 
-      thrower_calib_drill_number_end = THROWER_CALIB_DRILL_NUMBER_START + len(thrower_calib_drill_dict) + 1
-      if (id not in range(THROWER_CALIB_DRILL_NUMBER_START, thrower_calib_drill_number_end)) and \
-         (id != THROWER_CALIB_WORKOUT_ID):
-         # the defaults are set from what was last saved in the settings file
-         drill_stepper_options = { \
-            LEVEL_PARAM:{"legend":"Level", "dflt":base_settings_dict[LEVEL_PARAM]/LEVEL_UI_FACTOR, \
-               "min":LEVEL_MIN/LEVEL_UI_FACTOR, "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
-            SPEED_MOD_PARAM:{"legend":"Speed", "dflt":base_settings_dict[SPEED_MOD_PARAM], \
-               "min":SPEED_MOD_MIN, "max":SPEED_MOD_MAX, "step":SPEED_MOD_STEP}, \
-            DELAY_MOD_PARAM:{"legend":"Delay", "dflt":base_settings_dict[DELAY_MOD_PARAM]/DELAY_UI_FACTOR, \
-               "min":DELAY_MOD_MIN/DELAY_UI_FACTOR, "max":DELAY_MOD_MAX/DELAY_UI_FACTOR, "step":DELAY_UI_STEP/DELAY_UI_FACTOR}, \
-            ELEVATION_MOD_PARAM:{"legend":"Height", "dflt":base_settings_dict[ELEVATION_MOD_PARAM], \
-               "min":ELEVATION_ANGLE_MOD_MIN, "max":ELEVATION_ANGLE_MOD_MAX, "step":ELEVATION_ANGLE_MOD_STEP} \
-         }
+   thrower_calib_drill_number_end = THROWER_CALIB_DRILL_NUMBER_START + len(thrower_calib_drill_dict) + 1
+   if (not is_workout and id not in range(THROWER_CALIB_DRILL_NUMBER_START, thrower_calib_drill_number_end)) or \
+      (is_workout and id != THROWER_CALIB_WORKOUT_ID):
+      # the defaults are set from what was last saved in the settings file
+      drill_stepper_options = { \
+         LEVEL_PARAM:{"legend":"Level", "dflt":base_settings_dict[LEVEL_PARAM]/LEVEL_UI_FACTOR, \
+            "min":LEVEL_MIN/LEVEL_UI_FACTOR, "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
+         SPEED_MOD_PARAM:{"legend":"Speed", "dflt":base_settings_dict[SPEED_MOD_PARAM], \
+            "min":SPEED_MOD_MIN, "max":SPEED_MOD_MAX, "step":SPEED_MOD_STEP}, \
+         DELAY_MOD_PARAM:{"legend":"Delay", "dflt":base_settings_dict[DELAY_MOD_PARAM]/DELAY_UI_FACTOR, \
+            "min":DELAY_MOD_MIN/DELAY_UI_FACTOR, "max":DELAY_MOD_MAX/DELAY_UI_FACTOR, "step":DELAY_UI_STEP/DELAY_UI_FACTOR}, \
+         ELEVATION_MOD_PARAM:{"legend":"Height", "dflt":base_settings_dict[ELEVATION_MOD_PARAM], \
+            "min":ELEVATION_ANGLE_MOD_MIN, "max":ELEVATION_ANGLE_MOD_MAX, "step":ELEVATION_ANGLE_MOD_STEP} \
+      }
          
    return render_template(DRILL_TEMPLATE, \
       page_title = f"Running {mode_string}", \
