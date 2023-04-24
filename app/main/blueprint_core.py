@@ -37,7 +37,7 @@ def read_base_settings_from_file():
          settings_dict = json.load(f)
          # current_app.logger.debug(f"Settings restored: {settings_dict}")
    except:
-      current_app.logger.warning(f"Settings file read failed; using defaults.")
+      current_app.logger.warning(f"Read of '{settings_dir}/{settings_filename}' failed; using defaults.")
       settings_dict = {GRUNTS_PARAM: 0, TRASHT_PARAM: 0, LEVEL_PARAM: LEVEL_DEFAULT, \
             SERVE_MODE_PARAM: 1, TIEBREAKER_PARAM: 0, \
             SPEED_MOD_PARAM: SPEED_MOD_DEFAULT, DELAY_MOD_PARAM: DELAY_MOD_DEFAULT, \

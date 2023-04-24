@@ -11,12 +11,15 @@ eventlet.debug.hub_prevent_multiple_readers(False)
 socketio = SocketIO() # logger=True)
 
 def create_app(debug=False):
-   from app.main.blueprint_core import blueprint_core
-   from app.main.blueprint_camera import blueprint_camera
-   from app.main.blueprint_drills import blueprint_drills
-   from app.main.blueprint_games import blueprint_games
-
    app = Flask(__name__)
+
+   # need to have the app_context for app logging to work:
+   with app.app_context():
+      from app.main.blueprint_core import blueprint_core
+      from app.main.blueprint_camera import blueprint_camera
+      from app.main.blueprint_drills import blueprint_drills
+      from app.main.blueprint_games import blueprint_games
+
    # secret key configured un gunicorn.conf.py
    # app.config['SECRET_KEY'] = 'gjr39dkjn344_!67#'
    
