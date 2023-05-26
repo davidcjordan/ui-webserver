@@ -99,7 +99,8 @@ def index():
 
    onclick_choice_list = [\
       {"html_before": "Game:", "value": "Play", "onclick_url": GAME_URL, "id": "game_button"},\
-      {"value": "Settings", "onclick_url": GAME_OPTIONS_URL, "id": "game_button", "html_after": html_horizontal_rule},\
+      {"value": "Settings", "onclick_url": GAME_OPTIONS_URL, "id": "game_settings"},\
+      {"value": "Help", "id": "game_help_button", "html_after": html_horizontal_rule},\
       {"html_before": "Drill:", "value": drill_list_button_title, "onclick_url": RECENTS_URL},\
       {"value": "Select", "onclick_url": DRILL_SELECT_TYPE_URL},\
       {"value": "Beep", "onclick_url": BEEP_SELECTION_URL, "html_after": html_horizontal_rule},\
@@ -108,16 +109,20 @@ def index():
       {"value": "Settings", "onclick_url": SETTINGS_URL}
    ]
 
+   page_js = [Markup('<script src="/static/js/game_help.js" defer></script>')]
+
    # added try/except because sometimes the display_custom_dict seems to be missing - this is a workaround to avoid a web server fault
    try:
       this_template = render_template(CHOICE_INPUTS_TEMPLATE, \
          page_title = "Welcome to Boomer", \
          installation_icon = display_customization_dict['icon'], \
          onclick_choices = onclick_choice_list, \
+         page_specific_js = page_js, \
          footer_center = display_customization_dict['title'])
    except:
       this_template = render_template(CHOICE_INPUTS_TEMPLATE, \
          page_title = "Welcome to Boomer", \
+         page_specific_js = page_js, \
          onclick_choices = onclick_choice_list)
       
    return this_template

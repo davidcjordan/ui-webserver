@@ -6,7 +6,7 @@ import json
 import time
 
 from app.main.defines import *
-from app.func_base import check_base, send_pause_resume_to_base, send_settings_to_base, get_game_state
+from app.func_base import check_base, send_pause_resume_to_base, send_settings_to_base, get_game_state, send_game_help_to_base
 from app.main.blueprint_core import write_base_settings_to_file
 from app.func_drills import get_drill_info, get_workout_info
 from app.main.blueprint_camera import scp_court_png
@@ -132,6 +132,12 @@ def handle_change_params(data):          # change_params() is the event callback
 
    write_base_settings_to_file() #writes global, hence no argument
    send_settings_to_base(base_settings_dict)
+
+
+@socketio.on('game_help')
+def handle_game_help():
+   current_app.logger.info(f'received game_help')
+   send_game_help_to_base()
 
 
 def textify_faults_table(faults_table):

@@ -261,3 +261,11 @@ def get_game_state():
    if not rc:
       current_app.logger.error("GET GAME SCORE failed, score= {}".format(game_state))
    return game_state
+
+def send_game_help_to_base():
+   rc, code = send_msg(PUT_METHOD, FUNC_RSRC, {FUNC_DUMP: 't'} )
+   if not rc:
+      if not code:
+         code = "unknown"
+      current_app.logger.error("PUT FUNC_DUMP (game_help) failed, code: {code}")
+   return rc

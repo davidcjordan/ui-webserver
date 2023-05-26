@@ -6,7 +6,7 @@
     {%-if choice['html_before'] %}
     {{choice['html_before']}}{%- endif %}
     <input class="block_b" type="submit" name="choice" value="{{choice['value']}}"
-      onclick="window.location.href='{{choice['onclick_url']}}
+      {%- if choice['onclick_url'] %} onclick="window.location.href='{{choice['onclick_url']}}'"{%- endif %}
       {%- if choice['param_name'] %}?{{choice['param_name']}}={{choice['param_value']}}{%- endif %}';"
       {%- if choice['disabled'] %} disabled {%- endif %} 
       {%- if choice['id'] %} id="{{choice['id']}}"{%- endif %}
@@ -39,8 +39,4 @@
 
 {%- block page_specific_styles %} 
    <link rel="stylesheet" href="/static/css/radio-slider.css">
-{%- endblock %} 
-
-{%- block page_specific_js %} 
-  <script src="/static/js/radio-button-emit.js" defer></script>
 {%- endblock %} 
