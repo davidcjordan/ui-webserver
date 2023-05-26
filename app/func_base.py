@@ -263,7 +263,7 @@ def get_game_state():
    return game_state
 
 def send_game_help_to_base():
-   rc, code = send_msg(PUT_METHOD, FUNC_RSRC, {FUNC_DUMP: 't'} )
+   rc, code = send_msg(PUT_METHOD, FUNC_RSRC, {FUNC_HELP: 'game'} )
    if not rc:
       if not code:
          code = "unknown"
