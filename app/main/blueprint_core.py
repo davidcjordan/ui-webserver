@@ -42,10 +42,12 @@ def read_base_settings_from_file():
             SERVE_MODE_PARAM: 1, TIEBREAKER_PARAM: 0, \
             SPEED_MOD_PARAM: SPEED_MOD_DEFAULT, DELAY_MOD_PARAM: DELAY_MOD_DEFAULT, \
             ELEVATION_MOD_PARAM: ELEVATION_ANGLE_MOD_DEFAULT,
-            CONTINUOUS_MOD_PARAM: 0}
+            CONTINUOUS_MOD_PARAM: 0, ADVANCED_GAME_PARAM: 0}
    # !! need to add defaults to new settings as they are added:
    if CONTINUOUS_MOD_PARAM not in settings_dict:
       settings_dict[CONTINUOUS_MOD_PARAM] = 0
+   if ADVANCED_GAME_PARAM not in settings_dict:
+      settings_dict[ADVANCED_GAME_PARAM] = 0
    return settings_dict
 
 display_customization_dict = read_display_customization_file()

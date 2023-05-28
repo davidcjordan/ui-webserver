@@ -29,6 +29,10 @@ def game_options():
       {'name': TIEBREAKER_PARAM,'legend':"Scoring", 'buttons':[ \
          {'label': "Standard", 'value': 0}, \
          {'label': "Tie Breaker", 'value': 1}, \
+      ]}, \
+      {'name': ADVANCED_GAME_PARAM,'legend':"Advanced Game Mode", 'buttons':[ \
+         {'label': "Off", 'value': 0}, \
+         {'label': "On", 'value': 1}, \
       ]} \
       # RUN_REDUCE_PARAM:{"legend":"Running", "buttons":[{"label":"Standard", "value":0},{"label":"Less", "value":1}]} \
    ]
@@ -40,6 +44,7 @@ def game_options():
    # app.logger.debug(f"base_settings_dict[TIEBREAKER_PARAM]= {base_settings_dict[TIEBREAKER_PARAM]}")
    game_radio_options[1]['buttons'][base_settings_dict[TIEBREAKER_PARAM]]['checked'] = 1
    # app.logger.debug(f"game_radio_options= {game_radio_options}")
+   game_radio_options[2]['buttons'][base_settings_dict[ADVANCED_GAME_PARAM]]['checked'] = 1
 
    page_js = [Markup('<script src="/static/js/radio-button-emit.js" defer></script>')]
 

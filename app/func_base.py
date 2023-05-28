@@ -219,7 +219,8 @@ def send_settings_to_base(settings_dict):
 
    rc, code = send_msg(PUT_METHOD, GCFG_RSRC, \
       {SERVE_MODE_PARAM: settings_dict[SERVE_MODE_PARAM], \
-         TIEBREAKER_PARAM: settings_dict[TIEBREAKER_PARAM]})
+         TIEBREAKER_PARAM: settings_dict[TIEBREAKER_PARAM], \
+         ADVANCED_GAME_PARAM: settings_dict[ADVANCED_GAME_PARAM]})
          # POINTS_DELAY_PARAM: settings_dict[POINTS_DELAY_PARAM]})
 
 def send_start_to_base(mode_dict):
