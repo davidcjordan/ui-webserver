@@ -106,8 +106,7 @@ def index():
       {"html_before": "Drill:", "value": drill_list_button_title, "onclick_url": RECENTS_URL},\
       {"value": "Select", "onclick_url": DRILL_SELECT_TYPE_URL},\
       {"value": "Beep", "onclick_url": BEEP_SELECTION_URL, "html_after": html_horizontal_rule},\
-      {"value": "Workouts", "onclick_url": SELECT_URL, \
-         "param_name": ONCLICK_MODE_KEY, "param_value": ONCLICK_MODE_WORKOUT_VALUE, "disabled": 0, "html_after": html_horizontal_rule}, \
+      {"value": "Workouts", "onclick_url": SELECT_WORKOUT_URL, "html_after": html_horizontal_rule}, \
       {"value": "Settings", "onclick_url": SETTINGS_URL}
    ]
 

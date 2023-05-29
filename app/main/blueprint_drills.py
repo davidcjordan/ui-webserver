@@ -191,7 +191,7 @@ def drill_select_type():
       page_title = "Select Type of Drill", \
       installation_icon = display_customization_dict['icon'], \
       radio_options = drill_type_choices, \
-      url_for_post = SELECT_URL, \
+      url_for_post = SELECT_DRILL_URL, \
       footer_center = display_customization_dict['title'], \
       page_specific_js = radio_button_disable_js \
    )
@@ -213,63 +213,51 @@ def beep_selection():
       footer_center = display_customization_dict['title'])
 
 
-@blueprint_drills.route(SELECT_URL, methods=DEFAULT_METHODS)
-def select():
+@blueprint_drills.route(SELECT_DRILL_URL, methods=DEFAULT_METHODS)
+def select_drill():
    from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
 
-   # current_app.logger.debug(f"select [drill/workout] request: {request}")
-   current_app.logger.debug(f"SELECT_URL request_form: {request.form}")
+   current_app.logger.debug(f"SELECT_DRILL_URL request_form: {request.form}")
    # DEBUG:flask.app:SELECT_URL request_form: ImmutableMultiDict([('Group', '1'), ('Lines', '4'), ('Focus', '0'), ('Stroke', '0')])
 
    drill_list = None
    page_title_str = "Select Drill"
    selection_list = []
 
-   if request.args.get(ONCLICK_MODE_KEY) == ONCLICK_MODE_WORKOUT_VALUE:
-      # select_post_param = {"name": ONCLICK_MODE_KEY, "value": ONCLICK_MODE_WORKOUT_VALUE}
-      for workout_id in workout_list:
-         # current_app.logger.debug(f"workout_id={workout_id} is of type {type(workout_id)}")
-         workout_id_str = f"{workout_id:03}"
-         if (fetch_into_workout_dict(workout_id_str)):
-            selection_list.append({'id': workout_id_str, 'title': workouts_dict[workout_id_str]['name']})
-         else:
-            current_app.logger.error(f"WORK{workout_id_str} missing from workouts_dict; not including in choices")
-      page_title_str = "Select Workout"
-   else:
-      # parse drill selection criteria to make list of drills:
-      if ((drill_type_options.Group.name in request.form) and (request.form[drill_type_options.Group.name] == '1')):
-         if (drill_type_options.Lines.name in request.form):
-            drill_list = line_drill_dict[request.form[drill_type_options.Lines.name]]
-         else:
-            current_app.logger.error(f"request.form missing [drill_type_options.Lines.name]: using 1-line drills")
-            drill_list = line_drill_dict['1-line']
-      elif (drill_type_options.Focus.name in request.form):
-         current_app.logger.debug(f"request.form[drill_type_options.Focus.name]={request.form[drill_type_options.Focus.name]}")
-         if (request.form[drill_type_options.Focus.name] == str(focus_options.Movement.value)):
-            drill_list = movement_drill_list
-         elif (request.form[drill_type_options.Focus.name] == str(focus_options.Situational.value)):
-            drill_list = situational_drill_list
-         elif (request.form[drill_type_options.Focus.name] == str(focus_options.Development.value)):
-            drill_list = stroketype_drill_dict[request.form[beep_options.Stroke.name]]
-         else:
-            current_app.logger.error(f"Unrecognized Drill Select Focus: {request.form[drill_type_options.Focus.name]}; using recent_drill_list")
-            drill_list = recent_drill_list
-
-      # current_app.logger.debug(f"Group test: drill_list={drill_list}; drill_list_name={request.form[drill_type_options.Lines.name]}")
-      if drill_list is None:
-         current_app.logger.error(f"Drill list was None after drill selection processing; using recent_drill_list")
+   # parse drill selection criteria to make list of drills:
+   if ((drill_type_options.Group.name in request.form) and (request.form[drill_type_options.Group.name] == '1')):
+      if (drill_type_options.Lines.name in request.form):
+         drill_list = line_drill_dict[request.form[drill_type_options.Lines.name]]
+      else:
+         current_app.logger.error(f"request.form missing [drill_type_options.Lines.name]: using 1-line drills")
+         drill_list = line_drill_dict['1-line']
+   elif (drill_type_options.Focus.name in request.form):
+      current_app.logger.debug(f"request.form[drill_type_options.Focus.name]={request.form[drill_type_options.Focus.name]}")
+      if (request.form[drill_type_options.Focus.name] == str(focus_options.Movement.value)):
+         drill_list = movement_drill_list
+      elif (request.form[drill_type_options.Focus.name] == str(focus_options.Situational.value)):
+         drill_list = situational_drill_list
+      elif (request.form[drill_type_options.Focus.name] == str(focus_options.Development.value)):
+         drill_list = stroketype_drill_dict[request.form[beep_options.Stroke.name]]
+      else:
+         current_app.logger.error(f"Unrecognized Drill Select Focus: {request.form[drill_type_options.Focus.name]}; using recent_drill_list")
          drill_list = recent_drill_list
-         
-      # now make drill selection list (array of ID & name dicts) from drill list
-      for drill_id in drill_list:
-         # current_app.logger.debug(f"drill_id={drill_id} is of type {type(drill_id)}")
-         if len(selection_list) > 9: #limit to 10 entries
-            break
-         drill_id_str = f"{drill_id:03}"
-         if (fetch_into_drills_dict(drill_id_str)):
-            selection_list.append({'id': drill_id_str, 'title': drills_dict[drill_id_str]['name']})
-         else:
-            current_app.logger.error(f"DRL{drill_id_str} missing from drill_dict; not including in choices")
+
+   # current_app.logger.debug(f"Group test: drill_list={drill_list}; drill_list_name={request.form[drill_type_options.Lines.name]}")
+   if drill_list is None:
+      current_app.logger.error(f"Drill list was None after drill selection processing; using recent_drill_list")
+      drill_list = recent_drill_list
+      
+   # now make drill selection list (array of ID & name dicts) from drill list
+   for drill_id in drill_list:
+      # current_app.logger.debug(f"drill_id={drill_id} is of type {type(drill_id)}")
+      if len(selection_list) > 9: #limit to 10 entries
+         break
+      drill_id_str = f"{drill_id:03}"
+      if (fetch_into_drills_dict(drill_id_str)):
+         selection_list.append({'id': drill_id_str, 'title': drills_dict[drill_id_str]['name']})
+      else:
+         current_app.logger.error(f"DRL{drill_id_str} missing from drill_dict; not including in choices")
 
    return render_template(SELECT_TEMPLATE, \
       home_button = my_home_button, \
@@ -283,6 +271,36 @@ def select():
       page_specific_js = get_drill_info_js \
    )
  
+@blueprint_drills.route(SELECT_WORKOUT_URL, methods=DEFAULT_METHODS)
+def select_workout():
+   from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
+
+   # current_app.logger.debug(f"select [drill/workout] request: {request}")
+   current_app.logger.debug(f"SELECT_WORKOUT_URL request_form: {request.form}")
+
+   page_title_str = "Select Workout"
+   selection_list = []
+
+   for workout_id in workout_list:
+      # current_app.logger.debug(f"workout_id={workout_id} is of type {type(workout_id)}")
+      workout_id_str = f"{workout_id:03}"
+      if (fetch_into_workout_dict(workout_id_str)):
+         selection_list.append({'id': workout_id_str, 'title': workouts_dict[workout_id_str]['name']})
+      else:
+         current_app.logger.error(f"WORK{workout_id_str} missing from workouts_dict; not including in choices")
+
+   return render_template(SELECT_TEMPLATE, \
+      home_button = my_home_button, \
+      page_title = page_title_str, \
+      installation_icon = display_customization_dict['icon'], \
+      url_for_post = DRILL_URL, \
+      # the following doesn't work: the query parameter is now stripped by the browser.  TODO: remove from template
+      # post_param = select_post_param, \
+      choices = selection_list, \
+      footer_center = display_customization_dict['title'], \
+      page_specific_js = get_drill_info_js \
+   )
+
 @blueprint_drills.route(DRILL_URL, methods=DEFAULT_METHODS)
 def drill():
    from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
