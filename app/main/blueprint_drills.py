@@ -271,36 +271,6 @@ def select_drill():
       page_specific_js = get_drill_info_js \
    )
  
-@blueprint_drills.route(SELECT_WORKOUT_URL, methods=DEFAULT_METHODS)
-def select_workout():
-   from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
-
-   # current_app.logger.debug(f"select [drill/workout] request: {request}")
-   current_app.logger.debug(f"SELECT_WORKOUT_URL request_form: {request.form}")
-
-   page_title_str = "Select Workout"
-   selection_list = []
-
-   for workout_id in workout_list:
-      # current_app.logger.debug(f"workout_id={workout_id} is of type {type(workout_id)}")
-      workout_id_str = f"{workout_id:03}"
-      if (fetch_into_workout_dict(workout_id_str)):
-         selection_list.append({'id': workout_id_str, 'title': workouts_dict[workout_id_str]['name']})
-      else:
-         current_app.logger.error(f"WORK{workout_id_str} missing from workouts_dict; not including in choices")
-
-   return render_template(SELECT_TEMPLATE, \
-      home_button = my_home_button, \
-      page_title = page_title_str, \
-      installation_icon = display_customization_dict['icon'], \
-      url_for_post = DRILL_URL, \
-      # the following doesn't work: the query parameter is now stripped by the browser.  TODO: remove from template
-      # post_param = select_post_param, \
-      choices = selection_list, \
-      footer_center = display_customization_dict['title'], \
-      page_specific_js = get_drill_info_js \
-   )
-
 @blueprint_drills.route(DRILL_URL, methods=DEFAULT_METHODS)
 def drill():
    from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
@@ -444,6 +414,88 @@ def drill():
       installation_icon = display_customization_dict['icon'], \
       stepper_options = drill_stepper_options, \
       radio_options = continuous_option, \
+      footer_center = display_customization_dict['title'])
+
+
+@blueprint_drills.route(SELECT_WORKOUT_URL, methods=DEFAULT_METHODS)
+def select_workout():
+   from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
+
+   # current_app.logger.debug(f"select [drill/workout] request: {request}")
+   current_app.logger.debug(f"SELECT_WORKOUT_URL request_form: {request.form}")
+
+   page_title_str = "Select Workout"
+   selection_list = []
+
+   for workout_id in workout_list:
+      # current_app.logger.debug(f"workout_id={workout_id} is of type {type(workout_id)}")
+      workout_id_str = f"{workout_id:03}"
+      if (fetch_into_workout_dict(workout_id_str)):
+         selection_list.append({'id': workout_id_str, 'title': workouts_dict[workout_id_str]['name']})
+      else:
+         current_app.logger.error(f"WORK{workout_id_str} missing from workouts_dict; not including in choices")
+
+   return render_template(SELECT_TEMPLATE, \
+      home_button = my_home_button, \
+      page_title = page_title_str, \
+      installation_icon = display_customization_dict['icon'], \
+      url_for_post = WORKOUT_URL, \
+      choices = selection_list, \
+      footer_center = display_customization_dict['title'], \
+      # page_specific_js = get_workout_info_js \
+   )
+
+
+@blueprint_drills.route(WORKOUT_URL, methods=DEFAULT_METHODS)
+def workout():
+   from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
+
+   current_app.logger.debug(f"DRILL_URL request_form: {request.form}")
+
+   # current_app.logger.info(f"request.form is of type: {type(request.form)}")
+   # for key, value in request.form.items():
+   #    print(key, '->', value)
+   id = None
+   if 'choice_id' in request.form:
+      #INFO:flask.app:DRILL_URL request_form: ImmutableMultiDict([('choice_id', '100')])
+      id = int(request.form['choice_id'])
+      current_app.logger.info(f"Setting workout_id= {id} from request.form")
+   else:
+      current_app.logger.error("WORKOUT_URL - no workout id!")
+   
+   # handle case where it gets to this page without a drill ID
+   if id is None:
+      id = 1
+
+   drill_stepper_options = {}
+ 
+   base_mode_dict = {MODE_PARAM: base_mode_e.WORKOUT.value, ID_PARAM: id}
+   mode_string = f"{MODE_WORKOUT_SELECTED}{id}"
+
+   from app.main.blueprint_core import base_settings_dict
+   # turn of continous mode
+   base_settings_dict['contin'] = 0
+   send_settings_to_base(base_settings_dict)
+   send_start_to_base(base_mode_dict)
+
+   thrower_calib_drill_number_end = THROWER_CALIB_DRILL_NUMBER_START + len(thrower_calib_drill_dict) + 1
+   if (id != THROWER_CALIB_WORKOUT_ID):
+      # the defaults are set from what was last saved in the settings file
+      drill_stepper_options = { \
+         LEVEL_PARAM:{"legend":"Level", "dflt":base_settings_dict[LEVEL_PARAM]/LEVEL_UI_FACTOR, \
+            "min":LEVEL_MIN/LEVEL_UI_FACTOR, "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
+         SPEED_MOD_PARAM:{"legend":"Speed", "dflt":base_settings_dict[SPEED_MOD_PARAM], \
+            "min":SPEED_MOD_MIN, "max":SPEED_MOD_MAX, "step":SPEED_MOD_STEP}, \
+         DELAY_MOD_PARAM:{"legend":"Delay", "dflt":base_settings_dict[DELAY_MOD_PARAM]/DELAY_UI_FACTOR, \
+            "min":DELAY_MOD_MIN/DELAY_UI_FACTOR, "max":DELAY_MOD_MAX/DELAY_UI_FACTOR, "step":DELAY_UI_STEP/DELAY_UI_FACTOR}, \
+         ELEVATION_MOD_PARAM:{"legend":"Height", "dflt":base_settings_dict[ELEVATION_MOD_PARAM], \
+            "min":ELEVATION_ANGLE_MOD_MIN, "max":ELEVATION_ANGLE_MOD_MAX, "step":ELEVATION_ANGLE_MOD_STEP} \
+      }
+         
+   return render_template(DRILL_TEMPLATE, \
+      page_title = f"Running {mode_string}", \
+      installation_icon = display_customization_dict['icon'], \
+      stepper_options = drill_stepper_options, \
       footer_center = display_customization_dict['title'])
 
 
