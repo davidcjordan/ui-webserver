@@ -84,7 +84,7 @@ def handle_get_updates(data):
          #TODO: if (len(faults_table) != len(previous_faults_table)):
          emit('faults_update', json.dumps(textify_faults_table(faults_table)))
 
-      if (((current_page == GAME_URL) or (current_page == DRILL_URL) or (current_page == MOTOR_CALIB_URL)) and
+      if (((current_page == GAME_URL) or (current_page == DRILL_URL) or (current_page == WORKOUT_URL) or (current_page == MOTOR_CALIB_URL)) and
          (base_state == base_state_e.IDLE)):
          update_dict['new_url'] = DONE_URL
 
