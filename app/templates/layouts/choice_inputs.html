@@ -1,12 +1,13 @@
 {% extends "layouts/base.html" %}
 
+## adding an 'if' to the onclick="window.location" breaks passing a parameter in the URL
 {%- block selections %}
 <div>
   {%- for choice in onclick_choices %}
     {%-if choice['html_before'] %}
     {{choice['html_before']}}{%- endif %}
     <input class="block_b" type="submit" name="choice" value="{{choice['value']}}"
-      {%- if choice['onclick_url'] %} onclick="window.location.href='{{choice['onclick_url']}}'"{%- endif %}
+      onclick="window.location.href='{{choice['onclick_url']}}
       {%- if choice['param_name'] %}?{{choice['param_name']}}={{choice['param_value']}}{%- endif %}';"
       {%- if choice['disabled'] %} disabled {%- endif %} 
       {%- if choice['id'] %} id="{{choice['id']}}"{%- endif %}
