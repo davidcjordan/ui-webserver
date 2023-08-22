@@ -271,7 +271,7 @@ function goToNextPoint() {
      let submitButton = document.getElementById("submitButton");
      submitButton.disabled = false;
    }
-   refreshImage();
+   // refreshImage();
    setPointLabel();
 }
 
@@ -285,7 +285,7 @@ function goToNextPoint() {
    document.getElementById(coordinateId).value = centerOfZoomed.y;
 
    goToNextPoint();    
-   refreshImage();
+   // refreshImage();
    drawCourtLines();
 }
 
