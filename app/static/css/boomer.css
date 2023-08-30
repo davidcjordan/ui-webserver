@@ -1,6 +1,6 @@
 
 :root {
-  --icon-button-size: 120px;
+  --icon-button-size:120px;
 }
 /* reset margins */
 /*
@@ -76,27 +76,18 @@ body {
   vertical-align: top;      
 }
 .statistics-display {
-  width: 50%;       
+  /* width: 50%;        */
+  width: 610px;       
 }
 .selections_45percent {
-  width: 39%;            
+  /* width: 39%;             */
+  width: 460px;            
 }
 .selections_90percent {
   width: 88%;
 }
 .selections_100percent {
   width: 100%;
-}
-.start-stop {
-  width: 9%;  
-}
-.start-stop button {
-  width: var(--icon-button-size);
-  height: var(--icon-button-size);
-}
-.start-stop img {
-  width: var(--icon-button-size);
-  height: var(--icon-button-size);
 }
 
 .footer-left, .footer-center, .footer-right {
@@ -116,7 +107,25 @@ body {
   text-align: right;
 }
 
-/* what does this do??: display: table */
+/* could not set width using calc(var(--icon-button-raw) + 8)
+  --> so change the width if icon-button-size is changed! */
+.start-stop {
+  /* width: 9%;   */
+  width: 132px;
+}
+
+.start-stop button {
+  border: 1px;
+  border-color: white;
+  border-radius: 0%;
+  background: transparent;
+}
+
+.start-stop img {
+  width: var(--icon-button-size);
+  height: var(--icon-button-size);
+}
+
 .pause-resume-button {
   border: 1px;
   border-color: white;
