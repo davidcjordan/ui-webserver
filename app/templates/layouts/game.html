@@ -77,8 +77,13 @@
 <div class="start-stop">
   <button type="button" id="pause-resume" class="pause-resume-button resume">
   </button>
-  <button type="submit" onclick="window.location.href='{{ url_for('blueprint_core.done') }}';">
+  <button type="submit" class="start-stop.stop" onclick="window.location.href='{{ url_for('blueprint_core.done') }}';">
     <img src="/static/stop.png">
+  </button>
+  <br>
+  <br>
+  <button type="button" id="game_help_button">
+    <img src="/static/help.png">
   </button>
 </div>
 {%- endblock %}
@@ -91,4 +96,5 @@
 {%- block page_specific_js %} 
   <script src="/static/js/number-picker-2.js" defer ></script>
   <script src="/static/js/pause_resume.js" defer></script>
+  <script src="/static/js/game_help.js" defer></script>
 {%- endblock %} 
