@@ -20,6 +20,8 @@ var notZoomedDivWidth; //set in init; used in drawLines
 var notZoomedDivHeight; //used in imageZoom
 var currentCoordinate;
 var coordinateArray;
+let STARTING_POINT = 2; //used to skip over FBL AND FBR
+var points;
 
 var lensDiv; //this is the square drawn on the image to indicate the zoomed area
 var lensDivBorderTotalWidth;  //set in imageZoom(), used in moveLensByTouch() to not have the lens go outside the image
@@ -69,15 +71,22 @@ function init() {
 
    if ( page_id.indexOf( "calib" ) > -1 ) {
       imageZoom("div_zoomed_8")
-      drawCursorInZoom8();
 
       coordinateArray = document.getElementById("court_coordinates").elements;
       // console.log(coordinateArray)
       // the following is the output of the console log:
       // HTMLFormControlsCollection(15) [input#FBLX, input#FBLY, input#FBRX, input#FBRY, input#NSLX, input#NSLY, input#NSCX, input#NSCY, input#NSRX, input#NSRY, input#NBLX, input#NBLY, input#NBRX, input#NBRY, input#submitButton, FBLX: input#FBLX, FBLY: input#FBLY, FBRX: input#FBRX, FBRY: input#FBRY, NSLX: input#NSLX, …]
-      currentCoordinate = 0;
+      currentCoordinate = STARTING_POINT * 2;
       setPointLabel();
-   }
+      // reposition zoom to where the first point (NSL) is:
+      if ((points[0][0] > 0) && (points[0][0] > 0))
+      {
+         backgroundPosition.top = (2*points[0][1]) - (lensDiv.offsetWidth);
+         backgroundPosition.left = (2*points[0][0]) - (lensDiv.offsetHeight);  
+         moveLensBoundaryCheck();
+      }   
+      drawCursorInZoom8();
+    }
 };
 
 init();
@@ -88,28 +97,24 @@ function drawCourtLines() {
 
    notZoomedContext.clearRect(0, 0, notZoomedCanvas.width, notZoomedCanvas.height);
    canvasDivisor = imgWidth/notZoomedDivWidth;
-   // console.log('canvasDivisor=%f', canvasDivisor);
-
-   // ? could change this to use the coordinateArray to get the coordinate names
-   // and iterate through the pairs of coordinates, but skip certain pairs: FBR to NSL & NSR to NBL
-   // And add other pairs: FBL to NSL, FBR to NSR, NSL to NBL and NSR to NBL
+  // console.log('canvasDivisor=%f', canvasDivisor);
    
-   // draw outer-court lines (6 of them); start by loading array of court points
-   var points = 
-   [[parseInt(document.getElementById("FBLX").value/canvasDivisor), 
-      parseInt(document.getElementById("FBLY").value/canvasDivisor)],
-      [parseInt(document.getElementById("FBRX").value/canvasDivisor),
-      parseInt(document.getElementById("FBRY").value/canvasDivisor)],
+   // load array of court points; note that this gets updated by SetPoints
+   points = 
+   [ [parseInt(document.getElementById("NSLX").value/canvasDivisor), 
+      parseInt(document.getElementById("NSLY").value/canvasDivisor)],
+      [parseInt(document.getElementById("NSCX").value/canvasDivisor),
+      parseInt(document.getElementById("NSCY").value/canvasDivisor)],
       [parseInt(document.getElementById("NSRX").value/canvasDivisor),
       parseInt(document.getElementById("NSRY").value/canvasDivisor)],
       [parseInt(document.getElementById("NBRX").value/canvasDivisor),
       parseInt(document.getElementById("NBRY").value/canvasDivisor)],
       [parseInt(document.getElementById("NBLX").value/canvasDivisor),
-      parseInt(document.getElementById("NBLY").value/canvasDivisor)],
-      [parseInt(document.getElementById("NSLX").value/canvasDivisor),
-      parseInt(document.getElementById("NSLY").value/canvasDivisor)]];
-   // console.table(points);
+      parseInt(document.getElementById("NBLY").value/canvasDivisor)]];
+  console.log('canvasDivisor=%f NSL_element=%s NSL_point=%d', canvasDivisor, document.getElementById("NSLX").value, points[0][0]);
+  // console.table(points);
    
+   // draw lines between court points:
    for (var this_pt = 0; this_pt < points.length; this_pt++) {
       var next_pt = this_pt + 1;
       if (next_pt >= points.length) {next_pt = 0}
@@ -122,30 +127,9 @@ function drawCourtLines() {
       }
    }
 
-   // draw service line (2 lines);  reload points array with service line points
-   points.length = 3;
-   points[0] = [parseInt(document.getElementById("NSLX").value/canvasDivisor), 
-      parseInt(document.getElementById("NSLY").value/canvasDivisor)];
-
-   points[1] = [parseInt(document.getElementById("NSCX").value/canvasDivisor),
-      parseInt(document.getElementById("NSCY").value/canvasDivisor)];
-   
-   points[2] = [parseInt(document.getElementById("NSRX").value/canvasDivisor),
-      parseInt(document.getElementById("NSRY").value/canvasDivisor)];
-
-   for (var this_pt = 0; this_pt < points.length-1; this_pt++) {
-      var next_pt = this_pt + 1;
-      if ((points[this_pt][0] > 0) && (points[next_pt][0] > 0))
-      {
-         notZoomedContext.beginPath();
-         notZoomedContext.moveTo(points[this_pt][0], points[this_pt][1]);
-         notZoomedContext.lineTo(points[next_pt][0], points[next_pt][1]);
-         notZoomedContext.stroke();   
-      }
-   }
    // draw a vertical hash mark on NSC to show where the center is
    let nsc_crosshair_half_length = 20
-   if ((points[this_pt][1] > 0) && (points[next_pt][1] > 0))
+   if ((points[1][0] > 0) && (points[1][1] > 0))
    {
       notZoomedContext.beginPath();
       notZoomedContext.moveTo(points[1][0], points[1][1]-nsc_crosshair_half_length);
@@ -267,25 +251,32 @@ function drawCursorInZoom8() {
 function goToNextPoint() {
    currentCoordinate += 2;
    if (currentCoordinate >= 13) {
-     currentCoordinate = 0;
+     currentCoordinate = STARTING_POINT * 2;
      let submitButton = document.getElementById("submitButton");
      submitButton.disabled = false;
    }
    // refreshImage();
+   var nextPoint = currentCoordinate/2 - STARTING_POINT;
+   // console.log("nextPoint=%d corrId=%s", nextPoint, coordinateArray[currentCoordinate].id)
+   if ((points[nextPoint][0] > 0) && (points[nextPoint][0] > 0)) {
+      backgroundPosition.top = (2*points[nextPoint][1]) - (lensDiv.offsetWidth);
+      backgroundPosition.left = (2*points[nextPoint][0]) - (lensDiv.offsetHeight);  
+      moveLensBoundaryCheck();
+   }   
+   drawCursorInZoom8();
    setPointLabel();
 }
 
  function setPoint() {
    // the point's X/Y is equal to the center of the zoomed image which is set in moveLensBoundaryCheck()
 
-   // console.dir(coordinateArray, {'maxArrayLength': null});
+  //  console.dir(coordinateArray, {'maxArrayLength': null});
    var coordinateId = coordinateArray[currentCoordinate].id
    document.getElementById(coordinateId).value = centerOfZoomed.x;
    coordinateId = coordinateArray[currentCoordinate+1].id
    document.getElementById(coordinateId).value = centerOfZoomed.y;
 
    goToNextPoint();    
-   // refreshImage();
    drawCourtLines();
 }
 
