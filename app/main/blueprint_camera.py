@@ -4,6 +4,7 @@ blueprint_camera = Blueprint('blueprint_camera', __name__)
 import enum
 import json
 import datetime
+import os.path #for file exists
 
 from app.main.defines import *
 from app.func_base import send_gen_vectors_to_base
@@ -353,7 +354,10 @@ def cam_calib_done():
             dt = datetime.datetime.now()
             dt_str = dt.strftime("%Y-%m-%d_%H-%M")
             output_line = json.dumps(court_points_dict_list[court_point_dict_index]) + " " +  dt_str + "\n"
-            with open(f'{settings_dir}/{cam_side.lower()}_court_points.json', 'r+') as outfile:
+            court_points_filename = f'{settings_dir}/{cam_side.lower()}_court_points.json'
+            if not os.path.exists(court_points_filename):
+               open(court_points_filename, 'a').close()
+            with open(court_points_filename, 'r+') as outfile:
                lines = outfile.readlines() # read old content
                outfile.seek(0) # go back to the beginning of the file
                outfile.write(output_line) # write new content at the beginning
