@@ -81,8 +81,8 @@ function init() {
       // reposition zoom to where the first point (NSL) is:
       if ((points[0][0] > 0) && (points[0][0] > 0))
       {
-         backgroundPosition.top = (2*points[0][1]) - (lensDiv.offsetWidth);
-         backgroundPosition.left = (2*points[0][0]) - (lensDiv.offsetHeight);  
+         backgroundPosition.top = points[0][1] - lensDiv.offsetWidth + lensDivBorderTotalWidth;
+         backgroundPosition.left = points[0][0] - lensDiv.offsetHeight + lensDivBorderTotalWidth;  
          moveLensBoundaryCheck();
       }   
       drawCursorInZoom8();
@@ -97,21 +97,20 @@ function drawCourtLines() {
 
    notZoomedContext.clearRect(0, 0, notZoomedCanvas.width, notZoomedCanvas.height);
    canvasDivisor = imgWidth/notZoomedDivWidth;
-  // console.log('canvasDivisor=%f', canvasDivisor);
    
    // load array of court points; note that this gets updated by SetPoints
    points = 
-   [ [parseInt(document.getElementById("NSLX").value/canvasDivisor), 
-      parseInt(document.getElementById("NSLY").value/canvasDivisor)],
-      [parseInt(document.getElementById("NSCX").value/canvasDivisor),
-      parseInt(document.getElementById("NSCY").value/canvasDivisor)],
-      [parseInt(document.getElementById("NSRX").value/canvasDivisor),
-      parseInt(document.getElementById("NSRY").value/canvasDivisor)],
-      [parseInt(document.getElementById("NBRX").value/canvasDivisor),
-      parseInt(document.getElementById("NBRY").value/canvasDivisor)],
-      [parseInt(document.getElementById("NBLX").value/canvasDivisor),
-      parseInt(document.getElementById("NBLY").value/canvasDivisor)]];
-  console.log('canvasDivisor=%f NSL_element=%s NSL_point=%d', canvasDivisor, document.getElementById("NSLX").value, points[0][0]);
+   [ [parseInt(document.getElementById("NSLX").value), 
+      parseInt(document.getElementById("NSLY").value)],
+      [parseInt(document.getElementById("NSCX").value),
+      parseInt(document.getElementById("NSCY").value)],
+      [parseInt(document.getElementById("NSRX").value),
+      parseInt(document.getElementById("NSRY").value)],
+      [parseInt(document.getElementById("NBRX").value),
+      parseInt(document.getElementById("NBRY").value)],
+      [parseInt(document.getElementById("NBLX").value),
+      parseInt(document.getElementById("NBLY").value)]];
+  // console.log('canvasDivisor=%f NSL_element=%s', canvasDivisor, document.getElementById("NSLX").value);
   // console.table(points);
    
    // draw lines between court points:
@@ -121,8 +120,8 @@ function drawCourtLines() {
       if ((points[this_pt][0] > 0) && (points[next_pt][0] > 0))
       {
          notZoomedContext.beginPath();
-         notZoomedContext.moveTo(points[this_pt][0], points[this_pt][1]);
-         notZoomedContext.lineTo(points[next_pt][0], points[next_pt][1]);
+         notZoomedContext.moveTo(points[this_pt][0]/canvasDivisor, points[this_pt][1]/canvasDivisor);
+         notZoomedContext.lineTo(points[next_pt][0]/canvasDivisor, points[next_pt][1]/canvasDivisor);
          notZoomedContext.stroke();   
       }
    }
@@ -132,8 +131,8 @@ function drawCourtLines() {
    if ((points[1][0] > 0) && (points[1][1] > 0))
    {
       notZoomedContext.beginPath();
-      notZoomedContext.moveTo(points[1][0], points[1][1]-nsc_crosshair_half_length);
-      notZoomedContext.lineTo(points[1][0], points[1][1]+nsc_crosshair_half_length);
+      notZoomedContext.moveTo(points[1][0]/canvasDivisor, points[1][1]/canvasDivisor-nsc_crosshair_half_length);
+      notZoomedContext.lineTo(points[1][0]/canvasDivisor, points[1][1]/canvasDivisor+nsc_crosshair_half_length);
       notZoomedContext.stroke();   
    }
 }
@@ -173,7 +172,7 @@ function imageZoom(targetDivID) {
    zoomed8Div.style.height = zoomDivSize + 'px';
    zoomed8DivStyle = getComputedStyle(zoomed8Div);
    let zoomed8DivBorderTotalWidth = (parseInt(zoomed8DivStyle.borderLeftWidth) || 0) *2;
-   // console.log("lensDivBorderTotalWidth: %d   zoomed8DivBorderTotalWidth: %d", lensDivBorderTotalWidth, zoomed8DivBorderTotalWidth);
+  // console.log("lensDivBorderTotalWidth: %d   zoomed8DivBorderTotalWidth: %d", lensDivBorderTotalWidth, zoomed8DivBorderTotalWidth);
  
    zoomed8Canvas = document.getElementById("canvas_id_zoomed_8");
    zoomed8Canvas.width = zoomed8Div.offsetWidth - zoomed8DivBorderTotalWidth;
@@ -259,8 +258,8 @@ function goToNextPoint() {
    var nextPoint = currentCoordinate/2 - STARTING_POINT;
    // console.log("nextPoint=%d corrId=%s", nextPoint, coordinateArray[currentCoordinate].id)
    if ((points[nextPoint][0] > 0) && (points[nextPoint][0] > 0)) {
-      backgroundPosition.top = (2*points[nextPoint][1]) - (lensDiv.offsetWidth);
-      backgroundPosition.left = (2*points[nextPoint][0]) - (lensDiv.offsetHeight);  
+      backgroundPosition.top = points[nextPoint][1] - lensDiv.offsetWidth + lensDivBorderTotalWidth;
+      backgroundPosition.left = points[nextPoint][0] - lensDiv.offsetHeight + lensDivBorderTotalWidth;  
       moveLensBoundaryCheck();
    }   
    drawCursorInZoom8();
