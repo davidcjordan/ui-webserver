@@ -255,12 +255,14 @@ function goToNextPoint() {
      submitButton.disabled = false;
    }
    // refreshImage();
-   var nextPoint = currentCoordinate/2 - STARTING_POINT;
-   // console.log("nextPoint=%d corrId=%s", nextPoint, coordinateArray[currentCoordinate].id)
-   if ((points[nextPoint][0] > 0) && (points[nextPoint][0] > 0)) {
-      backgroundPosition.top = points[nextPoint][1] - lensDiv.offsetWidth + lensDivBorderTotalWidth;
-      backgroundPosition.left = points[nextPoint][0] - lensDiv.offsetHeight + lensDivBorderTotalWidth;  
-      moveLensBoundaryCheck();
+   var nextPoint_x = parseInt(document.getElementById(coordinateArray[currentCoordinate].id).value)
+   var nextPoint_y = parseInt(document.getElementById(coordinateArray[currentCoordinate+1].id).value)
+   // console.log("nextPointId_x=%s nextPoint_x=%d nextPointId_y=%s nextPoint_y=%d",
+   //    coordinateArray[currentCoordinate].id, nextPoint_x, coordinateArray[currentCoordinate+1].id, nextPoint_y)
+   if ((nextPoint_x > 0) && (nextPoint_y > 0)) {
+    backgroundPosition.top = nextPoint_y - lensDiv.offsetWidth + lensDivBorderTotalWidth;
+    backgroundPosition.left = nextPoint_x - lensDiv.offsetHeight + lensDivBorderTotalWidth;  
+    moveLensBoundaryCheck();
    }   
    drawCursorInZoom8();
    setPointLabel();
