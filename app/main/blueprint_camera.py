@@ -215,7 +215,10 @@ def cam_calib():
             new_cam_measurement_mm[Measurement(i).value] = int(new_cam_measurement_mm[Measurement(i).value])
          
          output_line = json.dumps(new_cam_measurement_mm) + " " +  dt_str + "\n"
-         with open(f'{settings_dir}/{cam_side.lower()}_cam_measurements.json', 'r+') as outfile:
+         cam_measurements_filename = f'{settings_dir}/{cam_side.lower()}_cam_measurements.json'
+         if not os.path.exists(cam_measurements_filename):
+            open(cam_measurements_filename, 'a').close()
+         with open(cam_measurements_filename, 'r+') as outfile:
             lines = outfile.readlines() # read old content
             outfile.seek(0) # go back to the beginning of the file
             outfile.write(output_line) # write new content at the beginning
@@ -254,14 +257,15 @@ def cam_calib():
 
          #TODO: move persist values to func_base
          output_line = json.dumps(new_cam_location_mm) + " " +  dt_str + "\n"
-         with open(f'{settings_dir}/{cam_side.lower()}_cam_location.json', 'r+') as outfile:
+         cam_location_filename = f'{settings_dir}/{cam_side.lower()}_cam_location.json'
+         if not os.path.exists(cam_location_filename):
+            open(cam_location_filename, 'a').close()
+         with open(cam_location_filename, 'r+') as outfile:
             lines = outfile.readlines() # read old content
             outfile.seek(0) # go back to the beginning of the file
             outfile.write(output_line) # write new content at the beginning
             for line in lines: # write old content after new
                outfile.write(line)
-         # with open(f"{settings_dir}/{cam_side.lower()}_cam_location.json", "w") as outfile:
-         #    json.dump(new_cam_location_mm, outfile)
       else:
          current_app.logger.debug(f"No change in {cam_side} cam measurements, not updating cam_measurements or cam_location")
 
