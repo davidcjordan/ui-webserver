@@ -78,7 +78,7 @@ if __name__ == '__main__':
           # have court points, so write to file:
           output_line = json.dumps(court_points_dict) + " " +  dt_str + "\n"
           # print(output_line)
-          with open(f'{BASE_PATH}{OUTPUT_FILE_PATH}{file_prefix}{POINTS_FILE_SUFFIX}', 'r+') as outfile:
+          with open(f'{BASE_PATH}{OUTPUT_FILE_PATH}{file_prefix}{POINTS_FILE_SUFFIX}', 'w') as outfile:
             lines = outfile.readlines() # read old content
             outfile.seek(0) # go back to the beginning of the file
             outfile.write(output_line) # write new content at the beginning
@@ -92,7 +92,7 @@ if __name__ == '__main__':
             cam_location_axis[i] = float(value)
           # print(f"cam_location_axis= {cam_location_axis}")
           output_line = json.dumps(cam_location_axis) + " " +  dt_str + "\n"
-          with open(f'{BASE_PATH}{OUTPUT_FILE_PATH}{file_prefix}{LOCATION_FILE_SUFFIX}', 'r+') as outfile:
+          with open(f'{BASE_PATH}{OUTPUT_FILE_PATH}{file_prefix}{LOCATION_FILE_SUFFIX}', 'w') as outfile:
             lines = outfile.readlines() # read old content
             outfile.seek(0) # go back to the beginning of the file
             outfile.write(output_line) # write new content at the beginning
