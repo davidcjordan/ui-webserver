@@ -5,6 +5,7 @@ import enum
 import json
 import datetime
 import os.path #for file exists
+from time import sleep
 
 from app.main.defines import *
 from app.func_base import send_gen_vectors_to_base
@@ -434,11 +435,15 @@ def scp_court_png(side_name='Left', frame='even'):
    from subprocess import Popen
 
    scp_return_code = scp_status.OK.value
+   file_size = [0,0,0]
 
    # current_app.logger.debug(f"scp_court_png: side_name={side} frame={frame}")
    source_path = f"{side_name.lower()}:/run/shm/frame_{frame}.png"
-   destination_path = f"{user_dir}/{boomer_dir}/{side_name.lower()}_court.png"
-   # current_app.logger.info(f"BEFORE: scp {source_path} {destination_path}")
+
+   final_destination_path = f"/run/shm/{side_name.lower()}_court"
+   if os.path.isfile(f"{final_destination_path}.png"):
+      #rename PNG so no image will be shown if the scp fails; prevents showing a stale image
+      os.rename(f"{final_destination_path}.png", f"{final_destination_path}_previous.png")
 
    p = Popen(["ping", "-c1", "-W1",f"{side_name.lower()}"], shell=False)
    p.wait()
@@ -446,15 +451,30 @@ def scp_court_png(side_name='Left', frame='even'):
       current_app.logger.error(f"FAILED: ping {side_name.lower()}")
       scp_return_code = scp_status.PING_FAILED.value
    else:
-      # the q is for quiet
-      p = Popen(["scp", "-q", "-o ConnectTimeout=3",source_path, destination_path], shell=False)
-      rc = p.wait()
-      stdoutdata, stderrdata = p.communicate()
-      if p.returncode != 0:
-         current_app.logger.error(f"FAILED: scp {source_path} {destination_path}; error_code={p.returncode}")
+      # do the scp twice, because on of them may have been while the .png file is being written and hence imcomplete
+      for attempt in range(1, 3):
+         # the q is for quiet
+         destination_path = f"{final_destination_path}_{attempt}.png"
+         p = Popen(["scp", "-qp", "-o ConnectTimeout=2",source_path, destination_path], shell=False)
+         rc = p.wait()
+         stdoutdata, stderrdata = p.communicate()
+         if p.returncode != 0:
+            current_app.logger.error(f"FAILED: scp -qp {source_path} {destination_path}; error_code={p.returncode}")
+         else:
+            file_size[attempt] = os.path.getsize(destination_path)
+            # current_app.logger.info(f"OK: scp {source_path} {destination_path}; filesize={file_size[attempt]}")
+            sleep(0.04)
+      current_app.logger.info(f"filesize1={file_size[1]} filesize2={file_size[2]}")
+      using_attempt= 0
+      if file_size[1] == 0 and file_size[2] == 0:
          scp_return_code = scp_status.SCP_FAILED.value
-      else:
-         current_app.logger.info(f"OK: scp {source_path} {destination_path}")
+      elif file_size[1] >= file_size[2]:
+         using_attempt= 1
+      elif file_size[1] < file_size[2]:
+         using_attempt= 2
+      if using_attempt > 0:
+         os.rename(f"{final_destination_path}_{using_attempt}.png", f"{final_destination_path}.png")
+         current_app.logger.info(f"Using attempt={using_attempt}; filesize1={file_size[1]} filesize2={file_size[2]}")
 
    return scp_return_code
 
