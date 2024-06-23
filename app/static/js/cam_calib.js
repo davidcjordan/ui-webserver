@@ -254,7 +254,7 @@ function goToNextPoint() {
      let submitButton = document.getElementById("submitButton");
      submitButton.disabled = false;
    }
-   // refreshImage();
+   refreshImage();
    var nextPoint_x = parseInt(document.getElementById(coordinateArray[currentCoordinate].id).value)
    var nextPoint_y = parseInt(document.getElementById(coordinateArray[currentCoordinate+1].id).value)
    // console.log("nextPointId_x=%s nextPoint_x=%d nextPointId_y=%s nextPoint_y=%d",
