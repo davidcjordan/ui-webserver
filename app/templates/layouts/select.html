@@ -25,6 +25,9 @@
     <button type="submit">
       <img src="/static/start.png">
     </button>
+    {%- if enable_edit_button is defined %}
+      <button type="submit" name="Edit"><img src="/static/save.png"></button>
+    {%- endif %}
   </div>
 </form>
 {%- endblock %}

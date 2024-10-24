@@ -18,6 +18,7 @@ CUSTOM_SELECTION_URL = '/custom_selection'
 CAM_VERIF_URL = '/cam_verif'
 DONE_URL = '/done'
 RECENTS_URL = '/recent_drills'
+EDIT_DRILL_URL = '/edit_drill'
 
 from flask import Markup
 my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \

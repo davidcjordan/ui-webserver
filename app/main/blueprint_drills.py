@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, request, render_template
+from flask import Blueprint, current_app, request, render_template, redirect
 
 blueprint_drills = Blueprint('blueprint_drills', __name__)
 '''
@@ -188,6 +188,7 @@ def custom():
       installation_icon = display_customization_dict['icon'], \
       footer_center = display_customization_dict['title'], \
       url_for_post = DRILL_URL, \
+      enable_edit_button = True, \
       choices = selection_list, \
       # page_specific_js = get_drill_info_js \
    )
@@ -324,6 +325,8 @@ def drill():
    example from beep test:
       DRILL_URL request_form: ImmutableMultiDict([('Stroke', 'Mini-Tennis'), ('Ground Stroke Type', 'Topspin'), ('Difficulty', 'Medium')])
       DRILL_URL request_args: ImmutableMultiDict([])
+   example from custom drill select, when edit button is pushed:
+      DRILL_URL request_form: ImmutableMultiDict([('choice_id', '401'), ('Edit', '')])
    '''
    current_app.logger.debug(f"DRILL_URL request_form: {request.form}")
    current_app.logger.debug(f"DRILL_URL request_args: {request.args}")
@@ -331,6 +334,14 @@ def drill():
    # current_app.logger.info(f"request.form is of type: {type(request.form)}")
    # for key, value in request.form.items():
    #    print(key, '->', value)
+
+   if 'Edit' in request.form:
+      if 'choice_id' in request.form:
+         id = int(request.form['choice_id'])
+      else:
+         return redirect(CUSTOM_SELECTION_URL)
+      return redirect(f"{EDIT_DRILL_URL}?drill_id={id}")
+ 
    id = None
    beep_type_value = None
    is_workout = False
@@ -453,6 +464,19 @@ def drill():
       installation_icon = display_customization_dict['icon'], \
       stepper_options = drill_stepper_options, \
       radio_options = continuous_option, \
+      footer_center = display_customization_dict['title'])
+
+@blueprint_drills.route(EDIT_DRILL_URL, methods=DEFAULT_METHODS)
+def edit_drill():
+   from app.main.blueprint_core import display_customization_dict
+
+   current_app.logger.debug(f"EDIT_DRILL_URL request_form: {request.form}")
+   current_app.logger.debug(f"EDIT_DRILL_URL request_args: {request.args}")
+
+   return render_template(CHOICE_INPUTS_TEMPLATE, \
+      page_title = "Edit Drill", \
+      installation_icon = display_customization_dict['icon'], \
+      onclick_choices = [{"value": "OK", "onclick_url": MAIN_URL}], \
       footer_center = display_customization_dict['title'])
 
 
