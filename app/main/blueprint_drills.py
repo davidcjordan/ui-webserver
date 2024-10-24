@@ -10,6 +10,7 @@ blueprint_drills = Blueprint('blueprint_drills', __name__)
 
 import json
 import enum
+import os
 from app.main.defines import *
 from app.func_drills import get_drill_info, get_workout_info
 from app.func_base import send_start_to_base, send_settings_to_base
@@ -42,6 +43,7 @@ THROWER_CALIB_WORKOUT_ID = 2
 
 MODE_DRILL_SELECTED = "Drill #"
 MODE_WORKOUT_SELECTED = "Workout #"
+EXAMPLE_CUSTOM_DRILL_FILENAME = "DRL401.csv"
 
 drills_dict = {} # holds copies of drills read in from DRLxxx.csv files; keys are the drill numbers
 workouts_dict = {} #as above, but using WORKxxx.csv files
@@ -151,6 +153,43 @@ def recents():
       url_for_post = DRILL_URL, \
       choices = selection_list, \
       page_specific_js = get_drill_info_js \
+   )
+
+
+@blueprint_drills.route(CUSTOM_SELECTION_URL, methods=DEFAULT_METHODS)
+def custom():
+   from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
+   custom_drill_list = []
+   selection_list = []
+
+   for file_path in os.listdir(CUSTOM_DRILL_FILES_PATH):
+      if os.path.isfile(os.path.join(CUSTOM_DRILL_FILES_PATH, file_path)):
+         if file_path.startswith('DRL') and file_path.endswith('.csv'):
+            custom_drill_list.append(file_path)
+
+   if len(custom_drill_list) == 0:
+      os.system(f'cp {DRILL_FILES_PATH}/DRL004.csv {CUSTOM_DRILL_FILES_PATH}/{EXAMPLE_CUSTOM_DRILL_FILENAME}')
+      custom_drill_list.append(EXAMPLE_CUSTOM_DRILL_FILENAME)
+
+   for file_name in custom_drill_list:
+      with open(os.path.join(settings_dir, file_name)) as f:
+         try:
+            title = f.readline().rstrip().strip('\"')
+         except:
+            current_app.logger.error(f"get_drill_info: Error reading '{file_path}'")
+         drill_id_str = file_name[3:6]
+         drill_item_dict = {'id': drill_id_str, 'title': title}
+         current_app.logger.debug(f"drill_item_dict={drill_item_dict}")
+         selection_list.append(drill_item_dict)
+
+   return render_template(SELECT_TEMPLATE, \
+      home_button = my_home_button, \
+      page_title = "Select Drill", \
+      installation_icon = display_customization_dict['icon'], \
+      footer_center = display_customization_dict['title'], \
+      url_for_post = DRILL_URL, \
+      choices = selection_list, \
+      # page_specific_js = get_drill_info_js \
    )
 
 

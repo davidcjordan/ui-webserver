@@ -105,7 +105,8 @@ def index():
       # {"value": "Help", "id": "game_help_button", "html_after": html_horizontal_rule},\
       {"html_before": "Drill:", "value": drill_list_button_title, "onclick_url": RECENTS_URL},\
       {"value": "Select", "onclick_url": DRILL_SELECT_TYPE_URL},\
-      {"value": "Beep", "onclick_url": BEEP_SELECTION_URL, "html_after": html_horizontal_rule},\
+      {"value": "Beep", "onclick_url": BEEP_SELECTION_URL},\
+      {"value": "Custom", "onclick_url": CUSTOM_SELECTION_URL, "html_after": html_horizontal_rule},\
       {"value": "Workouts", "onclick_url": SELECT_WORKOUT_URL, "html_after": html_horizontal_rule}, \
       {"value": "Settings", "onclick_url": SETTINGS_URL}
    ]
