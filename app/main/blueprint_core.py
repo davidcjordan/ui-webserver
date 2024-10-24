@@ -94,16 +94,11 @@ def index():
    # TODO: fix disable CSS
    # onclick_choices = [{"value": button_label, "onclick_url": MAIN_URL, "disabled": 1, "id": "Done"}], \
 
-   if (os.path.exists(f'{settings_dir}/{custom_drill_list_filename}')):
-      drill_list_button_title = "My Drills"
-   else:
-      drill_list_button_title = "Recents"
-
    onclick_choice_list = [\
       {"html_before": "Game:", "value": "Play", "onclick_url": GAME_URL, "id": "game_button"},\
       {"value": "Settings", "onclick_url": GAME_OPTIONS_URL, "id": "game_settings", "html_after": html_horizontal_rule},\
       # {"value": "Help", "id": "game_help_button", "html_after": html_horizontal_rule},\
-      {"html_before": "Drill:", "value": drill_list_button_title, "onclick_url": RECENTS_URL},\
+      {"html_before": "Drill:", "value": "Recents", "onclick_url": RECENTS_URL},\
       {"value": "Select", "onclick_url": DRILL_SELECT_TYPE_URL},\
       {"value": "Beep", "onclick_url": BEEP_SELECTION_URL},\
       {"value": "Custom", "onclick_url": CUSTOM_SELECTION_URL, "html_after": html_horizontal_rule},\
@@ -124,7 +119,6 @@ def index():
    except:
       this_template = render_template(CHOICE_INPUTS_TEMPLATE, \
          page_title = "Welcome to Boomer", \
-         page_specific_js = page_js, \
          onclick_choices = onclick_choice_list)
       
    return this_template
