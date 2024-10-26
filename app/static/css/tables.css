@@ -39,3 +39,9 @@
   padding-left: 5px;
   padding-right: 5px;
 }
+select {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #010101;
+  font-size: 0.8em;
+}
