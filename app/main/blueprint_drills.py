@@ -473,10 +473,10 @@ def edit_drill():
    current_app.logger.debug(f"EDIT_DRILL_URL request_form: {request.form}")
    current_app.logger.debug(f"EDIT_DRILL_URL request_args: {request.args}")
 
-   return render_template(CHOICE_INPUTS_TEMPLATE, \
+   return render_template('/layouts/drill_show.html', \
       page_title = "Edit Drill", \
+      home_button = my_home_button, \
       installation_icon = display_customization_dict['icon'], \
-      onclick_choices = [{"value": "OK", "onclick_url": MAIN_URL}], \
       footer_center = display_customization_dict['title'])
 
 
