@@ -22,126 +22,37 @@
    
 <div>
    <table style="font-size:0.8em" id="drill_table" class="Table">
-   <p></p>
-   <thead>
-      <tr class="Heading">
-         <th class="Cell">#</th>
-         <th class="Cell">Type</th>
-         <th class="Cell">Court</th>
-         <th class="Cell">Ang</th>
-         <th class="Cell">Delay</th>
-         <th class="Cell">Scoring</th>
-         <th class="Cell">Lvl</th>
-         <th class="Cell">Speed</th>
-         <th class="Cell">Loft</th>
-         <th class="Cell">Spin Spd</th>
-         <th class="Cell">Spin Type</th>
-      </tr>
-   </thead>
-   <tbody>
-      <tr>
-         <td class="Cell">1</td>
-         <!-- <td class="Cell">Rand ground</td> -->
-         <td class="Cell">
-            <select>
-               <option value="SERVE">Serve</option>
-               <option value="DROP">Drop</option>
-               <option value="CHIP">Chip</option>
-               <option value="TOPSPIN">Topspin</option>
-               <option value="CUSTOM">Custom</option>
-               <option value="RAND_GROUND">Rand Grnd</option>
-               <option value="RAND_NET">Rand Net</option>
-            </select>
-         </td>
-         <td class="Cell">
-            <select>
-               <option value="FH" selected>Forehand</option>
-               <option value="BH">Backhand</option>
-               <option value="CENTER">Center</option>
-               <option value="RAND">Random</option>
-               <option value="RANDFH">Rand-FH</option>
-               <option value="RANDBH">Rand-BH</option>
-            </select>
-         <td class="Cell">
-            <select>
-               <option value="1" selected>1</option>
-               <option value="2" selected>2</option>
-               <option value="3" selected>3</option>
-               <option value="7" selected>7</option>
-               <option value="10" selected>10</option>
-               <option value="13" selected>13</option>
-            </select>
-         </td>
-         <td class="Cell">
-            <select>
-               <option value="2.0">2.0</option>
-               <option value="2.5">2.5</option>
-               <option value="3.0">3.0</option>
-               <option value="3.5">3.5</option>
-               <option value="4.0"selected>4.0</option>
-               <option value="4.5">4.5</option>
-               <option value="5.0">5.0</option>
-               <option value="5.5">5.5</option>
-            </select>
-         </td>
-         <td class="Cell">
-            <select>
-               <option value="NOT_SCORED" selected>None</option>
-               <option value="SERVE_DEUCE_WIDE">Serve Deuce Wide</option>
-               <option value="SERVE_AD_WIDE">Serve Ad Wide</option>
-               <option value="DEUCE">Deuce</option>
-               <option value="DEUCE_VERY_DEEP">Deuce Very Deep</option>
-               <!-- <option value="DEUCE_SHORT_VERY_WIDE">Deuce Short Very Wide</option> -->
-            </select>
-         </td>
-      <td class="Cell">
-         <select>
-            <option value="2.0">2.0</option>
-            <option value="2.5">2.5</option>
-            <option value="3.0"selected>3.0</option>
-            <option value="3.5">3.5</option>
-            <option value="4.0">4.0</option>
-            <option value="4.5">4.5</option>
-            <option value="5.0">5.0</option>
-            <option value="6.0">6.0</option>
-            <option value="7.0">7.0</option>
-         </select>
-      </td>
-         <td class="Cell">
-            <select>
-               <option value="30">30</option>
-               <option value="35">35</option>
-               <option value="40">40</option>
-               <option value="45">45</option>
-               <option value="50" selected>50</option>
-               <option value="55">55</option>
-               <option value="60">60</option>
-               <option value="80">80</option>
-            </select>
-         </td>
-         <td class="Cell">
-            <select>
-               <option value="5">5</option>
-               <option value="10">10</option>
-               <option value="20" selected>20</option>
-               <option value="43">43</option>
-            </select>
-         </td>
-         <td class="Cell">
-            <select>
-               <option value="1000">1000</option>
-               <option value="2000" selected>2000</option>
-               <option value="3000">3000</option>
-            </select>
-         </td>
-         <td class="Cell">
-            <select>
-               <option value="TOP" selected>Top</option>
-               <option value="BOT" >Bottom</option>
-            </select>
-         </td>
-      </tr>
-   </tbody>
+      <p></p>
+      <thead>
+         <tr class="Heading">
+            <th class="Cell">#</th>
+            <th class="Cell">Type</th>
+            <th class="Cell">Court</th>
+            <th class="Cell">Ang</th>
+            <th class="Cell">Delay</th>
+            <th class="Cell">Scoring</th>
+            <th class="Cell">Lvl</th>
+            <th class="Cell">Speed</th>
+            <th class="Cell">Loft</th>
+            <th class="Cell">Spin Spd</th>
+            <th class="Cell">Spin Type</th>
+         </tr>
+      </thead>
+      <tbody>
+         {% for i in range(0, number_of_rows) %}         <tr>
+            <td class="Cell">{{i+1}}</td>
+            {%- for column in throw_list[i] %}
+            <td>
+               <select>
+                  {%- for option_name in column %}
+                  <option value="{{option_name}}">{{option_name}}</option>
+                  {%- endfor %}
+               </select>
+            </td>
+            {%- endfor %}
+         </tr>
+         {%- endfor %}
+      </tbody>
    </table>
 </div>
 {%- endblock %} 
