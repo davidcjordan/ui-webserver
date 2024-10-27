@@ -473,8 +473,23 @@ def edit_drill():
    current_app.logger.debug(f"EDIT_DRILL_URL request_form: {request.form}")
    current_app.logger.debug(f"EDIT_DRILL_URL request_args: {request.args}")
 
+   this_throw_list = [
+      [
+         [{"Chip":0}, {"Serve":1}, {"Drop":0}],
+         [{"FH":0},{"BH":0},{"CENTER":1}],
+         [{"1":0},{"3":0},{"6":0},{"9":1},{"13":0}]
+      ],
+      [
+         [{"Chip":0}, {"Serve":1}, {"Drop":0}],
+         [{"FH":0},{"BH":0},{"CENTER":1}],
+         [{"1":0},{"3":0},{"6":0},{"9":1},{"13":0}]
+      ]
+   ]
+
    return render_template('/layouts/drill_show.html', \
       page_title = "Edit Drill", \
+      throw_list = this_throw_list, \
+      number_of_rows = len(this_throw_list), \
       home_button = my_home_button, \
       installation_icon = display_customization_dict['icon'], \
       footer_center = display_customization_dict['title'])
