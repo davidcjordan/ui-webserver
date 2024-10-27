@@ -59,3 +59,7 @@ execs_dir = f"{user_dir}/{boomer_dir}/execs"
 recents_filename = "recents.json"
 custom_drill_list_filename = "custom_drill_list.json"
 settings_filename = "drill_game_settings.json"
+
+drills_dir = f'{user_dir}/{boomer_dir}/drills'
+drill_file_prefix = "DRL"
+workout_file_prefix = "WORK"
