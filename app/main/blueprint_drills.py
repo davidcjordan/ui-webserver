@@ -12,7 +12,7 @@ import json
 import enum
 import os
 from app.main.defines import *
-from app.func_drills import get_drill_info, get_workout_info
+from app.func_drills import get_drill_info, get_workout_info, read_drill_csv
 from app.func_base import send_start_to_base, send_settings_to_base
 
 import sys
@@ -472,6 +472,15 @@ def edit_drill():
 
    current_app.logger.debug(f"EDIT_DRILL_URL request_form: {request.form}")
    current_app.logger.debug(f"EDIT_DRILL_URL request_args: {request.args}")
+
+   # inprogress
+   if 'drill_id' in request.args:
+      this_throw_list = read_drill_csv(int(request.args['drill_id']))
+      current_app.logger.info(f"throw_list= {this_throw_list}")
+
+   else:
+      current_app.logger.error(f"drill_id not in EDIT_DRILL_URL request_args: {request.args}")
+      #TODO: redirect
 
    this_throw_list = [
       [
