@@ -475,30 +475,81 @@ def edit_drill():
 
    # inprogress
    if 'drill_id' in request.args:
-      this_throw_list = read_drill_csv(int(request.args['drill_id']))
-      current_app.logger.info(f"throw_list= {this_throw_list}")
-
+      raw_throw_list = read_drill_csv(int(request.args['drill_id']))
+      # current_app.logger.info(f"raw_throw_list= {raw_throw_list}")
    else:
       current_app.logger.error(f"drill_id not in EDIT_DRILL_URL request_args: {request.args}")
       #TODO: redirect
 
-   this_throw_list = [
-      [
-         [{"Chip":0}, {"Serve":1}, {"Drop":0}],
-         [{"FH":0},{"BH":0},{"CENTER":1}],
-         [{"1":0},{"3":0},{"6":0},{"9":1},{"13":0}]
-      ],
-      [
-         [{"Chip":0}, {"Serve":1}, {"Drop":0}],
-         [{"FH":0},{"BH":0},{"CENTER":1}],
-         [{"1":0},{"3":0},{"6":0},{"9":1},{"13":0}]
+   if len(raw_throw_list) == 0:
+      current_app.logger.error(f"drill {request.args['drill_id']} had no throw (shot) rows.")
+
+   all_rows_throw_list = []
+   for throw_row in raw_throw_list:
+      this_row_throw_list = []
+
+      # shot-type column:
+      selection_list = []
+      for btype in balltype_e:
+         if btype.name == 'NONE' or btype.name == 'REPEAT' or btype.name == 'END':
+            continue
+         # current_app.logger.info(f"comparing {throw_row['SHOT_TYPE']} with {btype.name}")
+         select_list_name = btype.name.replace("_", " ").title()
+         select_list_name = select_list_name.replace("Ground", "Grd")
+         if throw_row['SHOT_TYPE'] == btype.name:
+            selection_list.append({select_list_name:1})
+         else:
+            selection_list.append({select_list_name:0})
+      # current_app.logger.info(f"selection_list= {selection_list}")
+      this_row_throw_list.append(selection_list)
+
+      # rotary-type column:
+      court_list = [{"FH":0}, {"BH":0},{"CENTER":0}]
+      angle_list = [{"-":0}]
+      for i in range(1, 14):
+         angle_list.append({i:0})
+
+      # for rtype in rotary_setting_e:
+      #    if rtype.name == 'FILLER' or rtype.name == 'END':
+      #       continue
+      #    select_list_name = rtype.name.replace("ROTTYPE_", "").title()
+      #    if throw_row['ROTARY_TYPE'].startswith('ROTTYPE_F'):
+      #       court_list.append({'FH':1})
+      #    elif throw_row['ROTARY_TYPE'].startswith('ROTTYPE_B'):
+      #       court_list.append({'BH':1})
+      #    elif throw_row['ROTARY_TYPE'] == 'ROTTYPE_CENTER':
+      #       court_list.append('Center')
+      #    elif throw_row['ROTARY_TYPE'] == 'INV':
+      #       court_list.append('Invert')
+      #    elif throw_row['ROTARY_TYPE'] == 'RANDFH':
+      #       court_list.append('FH')
+      #    elif throw_row['ROTARY_TYPE'] == 'RANDBH':
+      #       court_list.append('BH')
+
+      this_row_throw_list.append(court_list)
+      this_row_throw_list.append(angle_list)
+      all_rows_throw_list.append(this_row_throw_list)
+      
+   current_app.logger.info(f"all_rows_throw_list= {all_rows_throw_list}")
+
+   if 0:
+      all_rows_throw_list = [
+         [
+            [{"Chip":0}, {"Serve":1}, {"Drop":0}],
+            [{"FH":0},{"BH":0},{"CENTER":1}],
+            [{"1":0},{"3":0},{"6":0},{"9":1},{"13":0}]
+         ],
+         [
+            [{"Chip":0}, {"Serve":1}, {"Drop":0}],
+            [{"FH":0},{"BH":0},{"CENTER":1}],
+            [{"1":0},{"3":0},{"6":0},{"9":1},{"13":0}]
+         ]
       ]
-   ]
 
    return render_template('/layouts/drill_show.html', \
       page_title = "Edit Drill", \
-      throw_list = this_throw_list, \
-      number_of_rows = len(this_throw_list), \
+      throw_list = all_rows_throw_list, \
+      number_of_rows = len(all_rows_throw_list), \
       home_button = my_home_button, \
       installation_icon = display_customization_dict['icon'], \
       footer_center = display_customization_dict['title'])
