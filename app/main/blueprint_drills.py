@@ -503,49 +503,66 @@ def edit_drill():
       # current_app.logger.info(f"selection_list= {selection_list}")
       this_row_throw_list.append(selection_list)
 
-      # rotary-type column:
-      court_list = [{"FH":0}, {"BH":0},{"CENTER":0}]
-      angle_list = [{"-":0}]
-      for i in range(1, 14):
-         angle_list.append({i:0})
+      # rotary-type column: 2 pull-downs (1) which court; (2) angle if FH or BH
+      # court_list = [{"FH":0}, {"BH":0},{"Center":0}, {"Inverse":0},{"Random":0},{"RandFH":0},{"RandBH":0},{"Rand4":0},{"Rand6":0}]
+      court_list= [{'FH':0},{'BH':0}]
+      is_FH_BH = False
+      for rtype in rotary_setting_e:
+         if '_FILLER' in rtype.name or '_END' in rtype.name:
+            continue
+         # the list was initialized with FH, BG
+         if rtype.name.startswith('ROTTYPE_F') or rtype.name.startswith('ROTTYPE_B'):
+            continue
 
-      # for rtype in rotary_setting_e:
-      #    if rtype.name == 'FILLER' or rtype.name == 'END':
-      #       continue
-      #    select_list_name = rtype.name.replace("ROTTYPE_", "").title()
-      #    if throw_row['ROTARY_TYPE'].startswith('ROTTYPE_F'):
-      #       court_list.append({'FH':1})
-      #    elif throw_row['ROTARY_TYPE'].startswith('ROTTYPE_B'):
-      #       court_list.append({'BH':1})
-      #    elif throw_row['ROTARY_TYPE'] == 'ROTTYPE_CENTER':
-      #       court_list.append('Center')
-      #    elif throw_row['ROTARY_TYPE'] == 'INV':
-      #       court_list.append('Invert')
-      #    elif throw_row['ROTARY_TYPE'] == 'RANDFH':
-      #       court_list.append('FH')
-      #    elif throw_row['ROTARY_TYPE'] == 'RANDBH':
-      #       court_list.append('BH')
+         court_name_raw = rtype.name.replace("ROTTYPE_", "")
+         court_name = court_name_raw.title()
+         #Fix names where title does work:
+         if court_name_raw == 'RANDFH':
+            court_name = 'RandFH'
+         elif court_name_raw == 'RANDBH':
+            court_name = 'RandBH'
+         elif court_name_raw == 'INV':
+            court_name = 'Inverse'
+         elif court_name_raw == 'R4':
+            court_name = 'Rand4'
+         elif court_name_raw == 'R6':
+            court_name = 'Rand6'
+
+         if throw_row['ROTARY_TYPE'].startswith('F'):
+            court_list[0]['FH'] = 1
+            is_FH_BH = True
+         elif throw_row['ROTARY_TYPE'].startswith('B'):
+            court_list[1]['BH'] = 1
+            is_FH_BH = True
+         elif throw_row['ROTARY_TYPE'] == court_name_raw:
+            court_list.append({court_name:1})
+         else:
+            court_list.append({court_name:0})
+            # current_app.logger.info(f"rtype={rtype.name} throw_row['ROTARY_TYPE']={throw_row['ROTARY_TYPE']} court_list={court_list}")
 
       this_row_throw_list.append(court_list)
+
+      # populate the first angle selection with "-"
+      if is_FH_BH:
+         # angle = throw_row['ROTARY_TYPE'].name.replace("ROTTYPE_", "")
+         # the number trailing F or B is the angle
+         angle = int(throw_row['ROTARY_TYPE'][1:])
+         angle_list = [{"-":0}]
+      else:
+         angle_list = [{"-":1}]
+
+      # populate the rest of the angle_list:
+      for i in range(1, 14):
+         selected = 0
+         if is_FH_BH and (i == angle):
+            selected = 1
+         angle_list.append({i:selected})
+
       this_row_throw_list.append(angle_list)
       all_rows_throw_list.append(this_row_throw_list)
       
-   current_app.logger.info(f"all_rows_throw_list= {all_rows_throw_list}")
-
-   if 0:
-      all_rows_throw_list = [
-         [
-            [{"Chip":0}, {"Serve":1}, {"Drop":0}],
-            [{"FH":0},{"BH":0},{"CENTER":1}],
-            [{"1":0},{"3":0},{"6":0},{"9":1},{"13":0}]
-         ],
-         [
-            [{"Chip":0}, {"Serve":1}, {"Drop":0}],
-            [{"FH":0},{"BH":0},{"CENTER":1}],
-            [{"1":0},{"3":0},{"6":0},{"9":1},{"13":0}]
-         ]
-      ]
-
+   # current_app.logger.info(f"all_rows_throw_list= {all_rows_throw_list}")
+ 
    return render_template('/layouts/drill_show.html', \
       page_title = "Edit Drill", \
       throw_list = all_rows_throw_list, \
