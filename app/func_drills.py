@@ -82,9 +82,9 @@ def read_drill_csv(drill_id):
       with open(file_path) as f:
          lines = f.read().splitlines()
          column_names_string = 'column0' + lines[3]
-         current_app.logger.info(f"column_names_string: {column_names_string}")
+         # current_app.logger.debug(f"column_names_string: {column_names_string}")
          column_names = column_names_string.split(',')
-         # current_app.logger.info(f"column_names: {column_names}")
+         # current_app.logger.debug(f"column_names: {column_names}")
    except:
       current_app.logger.error(f"read_drill_csv: Error reading '{file_path}'")
 
@@ -157,11 +157,13 @@ def make_drill_options(raw_throw_list):
          elif throw_row['ROTARY_TYPE'].startswith('B'):
             court_list[1]['BH'] = 1
             is_FH_BH = True
-         elif throw_row['ROTARY_TYPE'] == court_name_raw:
+         
+         if throw_row['ROTARY_TYPE'] == court_name_raw:
             court_list.append({court_name:1})
          else:
             court_list.append({court_name:0})
-            # current_app.logger.info(f"rtype={rtype.name} throw_row['ROTARY_TYPE']={throw_row['ROTARY_TYPE']} court_list={court_list}")
+      
+         # current_app.logger.debug(f"rtype={rtype.name} throw_row['ROTARY_TYPE']={throw_row['ROTARY_TYPE']} court_list={court_list}")
 
       this_row_throw_list.append(court_list)
 
@@ -182,11 +184,17 @@ def make_drill_options(raw_throw_list):
          angle_list.append({i:selected})
 
       this_row_throw_list.append(angle_list)
+      # all_rows_throw_list.append(this_row_throw_list)
+
+      # populate delay
+      delay_list = [{"1.0":0},{"1.3":0},{"1.6":0},{"2.0":0},{"2.2":0},{"2.4":0},{"2.6":0},{"2.8":0}, \
+                     {"3.0":0},{"3.2":0},{"3.4":0},{"3.6":0},{"3.8":0},{"4.0":0},{"4.3":0},{"4.6":0}, \
+                     {"5.0":0},{"8.0":0},{"10.0":0},{"25.0":0}]
+      # TODO: check ranges to match selected options
+      this_row_throw_list.append(delay_list)
       all_rows_throw_list.append(this_row_throw_list)
 
       # inprogress
-      # populate delay
-      
-
+      # populate score method
      
    return all_rows_throw_list
