@@ -20,6 +20,7 @@
 
 </style>
    
+<form action="/edit_drill_done">
 <div>
    <table style="font-size:0.8em" id="drill_table" class="Table">
       <p></p>
@@ -43,7 +44,7 @@
             <td class="Cell">{{i+1}}</td>
             {%- for column in throw_list[i] %}
             <td>
-               <select>
+               <select name="{{i+1}}-{{loop.index}}" id="{{i+1}}-{{loop.index}}">
                   {%- for choice in column %}
                      {%- for key, value in choice.items() %}
                      <option value="{{key}}" {%- if value == 1 %}selected{%- endif %}>{{key}}</option>
@@ -57,12 +58,13 @@
       </tbody>
    </table>
 </div>
+<div class="save">
+   <input type="image" name="submit" src="/static/save.png"/>
+</div>
+</form>
 {%- endblock %} 
 
 {%- block control %} 
-<div class="save">
-   <button type="submit" name="Save" class="btn-size" onclick="window.location.href='/done';"><img src="/static/save.png"></button>
-</div>
 {%- endblock %} 
 
 {%- block page_specific_styles %} 
