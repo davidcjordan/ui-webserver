@@ -19,6 +19,7 @@ CAM_VERIF_URL = '/cam_verif'
 DONE_URL = '/done'
 RECENTS_URL = '/recent_drills'
 EDIT_DRILL_URL = '/edit_drill'
+EDIT_DRILL_DONE_URL = '/edit_drill_done'
 
 from flask import Markup
 my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
@@ -34,6 +35,7 @@ GAME_TEMPLATE = '/layouts' + GAME_URL + '.html'
 CHOICE_INPUTS_TEMPLATE = '/layouts' + '/choice_inputs' + '.html'
 SELECT_TEMPLATE = '/layouts' + '/select' + '.html'
 DRILL_TEMPLATE = '/layouts' + DRILL_URL + '.html'
+EDIT_DRILL_TEMPLATE = '/layouts' + 'drill_show' + '.html'
 CAM_CALIBRATION_TEMPLATE = '/layouts' + CAM_CALIB_URL + '.html'
 CAM_LOCATION_TEMPLATE = '/layouts' + CAM_LOCATION_URL + '.html'
 CAM_VERIFICATION_TEMPLATE = '/layouts' + CAM_VERIF_URL + '.html'

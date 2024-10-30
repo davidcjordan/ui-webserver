@@ -179,7 +179,7 @@ def custom():
             current_app.logger.error(f"get_drill_info: Error reading '{file_path}'")
          drill_id_str = file_name[3:6]
          drill_item_dict = {'id': drill_id_str, 'title': title}
-         current_app.logger.debug(f"drill_item_dict={drill_item_dict}")
+         # current_app.logger.debug(f"EDIT_DRILL: drill_item_dict={drill_item_dict}")
          selection_list.append(drill_item_dict)
 
    return render_template(SELECT_TEMPLATE, \
@@ -484,6 +484,7 @@ def edit_drill():
       current_app.logger.error(f"drill {request.args['drill_id']} had no throw (shot) rows.")
 
    all_rows_throw_list = make_drill_options(raw_throw_list)
+   # current_app.logger.info(f"all_rows_throw_list= {all_rows_throw_list}")
 
    return render_template('/layouts/drill_show.html', \
       page_title = "Edit Drill", \
@@ -650,3 +651,19 @@ def fetch_into_workout_dict(id_str):
       return True
    else:
       return False
+
+
+@blueprint_drills.route(EDIT_DRILL_DONE_URL, methods=DEFAULT_METHODS)
+def edit_drill_done():
+   from app.main.blueprint_core import display_customization_dict
+
+   current_app.logger.debug(f"In EDIT_DRILL_DONE")
+
+   current_app.logger.debug(f"EDIT_DRILL_URL request_form: {request.form}")
+   current_app.logger.debug(f"EDIT_DRILL_URL request_args: {request.args}")
+
+   return render_template(CHOICE_INPUTS_TEMPLATE, \
+      page_title = "Finished", \
+      installation_icon = display_customization_dict['icon'], \
+      onclick_choices = [{"value": "OK", "onclick_url": CUSTOM_SELECTION_URL}], \
+      footer_center = display_customization_dict['title'])
