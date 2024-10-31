@@ -24,10 +24,14 @@ def get_drill_info(drill_id):
    else:
       current_app.logger.error(f"drill_id {drill_id} is type={type(drill_id)} (not str or int)")
       return drill_info
+   
+   if int_drill_id >= CUSTOM_DRILL_NUMBER_START and int_drill_id <= CUSTOM_DRILL_NUMBER_END:
+      file_path = f'{settings_dir}/{drill_file_prefix}{int_drill_id:03}.csv'
+   else:
+      file_path = f'{drills_dir}/{drill_file_prefix}{int_drill_id:03}.csv'
 
    try:
-      file_path = f'{drills_dir}/{drill_file_prefix}{int_drill_id:03}.csv'
-      with open(file_path) as f:
+       with open(file_path) as f:
          lines = f.read().splitlines()
          # remove quotes from name, description and audio strings, if they exist
          drill_info['name'] = lines[0].replace('"','')
@@ -71,8 +75,7 @@ def read_drill_csv(drill_id):
       current_app.logger.error(f"drill_id {drill_id} is type={type(drill_id)} (not str or int)")
       return drill_info
 
-   # if int_drill_id >= CUSTOM_DRILL_NUMBER_START and <= CUSTOM_DRILL_NUMBER_END:
-   if int_drill_id >= 400 and int_drill_id <= 499:
+   if int_drill_id >= CUSTOM_DRILL_NUMBER_START and int_drill_id <= CUSTOM_DRILL_NUMBER_END:
       file_path = f'{settings_dir}/{drill_file_prefix}{int_drill_id:03}.csv'
    else:
       file_path = f'{drills_dir}/{drill_file_prefix}{int_drill_id:03}.csv'
@@ -198,3 +201,10 @@ def make_drill_options(raw_throw_list):
       # populate score method
      
    return all_rows_throw_list
+
+def save_drill(request_form, id):
+   # because the form button is an input type=image, then submit.x and submit.y are included in the
+   # form dictionary - they can just be ignored.
+   current_app.logger.debug(f"save_drill {id}: {request_form}")
+
+   return
