@@ -20,7 +20,7 @@
 
 </style>
    
-<form action="/edit_drill_done">
+<form action="/edit_drill_done?drill_id={{ request.args.get('drill_id') }}" method="post">
 <div>
    <table style="font-size:0.8em" id="drill_table" class="Table">
       <p></p>
@@ -40,11 +40,12 @@
          </tr>
       </thead>
       <tbody>
-         {% for i in range(0, number_of_rows) %}         <tr>
+         {%- for i in range(0, throw_list|length) %}
+         <tr>
             <td class="Cell">{{i+1}}</td>
             {%- for column in throw_list[i] %}
             <td>
-               <select name="{{i+1}}-{{loop.index}}" id="{{i+1}}-{{loop.index}}">
+               <select name="{{i+1}}-{{loop.index}}">
                   {%- for choice in column %}
                      {%- for key, value in choice.items() %}
                      <option value="{{key}}" {%- if value == 1 %}selected{%- endif %}>{{key}}</option>
