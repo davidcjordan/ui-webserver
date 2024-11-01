@@ -215,9 +215,11 @@ def save_drill(request_form, id):
             row_string_list.append(row_string)
          current_row += 1
          column_list = []
-      upper_value = value.upper()
+      upper_value = value.upper().replace(' ','_')
       # decode specific columns: combine court+angle into ROTTYPE
-      if col_num == 2:
+      if col_num == 1 and upper_value == "RAND_GRD":
+            column_list.append('RAND_GROUND')
+      elif col_num == 2:
          if upper_value == "INVERSE":
             column_list.append('INV')
          elif upper_value == 'Rand4':
@@ -233,7 +235,7 @@ def save_drill(request_form, id):
       else:
          column_list.append(upper_value)
  
-      current_app.logger.debug(f"key={key}  item[0]={int(item[0])} item[1]={item[1]} current_row={current_row}  column_list={column_list}")
+      # current_app.logger.debug(f"key={key}  item[0]={int(item[0])} item[1]={item[1]} current_row={current_row}  column_list={column_list}")
 
    # append last row:
    if len(column_list) > 0:
