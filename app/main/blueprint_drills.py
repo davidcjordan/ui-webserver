@@ -12,7 +12,7 @@ import json
 import enum
 import os
 from app.main.defines import *
-from app.func_drills import get_drill_info, get_workout_info, read_drill_csv, make_drill_options
+from app.func_drills import get_drill_workout_info, read_drill_csv, make_drill_options, save_drill
 from app.func_base import send_start_to_base, send_settings_to_base
 
 import sys
@@ -470,12 +470,17 @@ def drill():
 def edit_drill():
    from app.main.blueprint_core import display_customization_dict
 
-   current_app.logger.debug(f"EDIT_DRILL_URL request_form: {request.form}")
+   # current_app.logger.debug(f"EDIT_DRILL_URL request_form: {request.form}")
    current_app.logger.debug(f"EDIT_DRILL_URL request_args: {request.args}")
 
    if 'drill_id' in request.args:
-      raw_throw_list = read_drill_csv(int(request.args['drill_id']))
+      drill_id = request.args['drill_id']
+      raw_throw_list = read_drill_csv(drill_id)
       # current_app.logger.info(f"raw_throw_list= {raw_throw_list}")
+      this_drill_info = get_drill_workout_info(drill_id) #default is to get drill info
+      drill_name = ""
+      if ('name' in this_drill_info):
+         drill_name = this_drill_info['name']
    else:
       current_app.logger.error(f"drill_id not in EDIT_DRILL_URL request_args: {request.args}")
       #TODO: redirect
@@ -487,9 +492,8 @@ def edit_drill():
    # current_app.logger.info(f"all_rows_throw_list= {all_rows_throw_list}")
 
    return render_template('/layouts/drill_show.html', \
-      page_title = "Edit Drill", \
+      page_title = "Edit Drill: " + drill_name, \
       throw_list = all_rows_throw_list, \
-      number_of_rows = len(all_rows_throw_list), \
       home_button = my_home_button, \
       installation_icon = display_customization_dict['icon'], \
       footer_center = display_customization_dict['title'])
@@ -631,7 +635,7 @@ def motor_calib():
 def fetch_into_drills_dict(drill_id_str):
    # get name from drills_dict, or read the drill file and populate the drills_dict
    if (drill_id_str not in drills_dict):
-      this_drill_info = get_drill_info(drill_id_str)
+      this_drill_info = get_drill_workout_info(drill_id_str)
       if ('name' in this_drill_info):
          drills_dict[drill_id_str] = this_drill_info
 
@@ -643,7 +647,7 @@ def fetch_into_drills_dict(drill_id_str):
 
 def fetch_into_workout_dict(id_str):
    if (id_str not in workouts_dict):
-      this_workout_info = get_workout_info(id_str)
+      this_workout_info = get_drill_workout_info(id_str, file_type=workout_file_prefix)
       if ('name' in this_workout_info):
          workouts_dict[id_str] = this_workout_info
 
@@ -657,13 +661,20 @@ def fetch_into_workout_dict(id_str):
 def edit_drill_done():
    from app.main.blueprint_core import display_customization_dict
 
-   current_app.logger.debug(f"In EDIT_DRILL_DONE")
+   # current_app.logger.debug(f"EDIT_DRILL_DONE_URL request_form: {request.form}")
+   # current_app.logger.debug(f"EDIT_DRILL_DONE_URL request_args: {request.args}")
 
-   current_app.logger.debug(f"EDIT_DRILL_URL request_form: {request.form}")
-   current_app.logger.debug(f"EDIT_DRILL_URL request_args: {request.args}")
+   #EDIT_DRILL_DONE_URL request_form: ImmutableMultiDict([('1-1', 'Serve'), ('1-2', 'FH'), ('1-3', '1'), ('1-4', '2.6'), ('submit.x', '64'), ('submit.y', '48')])
+   #EDIT_DRILL_DONE_URL request_args: ImmutableMultiDict([('drill_id', '403')])
+
+   if 'drill_id' in request.args:
+      save_drill(request.form, id=request.args['drill_id'])
+   else:
+      current_app.logger.error(f"drill_id not in EDIT_DRILL_URL request_args: {request.args}")
+      #TODO: redirect
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
-      page_title = "Finished", \
+      page_title = f"Saving Edits for Drill {request.args['drill_id']}", \
       installation_icon = display_customization_dict['icon'], \
       onclick_choices = [{"value": "OK", "onclick_url": CUSTOM_SELECTION_URL}], \
       footer_center = display_customization_dict['title'])

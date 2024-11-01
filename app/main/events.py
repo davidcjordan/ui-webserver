@@ -8,7 +8,7 @@ import time
 from app.main.defines import *
 from app.func_base import check_base, send_pause_resume_to_base, send_settings_to_base, get_game_state, send_game_help_to_base
 from app.main.blueprint_core import write_base_settings_to_file
-from app.func_drills import get_drill_info, get_workout_info
+from app.func_drills import get_drill_workout_info
 from app.main.blueprint_camera import scp_court_png
 
 import sys
@@ -39,10 +39,10 @@ def handle_get_drill(data):
       drill_id = data['drill_id']
       if (('mode' in data) and 'work' in data['mode']):
          current_app.logger.debug(f"get_workout_desc for workout={drill_id}")
-         drill_info_dict = get_workout_info(drill_id)
+         drill_info_dict = get_drill_workout_info(drill_id, file_type=workout_file_prefix)
       else:
          current_app.logger.debug(f"get_drill_desc for drill={drill_id}")
-         drill_info_dict = get_drill_info(drill_id)
+         drill_info_dict = get_drill_workout_info(drill_id)
       if 'desc' in drill_info_dict:
          emit('drill_desc', drill_info_dict['desc'])
       else:

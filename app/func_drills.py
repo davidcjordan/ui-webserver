@@ -14,55 +14,33 @@ except:
    current_app.logger.error("Problems with 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
    exit()
 
-def get_drill_info(drill_id):
-   drill_info = {}
+def get_drill_workout_info(id, file_type=drill_file_prefix):
+   info = {}
 
-   if isinstance(drill_id, str):
-      int_drill_id = int(drill_id)
-   elif isinstance(drill_id, int):
-      int_drill_id = drill_id
+   if isinstance(id, str):
+      int_id = int(id)
+   elif isinstance(id, int):
+      int_id = id
    else:
-      current_app.logger.error(f"drill_id {drill_id} is type={type(drill_id)} (not str or int)")
-      return drill_info
+      current_app.logger.error(f"id {id} is type={type(id)} (not str or int)")
+      return info
    
-   if int_drill_id >= CUSTOM_DRILL_NUMBER_START and int_drill_id <= CUSTOM_DRILL_NUMBER_END:
-      file_path = f'{settings_dir}/{drill_file_prefix}{int_drill_id:03}.csv'
+   if int_id >= CUSTOM_DRILL_NUMBER_START and int_id <= CUSTOM_DRILL_NUMBER_END:
+      file_path = f'{settings_dir}/{file_type}{int_id:03}.csv'
    else:
-      file_path = f'{drills_dir}/{drill_file_prefix}{int_drill_id:03}.csv'
+      file_path = f'{drills_dir}/{file_type}{int_id:03}.csv'
 
    try:
        with open(file_path) as f:
          lines = f.read().splitlines()
          # remove quotes from name, description and audio strings, if they exist
-         drill_info['name'] = lines[0].replace('"','')
-         drill_info['desc'] = lines[1].replace('"','')
-         drill_info['audio'] = lines[2].replace('"','')
+         info['name'] = lines[0].replace('"','')
+         info['desc'] = lines[1].replace('"','')
+         info['audio'] = lines[2].replace('"','')
    except:
-      current_app.logger.error(f"get_drill_info: Error reading '{file_path}'")
-   return drill_info
+      current_app.logger.error(f"get_drill_workout_info: Error reading '{file_path}'")
+   return info
 
-def get_workout_info(workout_id):
-   workout_info = {}
-
-   if isinstance(workout_id, str):
-      int_drill_id = int(workout_id)
-   elif isinstance(workout_id, int):
-      int_drill_id = workout_id
-   else:
-      current_app.logger.error(f"workout_id {workout_id} is type={type(workout_id)} (not str or int)")
-      return workout_info
-
-   try:
-      file_path = f'{drills_dir}/{workout_file_prefix}{int_drill_id:03}.csv'
-      with open(file_path) as f:
-         lines = f.read().splitlines()
-         # remove quotes from name, description and audio strings, if they exist
-         workout_info['name'] = lines[0].replace('"','')
-         workout_info['desc'] = lines[1].replace('"','')
-         workout_info['audio'] = lines[2].replace('"','')
-   except:
-      current_app.logger.error(f"get_drill_info: Error reading '{file_path}'")
-   return workout_info
 
 def read_drill_csv(drill_id):
    drill_info = {}
@@ -207,4 +185,77 @@ def save_drill(request_form, id):
    # form dictionary - they can just be ignored.
    current_app.logger.debug(f"save_drill {id}: {request_form}")
 
-   return
+   '''[func_drills186]: save_drill 402: ImmutableMultiDict([('1-1', 'Serve'), ('1-2', 'FH'), ('1-3', '1'), ('1-4', '1.0'), 
+      ('2-1', 'Lob'), ('2-2', 'FH'), ('2-3', '13'), ('2-4', '1.0'), 
+      ('3-1', 'Pass'), ('3-2', 'BH'), ('3-3', '2'), ('3-4', '1.0'),
+      ('4-1', 'Chip'), ('4-2', 'BH'), ('4-3', '12'), ('4-4', '1.0'), 
+      ('5-1', 'Rand Net'), ('5-2', 'Center'),
+      ('5-3', '-'), ('5-4', '1.0'), ('6-1', 'Rand Grd'),
+      ('6-2', 'RandFH'), ('6-3', '-'), ('6-4', '1.0'), ('7-1', 'Rand Grd'),
+      ('7-2', 'RandBH'), ('7-3', '-'), ('7-4', '1.0'), ('8-1', 'Rand Grd'),
+      ('8-2', 'Rand4'), ('8-3', '-'), ('8-4', '1.0'), ('9-1', 'Rand Grd'),
+      ('9-2', 'Rand6'), ('9-3', '-'), ('9-4', '1.0'), ('10-1', 'Rand Grd'),
+      ('10-2', 'Inverse'), ('10-3', '-'), ('10-4', '1.0'), 
+      ('submit.x', '36'),('submit.y', '52')])
+   '''
+   row_string_list = []
+   current_row = 0
+   column_list = []
+   for key, value in request_form.items():
+      if "-" not in key:
+         continue
+      item = key.split('-')
+      row_num = int(item[0])
+      col_num = int(item[1])
+      if row_num != current_row:
+         #start a new row_string
+         if len(column_list) > 0:
+            # current_app.logger.debug(f"current_row={current_row} column_list= {column_list}")
+            row_string = "," + ",".join(column_list)
+            row_string_list.append(row_string)
+         current_row += 1
+         column_list = []
+      upper_value = value.upper()
+      # decode specific columns: combine court+angle into ROTTYPE
+      if col_num == 2:
+         if upper_value == "INVERSE":
+            column_list.append('INV')
+         elif upper_value == 'Rand4':
+            column_list.append('R4')
+         elif upper_value == 'Rand6':
+            column_list.append('R4')
+         else:
+            column_list.append(upper_value)
+
+      elif col_num == 3:
+         if column_list[-1] == 'FH' or column_list[-1] == 'BH':
+            column_list[-1] = column_list[-1] + '-' + value
+      else:
+         column_list.append(upper_value)
+ 
+      current_app.logger.debug(f"key={key}  item[0]={int(item[0])} item[1]={item[1]} current_row={current_row}  column_list={column_list}")
+
+   # append last row:
+   if len(column_list) > 0:
+      row_string = "," + ",".join(column_list)
+      row_string_list.append(row_string)
+   current_app.logger.debug(f"row_string_list= {row_string_list}")
+         
+   if 0:
+      if isinstance(id, str):
+         int_drill_id = int(id)
+      elif isinstance(id, int):
+         int_drill_id = id
+      else:
+         current_app.logger.error(f"drill_id {id} is type={type(id)} (not str or int)")
+         return False
+
+      file_path = f'{settings_dir}/tmp_{drill_file_prefix}{int_drill_id:03}.csv'
+
+      try:
+         with open(file_path, "w") as f:
+            f.write("Hello, World!\n")
+      except:
+         current_app.logger.error(f"save_drill: Error writing '{file_path}'")
+
+   return True
