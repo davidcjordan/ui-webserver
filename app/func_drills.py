@@ -183,10 +183,9 @@ def make_drill_options(raw_throw_list):
             if float(delay_key) >= original_delay_float:
                delay_list[idx][delay_key] = 1
                break
-
       this_row_throw_list.append(delay_list)
 
-      # scoring column:
+      # populate scoring column:
       selection_list = []
       for score_type in score_method_e:
          if score_type.name == 'SCORE_METHOD_END' or len(score_type.name) > 17:
@@ -199,10 +198,31 @@ def make_drill_options(raw_throw_list):
       # current_app.logger.info(f"selection_list= {selection_list}")
       this_row_throw_list.append(selection_list)
 
-      all_rows_throw_list.append(this_row_throw_list)
+      # populate level
+      level_list = [{"Same":0},{"Easy":0},{"Hard":0}]
+      # compare file's level to list to select the proper option.
+      try:
+         original_level_float = float(throw_row['LEVEL'])
+      except:
+         original_level_float = None
+      
+      if original_level_float is None:
+         for idx, level in enumerate(level_list):
+            level_key = list(level.keys())[0]
+            if throw_row['LEVEL'] == level_key.upper():
+               level_list[idx][level_key] = 1
 
-      # inprogress
-      # populate score method
+      # TODO: if level is floating point:
+      # if original_level_float is not None:
+      #    for idx, delay in enumerate(delay_list):
+      #       delay_key = list(delay.keys())[0]
+      #       if float(delay_key) >= original_delay_float:
+      #          delay_list[idx][delay_key] = 1
+      #          break
+      this_row_throw_list.append(level_list)
+
+
+      all_rows_throw_list.append(this_row_throw_list)
      
    return all_rows_throw_list
 
