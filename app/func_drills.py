@@ -165,7 +165,6 @@ def make_drill_options(raw_throw_list):
          angle_list.append({i:selected})
 
       this_row_throw_list.append(angle_list)
-      # all_rows_throw_list.append(this_row_throw_list)
 
       # populate delay
       delay_list = [{"1.0":0},{"1.3":0},{"1.6":0},{"2.0":0},{"2.2":0},{"2.4":0},{"2.6":0},{"2.8":0}, \
@@ -186,6 +185,20 @@ def make_drill_options(raw_throw_list):
                break
 
       this_row_throw_list.append(delay_list)
+
+      # scoring column:
+      selection_list = []
+      for score_type in score_method_e:
+         if score_type.name == 'SCORE_METHOD_END' or len(score_type.name) > 17:
+            continue
+         select_list_name = score_type.name.replace("_", " ").title()
+         if throw_row['SCORE_METHOD'] == score_type.name:
+            selection_list.append({select_list_name:1})
+         else:
+            selection_list.append({select_list_name:0})
+      # current_app.logger.info(f"selection_list= {selection_list}")
+      this_row_throw_list.append(selection_list)
+
       all_rows_throw_list.append(this_row_throw_list)
 
       # inprogress
