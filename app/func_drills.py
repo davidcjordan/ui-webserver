@@ -4,6 +4,7 @@ drill class definitions, and read drill files
 '''
 from flask import current_app
 import csv
+import os
 
 from app.main.defines import *
 import sys
@@ -277,7 +278,7 @@ def save_drill(request_form, id):
 
       elif col_num == 3:
          if column_list[-1] == 'FH' or column_list[-1] == 'BH':
-            column_list[-1] = column_list[-1] + value
+            column_list[-1] = column_list[-1][0] + value
       else:
          column_list.append(upper_value)
  
@@ -310,8 +311,10 @@ def save_drill(request_form, id):
 
       if len(lines) < 3:
          return False #bad file read
+       
+      # Make a backup:
+      os.system(f'cp "{file_path}" "{file_path.replace(".csv",".bu")}"')
       
-      file_path = f'{settings_dir}/tmp_{drill_file_prefix}{int_drill_id:03}.csv'
       try:
          with open(file_path, "w") as f:
             for idx, line in enumerate(lines):
