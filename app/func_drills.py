@@ -171,7 +171,20 @@ def make_drill_options(raw_throw_list):
       delay_list = [{"1.0":0},{"1.3":0},{"1.6":0},{"2.0":0},{"2.2":0},{"2.4":0},{"2.6":0},{"2.8":0}, \
                      {"3.0":0},{"3.2":0},{"3.4":0},{"3.6":0},{"3.8":0},{"4.0":0},{"4.3":0},{"4.6":0}, \
                      {"5.0":0},{"8.0":0},{"10.0":0},{"25.0":0}]
-      # TODO: check ranges to match selected options
+      # compare file's delay to list to select the proper option.
+      try:
+         original_delay_float = float(throw_row['DELAY'])
+      except:
+         original_delay_float = None
+         current_app.logger.debug(f"make_drill_options exception on delay {throw_row['DELAY']} float: {original_delay_float}")
+      
+      if original_delay_float is not None:
+         for idx, delay in enumerate(delay_list):
+            delay_key = list(delay.keys())[0]
+            if float(delay_key) >= original_delay_float:
+               delay_list[idx][delay_key] = 1
+               break
+
       this_row_throw_list.append(delay_list)
       all_rows_throw_list.append(this_row_throw_list)
 
@@ -231,7 +244,7 @@ def save_drill(request_form, id):
 
       elif col_num == 3:
          if column_list[-1] == 'FH' or column_list[-1] == 'BH':
-            column_list[-1] = column_list[-1] + '-' + value
+            column_list[-1] = column_list[-1] + value
       else:
          column_list.append(upper_value)
  
@@ -243,7 +256,8 @@ def save_drill(request_form, id):
       row_string_list.append(row_string)
    current_app.logger.debug(f"row_string_list= {row_string_list}")
          
-   if 0:
+   # write file
+   if 1:
       if isinstance(id, str):
          int_drill_id = int(id)
       elif isinstance(id, int):
@@ -252,11 +266,27 @@ def save_drill(request_form, id):
          current_app.logger.error(f"drill_id {id} is type={type(id)} (not str or int)")
          return False
 
-      file_path = f'{settings_dir}/tmp_{drill_file_prefix}{int_drill_id:03}.csv'
+      file_path = f'{settings_dir}/{drill_file_prefix}{int_drill_id:03}.csv'
 
+      # read info lines (the first 3)
+      try:
+       with open(file_path) as f:
+         lines = f.read().splitlines()
+      except:
+         current_app.logger.error(f"get_drill_workout_info: Error reading '{file_path}'")
+
+      if len(lines) < 3:
+         return False #bad file read
+      
+      file_path = f'{settings_dir}/tmp_{drill_file_prefix}{int_drill_id:03}.csv'
       try:
          with open(file_path, "w") as f:
-            f.write("Hello, World!\n")
+            for idx, line in enumerate(lines):
+               f.write(line + '\n')
+               if idx > 2:
+                  break
+            for row in row_string_list:
+               f.write(row + '\n')
       except:
          current_app.logger.error(f"save_drill: Error writing '{file_path}'")
 
