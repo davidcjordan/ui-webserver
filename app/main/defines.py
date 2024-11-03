@@ -20,6 +20,7 @@ DONE_URL = '/done'
 RECENTS_URL = '/recent_drills'
 EDIT_DRILL_URL = '/edit_drill'
 EDIT_DRILL_DONE_URL = '/edit_drill_done'
+COPY_DRILL_URL = '/copy_drill'
 
 from flask import Markup
 my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \

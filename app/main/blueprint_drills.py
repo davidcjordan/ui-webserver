@@ -335,12 +335,15 @@ def drill():
    # for key, value in request.form.items():
    #    print(key, '->', value)
 
-   if 'Edit' in request.form:
+   if 'Edit' in request.form or 'Copy' in request.form:
       if 'choice_id' in request.form:
          id = int(request.form['choice_id'])
       else:
          return redirect(CUSTOM_SELECTION_URL)
-      return redirect(f"{EDIT_DRILL_URL}?drill_id={id}")
+      if 'Edit' in request.form:
+         return redirect(f"{EDIT_DRILL_URL}?drill_id={id}")
+      else:
+         return redirect(f"{COPY_DRILL_URL}?drill_id={id}")
  
    id = None
    beep_type_value = None
@@ -675,6 +678,44 @@ def edit_drill_done():
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       page_title = f"Saving Edits for Drill {request.args['drill_id']}", \
+      installation_icon = display_customization_dict['icon'], \
+      onclick_choices = [{"value": "OK", "onclick_url": CUSTOM_SELECTION_URL}], \
+      footer_center = display_customization_dict['title'])
+
+
+@blueprint_drills.route(COPY_DRILL_URL, methods=DEFAULT_METHODS)
+def copy_drill():
+   from app.main.blueprint_core import display_customization_dict
+
+   # current_app.logger.debug(f"EDIT_DRILL_URL request_form: {request.form}")
+   current_app.logger.debug(f"COPY_DRILL_URL request_args: {request.args}")
+
+   new_drill_id = 410
+   custom_drill_id_list = []
+
+   if 'drill_id' in request.args:
+      drill_id = request.args['drill_id']
+      # figure out the next available DRL number
+      all_files = os.listdir(CUSTOM_DRILL_FILES_PATH)
+      # current_app.logger.debug(f"all files: {all_files}")
+      for file in all_files:
+         if file.startswith(drill_file_prefix) and file.endswith('.csv'):
+            custom_drill_id_list.append(file[3:6])
+      custom_drill_id_list.sort(reverse=True)
+      new_drill_id = int(custom_drill_id_list[0]) + 1
+      old_custom_number = int(drill_id) - CUSTOM_DRILL_NUMBER_START
+      new_custom_number = int(new_drill_id) - CUSTOM_DRILL_NUMBER_START
+      # current_app.logger.debug(f"custom files: {custom_drill_id_list}  new_drill_id= {new_drill_id}")
+      os.system(f'cp {CUSTOM_DRILL_FILES_PATH}/DRL{drill_id}.csv {CUSTOM_DRILL_FILES_PATH}/DRL{new_drill_id}.csv')
+      cmd = f"sed -i '1!b;s/{old_custom_number}/{new_custom_number}/' {CUSTOM_DRILL_FILES_PATH}/DRL{new_drill_id}.csv"
+      current_app.logger.debug(f"sed cmd: {cmd}")
+      os.system(cmd)
+   else:
+      current_app.logger.error(f"drill_id not in COPY_DRILL_URL request_args: {request.args}")
+      #TODO: redirect
+
+   return render_template(CHOICE_INPUTS_TEMPLATE, \
+      page_title = f"Copied Drill {request.args['drill_id']} to Drill {new_drill_id}", \
       installation_icon = display_customization_dict['icon'], \
       onclick_choices = [{"value": "OK", "onclick_url": CUSTOM_SELECTION_URL}], \
       footer_center = display_customization_dict['title'])
