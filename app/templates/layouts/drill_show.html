@@ -67,6 +67,16 @@
 {%- endblock %} 
 
 {%- block control %} 
+   {%- for column in throw_list[0] %}
+   <p hidden id="column-{{loop.index}}">
+         {%- for choice in column %}
+            {%- for key, value in choice.items() %}
+            <option value="{{key}}">{{key}}</option>
+            {%- endfor %}
+         {%- endfor %}
+   </p>
+   {%- endfor %}
+
 {%- endblock %} 
 
 {%- block page_specific_styles %} 
