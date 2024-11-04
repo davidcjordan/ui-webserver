@@ -59,7 +59,8 @@
       </tbody>
    </table>
 </div>
-<div class="save">
+<div class="x-save">
+   <input type="image" id="add_row" src="/static/add_row.png"/>
    <input type="image" name="submit" src="/static/save.png"/>
 </div>
 </form>
@@ -73,10 +74,5 @@
 {%- endblock %} 
 
 {%- block page_specific_js %} 
-<!-- <script">
-   document.getElementById("test").addEventListener("click", function (e) {
-      socket.emit("fault_request");
-      // console.log("emitted fault_request")
-   }, false);
-</script> -->
+   <script src="/static/js/edit_drill.js" defer></script>
 {%- endblock %} 
