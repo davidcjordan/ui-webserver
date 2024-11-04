@@ -153,7 +153,10 @@ def make_drill_options(raw_throw_list):
       if is_FH_BH:
          # angle = throw_row['ROTARY_TYPE'].name.replace("ROTTYPE_", "")
          # the number trailing F or B is the angle
-         angle = int(throw_row['ROTARY_TYPE'][1:])
+         try:
+            angle = int(throw_row['ROTARY_TYPE'][1:])
+         except:
+            angle = 1 # in case the angle was left as a dash
          angle_list = [{"-":0}]
       else:
          angle_list = [{"-":1}]
