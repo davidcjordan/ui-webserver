@@ -311,11 +311,12 @@ def save_drill(request_form, id):
          lines = f.read().splitlines()
       except:
          current_app.logger.error(f"get_drill_workout_info: Error reading '{file_path}'")
+         return False
 
       if len(lines) < 3:
          return False #bad file read
        
-      # Make a backup:
+      # Make a backup, ignore errors if backup not created
       os.system(f'cp "{file_path}" "{file_path.replace(".csv",".bu")}"')
       
       try:
@@ -328,5 +329,6 @@ def save_drill(request_form, id):
                f.write(row + '\n')
       except:
          current_app.logger.error(f"save_drill: Error writing '{file_path}'")
+         return False
 
    return True

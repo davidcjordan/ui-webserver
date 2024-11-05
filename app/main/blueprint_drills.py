@@ -132,7 +132,6 @@ def recents():
             recent_drill_list = json.load(f)
       except:
          current_app.logger.error(f"Error reading '{settings_dir}/{recents_filename}'; using defaults")
-         #TODO: read a factory defaults from drill directory
          recent_drill_list = default_recents_drill_list
 
    for drill_id in recent_drill_list:
@@ -486,7 +485,7 @@ def edit_drill():
          drill_name = this_drill_info['name']
    else:
       current_app.logger.error(f"drill_id not in EDIT_DRILL_URL request_args: {request.args}")
-      #TODO: redirect
+      return redirect(CUSTOM_SELECTION_URL)
 
    if len(raw_throw_list) == 0:
       current_app.logger.error(f"drill {request.args['drill_id']} had no throw (shot) rows.")
@@ -671,13 +670,17 @@ def edit_drill_done():
    #EDIT_DRILL_DONE_URL request_args: ImmutableMultiDict([('drill_id', '403')])
 
    if 'drill_id' in request.args:
-      save_drill(request.form, id=request.args['drill_id'])
+      saved_drill_successfully = save_drill(request.form, id=request.args['drill_id'])
+      if saved_drill_successfully:
+         title = f"Saved Edits for Drill {request.args['drill_id']}"
+      else:
+         title = f"Saving Edits failed for Drill {request.args['drill_id']}: read/write error!"
    else:
       current_app.logger.error(f"drill_id not in EDIT_DRILL_URL request_args: {request.args}")
-      #TODO: redirect
+      title = f"Saving Edits failed for Drill: no drill ID!"
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
-      page_title = f"Saving Edits for Drill {request.args['drill_id']}", \
+      page_title = title, \
       installation_icon = display_customization_dict['icon'], \
       onclick_choices = [{"value": "OK", "onclick_url": CUSTOM_SELECTION_URL}], \
       footer_center = display_customization_dict['title'])
@@ -712,6 +715,7 @@ def copy_drill():
       os.system(cmd)
    else:
       current_app.logger.error(f"drill_id not in COPY_DRILL_URL request_args: {request.args}")
+      
       #TODO: redirect
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
