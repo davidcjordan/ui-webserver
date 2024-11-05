@@ -4,6 +4,12 @@ document.getElementById("add_row").addEventListener("click", function (event) {
   const table = document.getElementById('drill_table');
   const newRowNumber = table.rows.length;
 
+  const rowLimit = 9;
+  if (newRowNumber > rowLimit) {
+    console.log("Not adding row; limit is " + rowLimit + "rows.")
+    return;
+  }
+
   const row = table.insertRow();
   // first column:
   var cell = row.insertCell();
@@ -14,11 +20,9 @@ document.getElementById("add_row").addEventListener("click", function (event) {
     const select_list = document.getElementById('column-' + i); 
     if (select_list == null) {
       console.log("select_list is null")
-      // how to handle error ?
+      alert("Missing data on webpage, so editing drills is broken. Redirecting to the home page.");
+      window.location.replace("/");
     }
-    //  else {
-    //   console.log(select_list.innerHTML)
-    // }
     cell = row.insertCell();
     cell.innerHTML = '<select name="' + newRowNumber + '-' + i +'">\n' + 
       select_list.innerHTML +
@@ -31,5 +35,7 @@ document.getElementById("del_row").addEventListener("click", function (event) {
   const table = document.getElementById('drill_table');
   const lastRowNumber = table.rows.length - 1;
   console.log("del_row_button clicked: delete row=" + lastRowNumber);
-  table.deleteRow(lastRowNumber);
+  if (lastRowNumber > 1) {
+    table.deleteRow(lastRowNumber);
+  }
 }, false);
