@@ -39,3 +39,37 @@ document.getElementById("del_row").addEventListener("click", function (event) {
     table.deleteRow(lastRowNumber);
   }
 }, false);
+
+// window.addEventListener('load', (event) => {
+//   console.log('edit_drill: The page has fully loaded');
+//   const form_elements = document.getElementsByTagName('form')[0].elements;
+//   console.log(form_elements);
+// });
+
+window.onload = function() {
+  initEventListeners();
+};
+
+function initEventListeners() {
+  console.log('initEventListeners called');
+  const selectors = document.querySelectorAll("select");
+  // console.log(selectors[0].name, selectors[0].value);
+  // console.log(selectors[0][0]);
+  for (let i = 0; i < selectors.length; i++) {
+    selectors[i].addEventListener("change", dropDownChanged);
+  }
+
+  // for (let i = 0; i < selectors.length; i++) {
+  //     for (let j = 0; j < selectors[i].length; j++) {
+  //       var selected = selectors[i][j].attributes.getNamedItem("selected").value;
+  //       console.log("selector=" + i + " option=" + j +  " selected=" + selected);
+  //   }
+  // }
+}
+
+function dropDownChanged(event) {
+  const name = event.currentTarget.name;
+  const value = event.currentTarget.value;
+  // const value = event.target.options[event.target.selectedIndex].getAttribute('value');
+  console.log("dropDownChanged for ", name, value);
+}
