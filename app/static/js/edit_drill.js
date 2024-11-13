@@ -54,9 +54,15 @@ function initEventListeners() {
   console.log('initEventListeners called');
   const selectors = document.querySelectorAll("select");
   // console.log(selectors[0].name, selectors[0].value);
+  // the above log yields: 1-1 Serve
   // console.log(selectors[0][0]);
   for (let i = 0; i < selectors.length; i++) {
-    selectors[i].addEventListener("change", dropDownChanged);
+    var column = selectors[i].name.split('-')[1];
+    // console.log(fields[0], fields[1]);
+    // only do value checking on shot-type, court and angle;
+    if (column < 4) {
+      selectors[i].addEventListener("change", dropDownChanged);
+    }
   }
 
   // for (let i = 0; i < selectors.length; i++) {
@@ -72,4 +78,30 @@ function dropDownChanged(event) {
   const value = event.currentTarget.value;
   // const value = event.target.options[event.target.selectedIndex].getAttribute('value');
   console.log("dropDownChanged for ", name, value);
+  const fields = name.split('-');
+  const event_selector_row = fields[0];
+  const event_selector_column = fields[1];
+  let target_selector_column = '3'; // assume will change angle
+  if (event_selector_column === '1') {
+    target_selector_column = '7'; // otherwise change speed, loft, spin
+  }
+
+  const selectors = document.querySelectorAll("select");
+  for (let i = 0; i < selectors.length; i++) {
+    if ((selectors[i].name.split('-')[0] === event_selector_row) &&
+        (selectors[i].name.split('-')[1] === target_selector_column)) {
+      // console.log('matched ', event_selector_row, target_selector_column);
+      if (event_selector_column === '2') {
+        if (value === 'FH' || value === 'BH') {
+          if (selectors[i].value === '-') {
+            selectors[i].value = '6';
+          } //else leave the current value
+        } else {
+          selectors[i].value = '-';
+        }
+      } //else if event_selector_column === '1'   <TODO: check for Custom
+      // else if event_selector_column === '4'  <TODO: make sure angle is correct for court-type
+    }
+  }
+
 }
