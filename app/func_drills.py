@@ -272,9 +272,9 @@ def save_drill(request_form, id):
       elif col_num == 2:
          if upper_value == "INVERSE":
             column_list.append('INV')
-         elif upper_value == 'Rand4':
+         elif upper_value == 'RAND4':
             column_list.append('R4')
-         elif upper_value == 'Rand6':
+         elif upper_value == 'RAND6':
             column_list.append('R4')
          else:
             column_list.append(upper_value)
