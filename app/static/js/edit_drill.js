@@ -4,7 +4,7 @@ document.getElementById("add_row").addEventListener("click", function (event) {
   const table = document.getElementById('drill_table');
   const newRowNumber = table.rows.length;
 
-  const rowLimit = 9;
+  const rowLimit = 10;
   if (newRowNumber > rowLimit) {
     console.log("Not adding row; limit is " + rowLimit + "rows.")
     return;
