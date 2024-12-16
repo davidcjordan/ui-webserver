@@ -11,7 +11,7 @@ backlog = 2
 # Whether to send Django output to the error log 
 capture_output = True
 
-SECRET_KEY = '264af6580bf8977d9ad15007e48efcd583ec8083a706532841709ad2249d59f6'
+# removed SECRET_KEY = ''    since gunicorn doesn't appear to need it.
 
 disable_redirect_access_to_syslog = True
 # print_config = True

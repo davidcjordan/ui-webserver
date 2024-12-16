@@ -20,8 +20,7 @@ def create_app(debug=False):
       from app.main.blueprint_drills import blueprint_drills
       from app.main.blueprint_games import blueprint_games
 
-   # secret key configured un gunicorn.conf.py
-   # app.config['SECRET_KEY'] = 'gjr39dkjn344_!67#'
+   # app.config['SECRET_KEY'] configured in gunicorn.conf.py
    
    import logging
    # the following attempts were replaced by gunicorn_log.conf:
