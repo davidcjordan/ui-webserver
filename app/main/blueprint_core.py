@@ -11,7 +11,7 @@ import os.path
 blueprint_core = Blueprint('blueprint_core', __name__)
 
 from app.main.defines import *
-from app.func_base import send_stop_to_base
+from app.func_base import send_stop_to_base, send_settings_to_base
 # from app.func_drills import *
 
 import sys
@@ -87,8 +87,10 @@ def index():
    global base_settings_dict 
    if GRUNTS_PARAM not in base_settings_dict:
       base_settings_dict = read_base_settings_from_file()
-   # update the base settings can happen at game/drill start:
-   # send_settings_to_base(settings_dict)
+   # updating the base settings (drill/game) occurs at game/drill start:
+   # send settings to base also happens here (index) so that the settings are updated when the base is restarted
+   send_settings_to_base(base_settings_dict)
+   current_app.logger.info("sent base settings to base")
 
    # example of setting button disabled and a button ID
    # TODO: fix disable CSS
