@@ -53,11 +53,9 @@ custom_drill_list = []
 radio_button_disable_js = [Markup('<script src="/static/js/radio-button-disable.js" defer></script>')]
 get_drill_info_js = [Markup('<script src="/static/js/get_drill_info.js" defer></script>')]
 
-#TODO: generate the dict by parsing the name in the drill description in the file
-# thrower_calib_drill_dict = {"ROTARY":(THROWER_CALIB_DRILL_NUMBER_START), "ELEVATOR": (THROWER_CALIB_DRILL_NUMBER_START+1)}
 thrower_calib_drill_dict = {"ROTARY":(THROWER_CALIB_DRILL_NUMBER_START)}
 for i in range(balltype_e.SERVE.value, balltype_e.CUSTOM.value):
-   thrower_calib_drill_dict[balltype_e(i).name] = THROWER_CALIB_DRILL_NUMBER_START+i+1
+   thrower_calib_drill_dict[balltype_e(i).name] = THROWER_CALIB_DRILL_NUMBER_START+i
 
 
 class beep_options(enum.Enum):
@@ -446,6 +444,7 @@ def drill():
    send_settings_to_base(base_settings_dict)
    send_start_to_base(base_mode_dict)
 
+   # THROWER_CALIB_WORKOUT_ID has been disabled:
    thrower_calib_drill_number_end = THROWER_CALIB_DRILL_NUMBER_START + len(thrower_calib_drill_dict) + 1
    if (not is_workout and id not in range(THROWER_CALIB_DRILL_NUMBER_START, thrower_calib_drill_number_end)) or \
       (is_workout and id != THROWER_CALIB_WORKOUT_ID):
@@ -460,6 +459,13 @@ def drill():
          ELEVATION_MOD_PARAM:{"legend":"Height", "dflt":base_settings_dict[ELEVATION_MOD_PARAM], \
             "min":ELEVATION_ANGLE_MOD_MIN, "max":ELEVATION_ANGLE_MOD_MAX, "step":ELEVATION_ANGLE_MOD_STEP} \
       }
+   else:
+      #TODO:  edit parameters in servo_calib_values.txt
+      drill_stepper_options = { \
+         LEVEL_PARAM:{"legend":"Parameter", "dflt":base_settings_dict[LEVEL_PARAM]/LEVEL_UI_FACTOR, \
+            "min":LEVEL_MIN/LEVEL_UI_FACTOR, "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
+      }
+      continuous_option = []
          
    return render_template(DRILL_TEMPLATE, \
       page_title = f"Running {mode_string}", \
@@ -562,7 +568,7 @@ def workout():
    send_settings_to_base(base_settings_dict)
    send_start_to_base(base_mode_dict)
 
-   thrower_calib_drill_number_end = THROWER_CALIB_DRILL_NUMBER_START + len(thrower_calib_drill_dict) + 1
+   # the THROWER_CALIB_WORKOUT_ID has been disabled, so the following will always be true:
    if (id != THROWER_CALIB_WORKOUT_ID):
       # the defaults are set from what was last saved in the settings file
       drill_stepper_options = { \
@@ -595,7 +601,8 @@ def thrower_calib():
       {"value": UI_ELEVATOR_CALIB_NAME.title(), "onclick_url": MOTOR_CALIB_URL, "param_name": CALIB_ID,"param_value": ELEVATOR_CALIB_NAME}, \
       {"value": UI_WHEEL_CALIB_NAME.title(), "onclick_url": MOTOR_CALIB_URL, "param_name": CALIB_ID,"param_value": UI_WHEEL_CALIB_NAME, \
           "html_after": html_horizontal_rule}, \
-      {"value": "All", "onclick_url": DRILL_URL, "param_name": WORKOUT_ID,"param_value": THROWER_CALIB_WORKOUT_ID} \
+      # since the calibration is manual, the option to run all the thrower calib drills is removed:
+      # {"value": "All", "onclick_url": DRILL_URL, "param_name": WORKOUT_ID,"param_value": THROWER_CALIB_WORKOUT_ID} \
    ]
    for parameter, drill_num in thrower_calib_drill_dict.items():
       button_label = f"{parameter.title()}"
