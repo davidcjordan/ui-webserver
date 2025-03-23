@@ -460,12 +460,22 @@ def drill():
             "min":ELEVATION_ANGLE_MOD_MIN, "max":ELEVATION_ANGLE_MOD_MAX, "step":ELEVATION_ANGLE_MOD_STEP} \
       }
    else:
-      #TODO:  edit parameters in servo_calib_values.txt
-      drill_stepper_options = { \
-         LEVEL_PARAM:{"legend":"Parameter", "dflt":base_settings_dict[LEVEL_PARAM]/LEVEL_UI_FACTOR, \
-            "min":LEVEL_MIN/LEVEL_UI_FACTOR, "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
-      }
       continuous_option = []
+      #TODO:  edit parameters in servo_calib_values.txt
+      if id == 760:
+         drill_stepper_options = { \
+            "ROTARY_ANGLE":{"legend":"Angle", "dflt":0, \
+               "min":-5, "max":+5, "step":0.1}, \
+         }
+      else:
+         drill_stepper_options = { \
+            "HEIGHT":{"legend":"Height", "dflt":20, \
+               "min":ELEVATION_ANGLE_BALL_MIN, "max":ELEVATION_ANGLE_BALL_MAX, "step":1}, \
+         }
+      # drop and lob throws need to have both height and speed adjusted:
+      if id == 762 or id == 766:
+         drill_stepper_options["SPEED"] = {"legend":"Speed", "dflt":30, \
+               "min":SPEED_BALL_MIN, "max":SPEED_BALL_MAX, "step":1}
          
    return render_template(DRILL_TEMPLATE, \
       page_title = f"Running {mode_string}", \
