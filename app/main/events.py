@@ -117,6 +117,7 @@ def handle_change_params(data):          # change_params() is the event callback
    # using 'global' for settings_dict doesn't work; a local is created.
    from app.main.blueprint_core import base_settings_dict
 
+   call_send_base_settings = False
    for k in data.keys():
       if data[k] == None:
          current_app.logger.warning(f'Received NoneType for {k}')
@@ -124,14 +125,25 @@ def handle_change_params(data):          # change_params() is the event callback
          # current_app.logger.debug(f'data[k] is not None; Setting: {k} to {data[k]}')
          if (k == LEVEL_PARAM):
             base_settings_dict[k] = int(data[k]*10)
+            call_send_base_settings = True
+            current_app.logger.debug(f'Setting: {k} to {base_settings_dict[k]}')
          elif (k == DELAY_MOD_PARAM):
             base_settings_dict[k] = int(data[k]*1000)
-         else:
+            call_send_base_settings = True
+            current_app.logger.debug(f'Setting: {k} to {base_settings_dict[k]}')
+         elif (k == ELEVATION_MOD_PARAM) or (k == SPEED_MOD_PARAM) or (k == CONTINUOUS_MOD_PARAM):
             base_settings_dict[k] = int(data[k])
-         current_app.logger.debug(f'Setting: {k} to {base_settings_dict[k]}')
+            call_send_base_settings = True
+            current_app.logger.debug(f'Setting: {k} to {base_settings_dict[k]}')
+         elif (k == 'ROTARY_ANGLE') or (k == 'SPEED') or (k == 'ANGLE'):
+            current_app.logger.info(f'Setting: {k} to {data[k]}')
+         else:
+            current_app.logger.error(f'Unknown: {k} in change_params')
 
-   write_base_settings_to_file() #writes global, hence no argument
-   send_settings_to_base(base_settings_dict)
+   current_app.logger.debug(f'call_send_base_settings: {call_send_base_settings}')
+   if call_send_base_settings:
+      write_base_settings_to_file() #writes global, hence no argument
+      send_settings_to_base(base_settings_dict)
 
 
 @socketio.on('game_help')

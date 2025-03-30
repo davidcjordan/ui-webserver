@@ -13,7 +13,7 @@ import enum
 import os
 from app.main.defines import *
 from app.func_drills import get_drill_workout_info, read_drill_csv, make_drill_options, save_drill
-from app.func_base import send_start_to_base, send_settings_to_base
+from app.func_base import send_start_to_base, send_settings_to_base, get_servo_params
 
 import sys
 
@@ -461,21 +461,38 @@ def drill():
       }
    else:
       continuous_option = []
-      #TODO:  edit parameters in servo_calib_values.txt
+      servo_params = get_servo_params()
       if id == 760:
+         current_angle = f'{servo_params[CENTER_ANGLE_PARAM]/10.0:.1f}'
          drill_stepper_options = { \
-            "ROTARY_ANGLE":{"legend":"Angle", "dflt":0, \
+            "ROTARY_ANGLE":{"legend":"Angle", "dflt": current_angle, \
                "min":-5, "max":+5, "step":0.1}, \
          }
+      # drop and lob throws only have speed adjusted:
+      elif id == 762 or id == 766:
+         if id == 762:
+            current_speed = servo_params[DROP_SPEED_PARAM]/10.0
+         else:
+            current_speed = servo_params[LOB_SPEED_PARAM]/10.0
+         drill_stepper_options["SPEED"] = {"legend":"Speed", "dflt":round_to_nearest_half_int(current_speed), \
+               "min":SPEED_BALL_MIN, "max":SPEED_BALL_MAX, "step":0.5}
       else:
+         if id == 761:
+            current_angle = servo_params[SERVE_ANGLE_PARAM]/10.0
+         elif id == 763:
+            current_angle = servo_params[FLAT_ANGLE_PARAM]/10.0
+         elif id == 764:
+            current_angle = servo_params[LOOP_ANGLE_PARAM]/10.0
+         elif id == 765:
+            current_angle = servo_params[CHIP_ANGLE_PARAM]/10.0
+         elif id == 767:
+            current_angle = servo_params[TOPSPIN_ANGLE_PARAM]/10.0
+         else:
+            current_angle = servo_params[PASS_ANGLE_PARAM]/10.0
          drill_stepper_options = { \
-            "HEIGHT":{"legend":"Height", "dflt":20, \
-               "min":ELEVATION_ANGLE_BALL_MIN, "max":ELEVATION_ANGLE_BALL_MAX, "step":1}, \
+            "HEIGHT":{"legend":"Height", "dflt":round_to_nearest_half_int(current_angle), \
+               "min":ELEVATION_ANGLE_BALL_MIN, "max":ELEVATION_ANGLE_BALL_MAX, "step":0.5}, \
          }
-      # drop and lob throws need to have both height and speed adjusted:
-      if id == 762 or id == 766:
-         drill_stepper_options["SPEED"] = {"legend":"Speed", "dflt":30, \
-               "min":SPEED_BALL_MIN, "max":SPEED_BALL_MAX, "step":1}
          
    return render_template(DRILL_TEMPLATE, \
       page_title = f"Running {mode_string}", \
@@ -740,3 +757,6 @@ def copy_drill():
       installation_icon = display_customization_dict['icon'], \
       onclick_choices = [{"value": "OK", "onclick_url": CUSTOM_SELECTION_URL}], \
       footer_center = display_customization_dict['title'])
+
+def round_to_nearest_half_int(num):
+    return round(num * 2) / 2

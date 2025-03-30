@@ -270,3 +270,11 @@ def send_game_help_to_base():
          code = "unknown"
       current_app.logger.error("PUT FUNC_DUMP (game_help) failed, code: {code}")
    return rc
+
+def get_servo_params():
+   msg_ok, servo_params = send_msg(GET_METHOD, SRVO_RSRC)
+   if not msg_ok:
+      current_app.logger.error("Error getting servo parameters")
+   else:
+      current_app.logger.debug(f"servo parameters: {servo_params}")
+   return servo_params
