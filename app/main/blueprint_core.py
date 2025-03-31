@@ -69,14 +69,8 @@ def index():
    # clicking stop on the game_url & drill_url goes to main/home/index, so issue stop.
    send_stop_to_base()
 
-   # if 'customization_dict' not in globals():
-   #    current_app.logger.error("customization_dict not in globals()")
-   # else:
-   #    current_app.logger.debug("customization_dict is in globals()")
-   # if 'customization_dict' not in locals():
-   #    current_app.logger.debug("customization_dict not in locals()")
-   # else:
-   #    current_app.logger.debug("customization_dict is in locals()")
+   from app.main.blueprint_drills import previous_drill_id
+   previous_drill_id = None # previous_drill_id is set in the drill selection & used by the done page
 
    global display_customization_dict 
    # get an unbound error if customization_dict is not declared global
@@ -192,12 +186,26 @@ def settings():
 @blueprint_core.route(DONE_URL, methods=DEFAULT_METHODS)
 def done():
 
+   from app.main.blueprint_drills import previous_drill_id
+
    send_stop_to_base()
+
+   this_page_title = "Finished"
+   onclick_choice_list = [{"value": "OK", "onclick_url": MAIN_URL}]
+
+   if previous_drill_id is not None:
+      current_app.logger.info(f"previous_drill_id={previous_drill_id}")
+      onclick_choice_list.append({"value": "Repeat", "onclick_url": DRILL_URL, \
+                                  "param_name": "drill_id", "param_value": previous_drill_id})
+      this_page_title += f" Drill #{previous_drill_id}"
+   else:
+      current_app.logger.info(f"previous_drill_id is None")
+
  
    return render_template(CHOICE_INPUTS_TEMPLATE, \
-      page_title = "Finished", \
+      page_title = this_page_title, \
       installation_icon = display_customization_dict['icon'], \
-      onclick_choices = [{"value": "OK", "onclick_url": MAIN_URL}], \
+      onclick_choices = onclick_choice_list, \
       footer_center = display_customization_dict['title'])
 
 

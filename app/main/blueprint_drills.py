@@ -49,6 +49,8 @@ drills_dict = {} # holds copies of drills read in from DRLxxx.csv files; keys ar
 workouts_dict = {} #as above, but using WORKxxx.csv files
 recent_drill_list = []
 custom_drill_list = []
+previous_drill_id = None
+calibration_setting = None # passed to done_url to send to base
 
 radio_button_disable_js = [Markup('<script src="/static/js/radio-button-disable.js" defer></script>')]
 get_drill_info_js = [Markup('<script src="/static/js/get_drill_info.js" defer></script>')]
@@ -313,6 +315,7 @@ def drill():
    from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
 
    global recent_drill_list
+   global previous_drill_id
 
    '''
    There are multiple ways of getting to this page
@@ -400,7 +403,7 @@ def drill():
       id = 1
 
    drill_stepper_options = {}
-   if not is_workout and beep_type_value is None:
+   if not is_workout and id < 600:
       # save to recents file
       if (len(recent_drill_list) < 6):
          current_app.logger.error(f"recent_drill_list only had {len(recent_drill_list)} drills; restoring with defaults.")
@@ -422,13 +425,16 @@ def drill():
    if is_workout:
       base_mode_dict = {MODE_PARAM: base_mode_e.WORKOUT.value, ID_PARAM: id}
       mode_string = f"{MODE_WORKOUT_SELECTED}{id}"
-
    #TODO: test BEEP enum: currently beep drills are using the DRILL enum
    # elif beep_type_value is not None:
    #    base_mode_dict = {MODE_PARAM: base_mode_e.BEEP.value, ID_PARAM: id}
    else:
       base_mode_dict = {MODE_PARAM: base_mode_e.DRILL.value, ID_PARAM: id}
-      mode_string = f"{MODE_DRILL_SELECTED}{id}"
+      this_drill_info = get_drill_workout_info(id)
+      if this_drill_info is None or 'name' not in this_drill_info:
+         this_drill_info['name'] = ''
+      mode_string = f"{MODE_DRILL_SELECTED}{id}: {this_drill_info['name']}"
+      previous_drill_id = id
 
    continuous_option = [ \
       {'name': CONTINUOUS_MOD_PARAM, 'legend': "Continous Mode", 'buttons':[ \
@@ -500,6 +506,7 @@ def drill():
       stepper_options = drill_stepper_options, \
       radio_options = continuous_option, \
       footer_center = display_customization_dict['title'])
+
 
 @blueprint_drills.route(EDIT_DRILL_URL, methods=DEFAULT_METHODS)
 def edit_drill():
