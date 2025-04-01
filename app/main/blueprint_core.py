@@ -11,7 +11,7 @@ import os.path
 blueprint_core = Blueprint('blueprint_core', __name__)
 
 from app.main.defines import *
-from app.func_base import send_stop_to_base, send_settings_to_base
+from app.func_base import send_stop_to_base, send_settings_to_base, send_servo_params
 # from app.func_drills import *
 
 import sys
@@ -69,6 +69,7 @@ def index():
    # clicking stop on the game_url & drill_url goes to main/home/index, so issue stop.
    send_stop_to_base()
 
+   # clear the previous drill id ; there wasn't a central place to clear it in blueprint_drills.py
    from app.main.blueprint_drills import previous_drill_id
    previous_drill_id = None # previous_drill_id is set in the drill selection & used by the done page
 
@@ -187,6 +188,7 @@ def settings():
 def done():
 
    from app.main.blueprint_drills import previous_drill_id
+   from app.main.blueprint_drills import calibration_parameter, calibration_value
 
    send_stop_to_base()
 
@@ -201,7 +203,14 @@ def done():
    else:
       current_app.logger.info(f"previous_drill_id is None")
 
- 
+   if calibration_parameter is not None:
+      if calibration_value is None:
+         current_app.logger.warning(f"calibration_value is None; not sending servo params to bbase")
+      else:
+         servo_param = {calibration_parameter: calibration_value}
+         current_app.logger.info(f"sending_servo_param= {servo_param}")
+         send_servo_params(servo_param)
+   
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       page_title = this_page_title, \
       installation_icon = display_customization_dict['icon'], \
