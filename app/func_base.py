@@ -278,3 +278,11 @@ def get_servo_params():
    else:
       current_app.logger.debug(f"servo parameters: {servo_params}")
    return servo_params
+
+def send_servo_params(params):
+   rc, code = send_msg(PUT_METHOD, SRVO_RSRC, params)
+   if not rc:
+      if not code:
+         code = "unknown"
+      current_app.logger.error("PUT SRVO_RSRC (game_help) failed, code: {code}")
+   return rc
