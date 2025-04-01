@@ -50,14 +50,17 @@ workouts_dict = {} #as above, but using WORKxxx.csv files
 recent_drill_list = []
 custom_drill_list = []
 previous_drill_id = None
-calibration_setting = None # passed to done_url to send to base
+# the 2 following variables are passed to done_url to send to base when calibrating shots.
+calibration_value = None
+calibration_parameter = None
 
 radio_button_disable_js = [Markup('<script src="/static/js/radio-button-disable.js" defer></script>')]
 get_drill_info_js = [Markup('<script src="/static/js/get_drill_info.js" defer></script>')]
 
-thrower_calib_drill_dict = {"ROTARY":(THROWER_CALIB_DRILL_NUMBER_START)}
+MANUAL_THROWER_CALIB_DRILL_NUMBER_START = 970
+thrower_calib_drill_dict = {"ROTARY":(MANUAL_THROWER_CALIB_DRILL_NUMBER_START)}
 for i in range(balltype_e.SERVE.value, balltype_e.CUSTOM.value):
-   thrower_calib_drill_dict[balltype_e(i).name] = THROWER_CALIB_DRILL_NUMBER_START+i
+   thrower_calib_drill_dict[balltype_e(i).name] = MANUAL_THROWER_CALIB_DRILL_NUMBER_START+i
 
 
 class beep_options(enum.Enum):
@@ -316,6 +319,11 @@ def drill():
 
    global recent_drill_list
    global previous_drill_id
+   global calibration_value
+   global calibration_parameter
+   # clear the following; they will be filled in if a calibration drill is selected
+   calibration_parameter = None
+   calibration_value = None
 
    '''
    There are multiple ways of getting to this page
@@ -451,8 +459,8 @@ def drill():
    send_start_to_base(base_mode_dict)
 
    # THROWER_CALIB_WORKOUT_ID has been disabled:
-   thrower_calib_drill_number_end = THROWER_CALIB_DRILL_NUMBER_START + len(thrower_calib_drill_dict) + 1
-   if (not is_workout and id not in range(THROWER_CALIB_DRILL_NUMBER_START, thrower_calib_drill_number_end)) or \
+   thrower_calib_drill_number_end = MANUAL_THROWER_CALIB_DRILL_NUMBER_START + len(thrower_calib_drill_dict) + 1
+   if (not is_workout and id not in range(MANUAL_THROWER_CALIB_DRILL_NUMBER_START, thrower_calib_drill_number_end)) or \
       (is_workout and id != THROWER_CALIB_WORKOUT_ID):
       # the defaults are set from what was last saved in the settings file
       drill_stepper_options = { \
@@ -466,35 +474,47 @@ def drill():
             "min":ELEVATION_ANGLE_MOD_MIN, "max":ELEVATION_ANGLE_MOD_MAX, "step":ELEVATION_ANGLE_MOD_STEP} \
       }
    else:
+      # the following are thrower calibration settings
       continuous_option = []
       servo_params = get_servo_params()
-      if id == 760:
-         current_angle = f'{servo_params[CENTER_ANGLE_PARAM]/10.0:.1f}'
+      #! Should do decode of drill number based on thrower_calib_drill_dict:
+      if id == MANUAL_THROWER_CALIB_DRILL_NUMBER_START:
+         # the rotary feedback is in degrees; converting to an integer,  the write back code converts back to floating point
+         current_angle = int(servo_params[CENTER_ANGLE_PARAM]/ONE_POT_BIT_VOLT)
          drill_stepper_options = { \
             "ROTARY_ANGLE":{"legend":"Angle", "dflt": current_angle, \
-               "min":-5, "max":+5, "step":0.1}, \
+               "min":100, "max":160, "step":1}, \
          }
+         calibration_parameter = CENTER_ANGLE_PARAM
       # drop and lob throws only have speed adjusted:
-      elif id == 762 or id == 766:
-         if id == 762:
+      elif id == 972 or id == 976:
+         if id == 972:
             current_speed = servo_params[DROP_SPEED_PARAM]/10.0
+            calibration_parameter = DROP_SPEED_PARAM
          else:
             current_speed = servo_params[LOB_SPEED_PARAM]/10.0
+            calibration_parameter = LOB_SPEED_PARAM
          drill_stepper_options["SPEED"] = {"legend":"Speed", "dflt":round_to_nearest_half_int(current_speed), \
                "min":SPEED_BALL_MIN, "max":SPEED_BALL_MAX, "step":0.5}
       else:
-         if id == 761:
+         if id == 971:
             current_angle = servo_params[SERVE_ANGLE_PARAM]/10.0
-         elif id == 763:
+            calibration_parameter = SERVE_ANGLE_PARAM
+         elif id == 973:
             current_angle = servo_params[FLAT_ANGLE_PARAM]/10.0
-         elif id == 764:
+            calibration_parameter = FLAT_ANGLE_PARAM
+         elif id == 974:
             current_angle = servo_params[LOOP_ANGLE_PARAM]/10.0
-         elif id == 765:
+            calibration_parameter = LOOP_ANGLE_PARAM
+         elif id == 975:
             current_angle = servo_params[CHIP_ANGLE_PARAM]/10.0
-         elif id == 767:
+            calibration_parameter = CHIP_ANGLE_PARAM
+         elif id == 977:
             current_angle = servo_params[TOPSPIN_ANGLE_PARAM]/10.0
+            calibration_parameter = TOPSPIN_ANGLE_PARAM
          else:
             current_angle = servo_params[PASS_ANGLE_PARAM]/10.0
+            calibration_parameter = PASS_ANGLE_PARAM
          drill_stepper_options = { \
             "HEIGHT":{"legend":"Height", "dflt":round_to_nearest_half_int(current_angle), \
                "min":ELEVATION_ANGLE_BALL_MIN, "max":ELEVATION_ANGLE_BALL_MAX, "step":0.5}, \
