@@ -145,7 +145,6 @@ def handle_change_params(data):          # change_params() is the event callback
          else:
             current_app.logger.error(f'Unknown: {k} in change_params')
 
-   current_app.logger.debug(f'call_send_base_settings: {call_send_base_settings}')
    if call_send_base_settings:
       write_base_settings_to_file() #writes global, hence no argument
       send_settings_to_base(base_settings_dict)

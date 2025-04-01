@@ -196,7 +196,6 @@ def done():
    onclick_choice_list = [{"value": "OK", "onclick_url": MAIN_URL}]
 
    if previous_drill_id is not None:
-      current_app.logger.info(f"previous_drill_id={previous_drill_id}")
       onclick_choice_list.append({"value": "Repeat", "onclick_url": DRILL_URL, \
                                   "param_name": "drill_id", "param_value": previous_drill_id})
       this_page_title += f" Drill #{previous_drill_id}"
