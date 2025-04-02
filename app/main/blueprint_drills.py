@@ -51,7 +51,6 @@ recent_drill_list = []
 custom_drill_list = []
 previous_drill_id = None
 # the 2 following variables are passed to done_url to send to base when calibrating shots.
-calibration_value = None
 calibration_parameter = None
 
 radio_button_disable_js = [Markup('<script src="/static/js/radio-button-disable.js" defer></script>')]
@@ -319,11 +318,12 @@ def drill():
 
    global recent_drill_list
    global previous_drill_id
-   global calibration_value
-   global calibration_parameter
    # clear the following; they will be filled in if a calibration drill is selected
+   global calibration_parameter
    calibration_parameter = None
-   calibration_value = None
+   from app.main.blueprint_core import set_calibration_value
+   # global calibration_value
+   set_calibration_value(None)
 
    '''
    There are multiple ways of getting to this page

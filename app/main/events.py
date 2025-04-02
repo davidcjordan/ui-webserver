@@ -115,8 +115,7 @@ def handle_change_params(data):          # change_params() is the event callback
    current_app.logger.info(f'received change_params: {data}')
 
    # using 'global' for settings_dict doesn't work; a local is created.
-   from app.main.blueprint_core import base_settings_dict
-   from app.main.blueprint_drills import calibration_value
+   from app.main.blueprint_core import base_settings_dict, set_calibration_value
 
    call_send_base_settings = False
    for k in data.keys():
@@ -137,11 +136,14 @@ def handle_change_params(data):          # change_params() is the event callback
             call_send_base_settings = True
             current_app.logger.debug(f'Setting: {k} to {base_settings_dict[k]}')
          elif (k == 'ROTARY_ANGLE'):
-            calibration_value = data[k]*ONE_POT_BIT_VOLT
-            current_app.logger.info(f'Setting calibration_value={calibration_value} for event={k}')
+            # to send to bbase, the value is multiplied by 10 and made an integer
+            # bbase in will divide by 10 to convert back to floating point
+            set_calibration_value(int(data[k]*ONE_POT_BIT_VOLT*10)
          elif (k == 'SPEED') or (k == 'HEIGHT'):
-            calibration_value = data[k]
-            current_app.logger.info(f'Setting calibration_value={calibration_value} for event={k}')
+            set_calibration_value(int(data[k]*10))
+            # previous_value = calibration_value
+            # calibration_value = data[k]
+            # current_app.logger.info(f'Change calibration_value: previous={previous_value} new={calibration_value} for event={k}')
          else:
             current_app.logger.error(f'Unknown: {k} in change_params')
 
