@@ -441,7 +441,8 @@ def drill():
       this_drill_info = get_drill_workout_info(id)
       if this_drill_info is None or 'name' not in this_drill_info:
          this_drill_info['name'] = ''
-      mode_string = f"{MODE_DRILL_SELECTED}{id}: {this_drill_info['name']}"
+      # truncate the drill name to fit: 
+      mode_string = f"{MODE_DRILL_SELECTED}{id}: {this_drill_info['name'][:36]}"
       previous_drill_id = id
 
    continuous_option = [ \
