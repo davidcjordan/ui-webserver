@@ -456,9 +456,6 @@ def drill():
    continuous_option[0]['buttons'][base_settings_dict[CONTINUOUS_MOD_PARAM]]['checked'] = 1
    # current_app.logger.debug(f"continuous_option= {continuous_option}")
 
-   send_settings_to_base(base_settings_dict)
-   send_start_to_base(base_mode_dict)
-
    # THROWER_CALIB_WORKOUT_ID has been disabled:
    thrower_calib_drill_number_end = MANUAL_THROWER_CALIB_DRILL_NUMBER_START + len(thrower_calib_drill_dict) + 1
    if (not is_workout and id not in range(MANUAL_THROWER_CALIB_DRILL_NUMBER_START, thrower_calib_drill_number_end)) or \
@@ -477,6 +474,7 @@ def drill():
    else:
       # the following are thrower calibration settings
       continuous_option = []
+      base_settings_dict[CONTINUOUS_MOD_PARAM] = 0
       servo_params = get_servo_params()
       # The parameters are all integers and need to be divided by 10 to get floating point
       #! Should do decode of drill number based on thrower_calib_drill_dict:
@@ -521,6 +519,9 @@ def drill():
             "HEIGHT":{"legend":"Height", "dflt":round_to_nearest_half_int(current_angle), \
                "min":ELEVATION_ANGLE_BALL_MIN, "max":ELEVATION_ANGLE_BALL_MAX, "step":0.5}, \
          }
+
+   send_settings_to_base(base_settings_dict)
+   send_start_to_base(base_mode_dict)
          
    return render_template(DRILL_TEMPLATE, \
       page_title = f"Running {mode_string}", \
