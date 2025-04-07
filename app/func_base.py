@@ -195,7 +195,29 @@ def send_stop_to_base():
    if not rc:
       current_app.logger.error(f"PUT Mode 0 failed, code: {code}")
 
+
+calibration_value = None
+# using a function instead of importing the variable from blueprint_drills
+# because the calibration_value did not appear to written by the event handler
+def set_calibration_value(value):
+   global calibration_value
+   previous_value = calibration_value
+   calibration_value = value
+   current_app.logger.info(f'Change calibration_value: previous={previous_value} new={calibration_value}')
+
+
 def send_pause_resume_to_base():
+   from app.main.blueprint_drills import calibration_parameter
+   global calibration_value
+
+   if calibration_parameter is not None:
+      if calibration_value is None:
+         current_app.logger.warning(f"calibration_value is None; not sending servo params to bbase")
+      else:
+         servo_param = {calibration_parameter: calibration_value}
+         current_app.logger.info(f"sending_servo_param= {servo_param}")
+         send_servo_params(servo_param)
+
    rc, code = send_msg(PUT_METHOD, PAUS_RSRC)
    if not rc:
       current_app.logger.error("PUT PAUSE failed, code: {}".format(code))

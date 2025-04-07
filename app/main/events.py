@@ -115,7 +115,8 @@ def handle_change_params(data):          # change_params() is the event callback
    current_app.logger.info(f'received change_params: {data}')
 
    # using 'global' for settings_dict doesn't work; a local is created.
-   from app.main.blueprint_core import base_settings_dict, set_calibration_value
+   from app.main.blueprint_core import base_settings_dict
+   from app.func_base import set_calibration_value
 
    call_send_base_settings = False
    for k in data.keys():

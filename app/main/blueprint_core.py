@@ -53,15 +53,6 @@ def read_base_settings_from_file():
 display_customization_dict = read_display_customization_file()
 base_settings_dict = read_base_settings_from_file()
 
-calibration_value = None
-# using a function instead of importing the variable from blueprint_drills
-# because the calibration_value did not appear to written by the event handler
-def set_calibration_value(value):
-   global calibration_value
-   previous_value = calibration_value
-   calibration_value = value
-   current_app.logger.info(f'Change calibration_value: previous={previous_value} new={calibration_value}')
-
 
 @blueprint_core.route('/favicon.ico')
 def favicon():
@@ -197,8 +188,6 @@ def settings():
 def done():
 
    from app.main.blueprint_drills import previous_drill_id
-   from app.main.blueprint_drills import calibration_parameter
-   global calibration_value
 
    send_stop_to_base()
 
@@ -212,14 +201,6 @@ def done():
    else:
       current_app.logger.info(f"previous_drill_id is None")
 
-   if calibration_parameter is not None:
-      if calibration_value is None:
-         current_app.logger.warning(f"calibration_value is None; not sending servo params to bbase")
-      else:
-         servo_param = {calibration_parameter: calibration_value}
-         current_app.logger.info(f"sending_servo_param= {servo_param}")
-         send_servo_params(servo_param)
-   
    return render_template(CHOICE_INPUTS_TEMPLATE, \
       page_title = this_page_title, \
       installation_icon = display_customization_dict['icon'], \
