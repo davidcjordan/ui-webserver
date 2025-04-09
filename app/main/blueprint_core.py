@@ -70,8 +70,7 @@ def index():
    send_stop_to_base()
 
    # clear the previous drill id ; there wasn't a central place to clear it in blueprint_drills.py
-   from app.main.blueprint_drills import previous_drill_id
-   previous_drill_id = None # previous_drill_id is set in the drill selection & used by the done page
+   set_previous_drill_id(None)
 
    global display_customization_dict 
    # get an unbound error if customization_dict is not declared global
@@ -187,7 +186,8 @@ def settings():
 @blueprint_core.route(DONE_URL, methods=DEFAULT_METHODS)
 def done():
 
-   from app.main.blueprint_drills import previous_drill_id
+   # from app.func_base import previous_drill_id
+   global previous_drill_id
 
    send_stop_to_base()
 
@@ -215,3 +215,14 @@ def write_base_settings_to_file():
          # current_app.logger.debug(f"Settings written: {settings_dict}")
    except:
       current_app.logger.error(f"Settings file write failed.")
+
+
+previous_drill_id = None
+# using a function instead of importing the variable from blueprint_drills
+# because the calibration_value did not appear to written by the event handler
+def set_previous_drill_id(value):
+   global previous_drill_id
+   previous_id = previous_drill_id
+   previous_drill_id = value
+   current_app.logger.info(f'Change calibration_value: previous={previous_id} new={previous_drill_id}')
+

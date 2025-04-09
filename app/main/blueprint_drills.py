@@ -49,7 +49,6 @@ drills_dict = {} # holds copies of drills read in from DRLxxx.csv files; keys ar
 workouts_dict = {} #as above, but using WORKxxx.csv files
 recent_drill_list = []
 custom_drill_list = []
-previous_drill_id = None
 # the 2 following variables are passed to done_url to send to base when calibrating shots.
 calibration_parameter = None
 
@@ -317,11 +316,11 @@ def drill():
    from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
 
    global recent_drill_list
-   global previous_drill_id
    # clear the following; they will be filled in if a calibration drill is selected
    global calibration_parameter
    calibration_parameter = None
    from app.func_base import set_calibration_value
+   from app.main.blueprint_core import set_previous_drill_id
    set_calibration_value(None)
 
    '''
@@ -442,7 +441,7 @@ def drill():
          this_drill_info['name'] = ''
       # truncate the drill name to fit: 
       mode_string = f"{MODE_DRILL_SELECTED}{id}: {this_drill_info['name'][:42]}"
-      previous_drill_id = id
+      set_previous_drill_id(id)
 
    continuous_option = [ \
       {'name': CONTINUOUS_MOD_PARAM, 'legend': "Continous Mode", 'buttons':[ \
