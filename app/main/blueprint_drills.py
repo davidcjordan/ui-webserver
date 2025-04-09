@@ -441,7 +441,7 @@ def drill():
       if this_drill_info is None or 'name' not in this_drill_info:
          this_drill_info['name'] = ''
       # truncate the drill name to fit: 
-      mode_string = f"{MODE_DRILL_SELECTED}{id}: {this_drill_info['name'][:36]}"
+      mode_string = f"{MODE_DRILL_SELECTED}{id}: {this_drill_info['name'][:42]}"
       previous_drill_id = id
 
    continuous_option = [ \
@@ -523,7 +523,7 @@ def drill():
    send_start_to_base(base_mode_dict)
          
    return render_template(DRILL_TEMPLATE, \
-      page_title = f"Running {mode_string}", \
+      page_title = f"{mode_string}", \
       installation_icon = display_customization_dict['icon'], \
       stepper_options = drill_stepper_options, \
       radio_options = continuous_option, \
