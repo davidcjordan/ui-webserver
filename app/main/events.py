@@ -139,7 +139,7 @@ def handle_change_params(data):          # change_params() is the event callback
          elif (k == 'ROTARY_ANGLE'):
             # to send to bbase, the value is multiplied by 10 and made an integer
             # bbase in will divide by 10 to convert back to floating point
-            set_calibration_value(int(data[k]*ONE_POT_BIT_VOLT*10))
+            set_calibration_value(int(data[k]))
          elif (k == 'SPEED') or (k == 'HEIGHT'):
             set_calibration_value(int(data[k]*10))
             # previous_value = calibration_value

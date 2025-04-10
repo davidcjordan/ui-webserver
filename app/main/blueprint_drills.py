@@ -477,11 +477,11 @@ def drill():
       # The parameters are all integers and need to be divided by 10 to get floating point
       #! Should do decode of drill number based on thrower_calib_drill_dict:
       if id == MANUAL_THROWER_CALIB_DRILL_NUMBER_START:
-         # the rotary feedback is in degrees; converting to an integer,  the write back code converts back to floating point
-         current_angle = int(servo_params[CENTER_ANGLE_PARAM]/10.0/ONE_POT_BIT_VOLT)
+         # the rotary feedback is not in degrees (not floating point): an 8-bit unsigned
+         current_angle = int(servo_params[CENTER_ANGLE_PARAM])
          drill_stepper_options = { \
             "ROTARY_ANGLE":{"legend":"Angle", "dflt": current_angle, \
-               "min":100, "max":160, "step":1}, \
+               "min":1, "max":255, "step":1}, \
          }
          calibration_parameter = CENTER_ANGLE_PARAM
       # drop and lob throws only have speed adjusted:
