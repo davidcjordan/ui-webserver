@@ -481,7 +481,7 @@ def drill():
          current_angle = int(servo_params[CENTER_ANGLE_PARAM])
          drill_stepper_options = { \
             "ROTARY_ANGLE":{"legend":"Angle", "dflt": current_angle, \
-               "min":1, "max":255, "step":1}, \
+               "min":100, "max":160, "step":1}, \
          }
          calibration_parameter = CENTER_ANGLE_PARAM
       # drop and lob throws only have speed adjusted:
