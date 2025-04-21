@@ -11,8 +11,7 @@ import os.path
 blueprint_core = Blueprint('blueprint_core', __name__)
 
 from app.main.defines import *
-from app.func_base import send_stop_to_base, send_settings_to_base, send_servo_params
-# from app.func_drills import *
+from app.func_base import send_stop_to_base, send_settings_to_base
 
 import sys
 sys.path.append(f'{user_dir}/{repos_dir}/control_ipc_utils')

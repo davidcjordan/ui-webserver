@@ -319,9 +319,7 @@ def drill():
    # clear the following; they will be filled in if a calibration drill is selected
    global calibration_parameter
    calibration_parameter = None
-   from app.func_base import set_calibration_value
    from app.main.blueprint_core import set_previous_drill_id
-   set_calibration_value(None)
 
    '''
    There are multiple ways of getting to this page

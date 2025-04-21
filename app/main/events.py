@@ -6,7 +6,7 @@ import json
 import time
 
 from app.main.defines import *
-from app.func_base import check_base, send_pause_resume_to_base, send_settings_to_base, get_game_state, send_game_help_to_base
+from app.func_base import check_base, send_pause_resume_to_base, send_settings_to_base, get_game_state, send_game_help_to_base, send_servo_params
 from app.main.blueprint_core import write_base_settings_to_file
 from app.func_drills import get_drill_workout_info
 from app.main.blueprint_camera import scp_court_png
@@ -116,9 +116,10 @@ def handle_change_params(data):          # change_params() is the event callback
 
    # using 'global' for settings_dict doesn't work; a local is created.
    from app.main.blueprint_core import base_settings_dict
-   from app.func_base import set_calibration_value
+   from app.main.blueprint_drills import calibration_parameter
 
    call_send_base_settings = False
+   local_calibration_value = None
    for k in data.keys():
       if data[k] == None:
          current_app.logger.warning(f'Received NoneType for {k}')
@@ -139,12 +140,9 @@ def handle_change_params(data):          # change_params() is the event callback
          elif (k == 'ROTARY_ANGLE'):
             # to send to bbase, the value is multiplied by 10 and made an integer
             # bbase in will divide by 10 to convert back to floating point
-            set_calibration_value(int(data[k]))
+            local_calibration_value = int(data[k])
          elif (k == 'SPEED') or (k == 'HEIGHT'):
-            set_calibration_value(int(data[k]*10))
-            # previous_value = calibration_value
-            # calibration_value = data[k]
-            # current_app.logger.info(f'Change calibration_value: previous={previous_value} new={calibration_value} for event={k}')
+            local_calibration_value = int(data[k]*10)
          else:
             current_app.logger.error(f'Unknown: {k} in change_params')
 
@@ -152,6 +150,13 @@ def handle_change_params(data):          # change_params() is the event callback
       write_base_settings_to_file() #writes global, hence no argument
       send_settings_to_base(base_settings_dict)
 
+   if local_calibration_value is not None:
+      if calibration_parameter is not None:
+         servo_param = {calibration_parameter: local_calibration_value}
+         current_app.logger.info(f"sending_servo_param= {servo_param}")
+         send_servo_params(servo_param)
+      else:
+         current_app.logger.error(f"calibration_parameter is None; not sending servo_param= {servo_param}")
 
 @socketio.on('game_help')
 def handle_game_help():
