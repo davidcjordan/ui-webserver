@@ -137,6 +137,9 @@ def handle_change_params(data):          # change_params() is the event callback
             base_settings_dict[k] = int(data[k])
             call_send_base_settings = True
             current_app.logger.debug(f'Setting: {k} to {base_settings_dict[k]}')
+         elif (k == SERVE_MODE_PARAM or k == TIEBREAKER_PARAM or k == ADVANCED_GAME_PARAM or k == POINTS_DELAY_PARAM):
+            base_settings_dict[k] = int(data[k])
+            call_send_base_settings = True
          elif (k == 'ROTARY_ANGLE'):
             # to send to bbase, the value is multiplied by 10 and made an integer
             # bbase in will divide by 10 to convert back to floating point
