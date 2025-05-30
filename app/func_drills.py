@@ -15,6 +15,8 @@ except:
    current_app.logger.error("Problems with 'control_ipc' modules, please run: git clone https://github.com/davidcjordan/control_ipc_utils")
    exit()
 
+NA_STRING = '------'
+
 def get_drill_workout_info(id, file_type=drill_file_prefix):
    info = {}
 
@@ -208,23 +210,116 @@ def make_drill_options(raw_throw_list):
       try:
          original_level_float = float(throw_row['LEVEL'])
       except:
-         original_level_float = None
-      
-      if original_level_float is None:
-         for idx, level in enumerate(level_list):
-            level_key = list(level.keys())[0]
-            if throw_row['LEVEL'] == level_key.upper():
-               level_list[idx][level_key] = 1
+         original_level_float = EASIER_LEVEL_THAN_BOOMER
+         current_app.logger.debug(f"make_drill_options exception on level {throw_row['LEVEL']}, setting to EASY")
 
-      # TODO: if level is floating point:
-      # if original_level_float is not None:
-      #    for idx, delay in enumerate(delay_list):
-      #       delay_key = list(delay.keys())[0]
-      #       if float(delay_key) >= original_delay_float:
-      #          delay_list[idx][delay_key] = 1
-      #          break
+      if original_level_float == SAME_LEVEL_AS_BOOMER:
+         level_list = [{"Same":1}]
+      else:
+         level_list = [{"Same":0}]
+
+      if original_level_float == EASIER_LEVEL_THAN_BOOMER:
+         level_list.append({"Easy":1})
+      else:
+         level_list.append({"Easy":0})
+
+      if original_level_float == HARDER_LEVEL_THAN_BOOMER:
+         level_list.append({"Hard":1})
+      else:
+         level_list.append({"Hard":0})
+
+      for level in range(LEVEL_MIN, LEVEL_MAX+5,5):
+         if level == original_level_float:
+            level_list.append({level/10:1})
+         else:
+            level_list.append({level/10:0})
+
       this_row_throw_list.append(level_list)
 
+      # if original_level_float is None:
+      #    for idx, level in enumerate(level_list):
+      #       level_key = list(level.keys())[0]
+      #       if throw_row['LEVEL'] == level_key.upper():
+      #          level_list[idx][level_key] = 1
+      # this_row_throw_list.append(level_list)
+
+      # populate speed
+      # current_app.logger.debug(f"make_drill_options throw_row['SPEED']='{throw_row['SPEED']}'.")
+
+      try:
+         original_speed = int(throw_row['SPEED'])
+      except:
+         original_speed = 0
+         current_app.logger.debug(f"make_drill_options exception on speed {throw_row['SPEED']}; setting to NA")
+
+      if 'NA' in throw_row['SPEED'] or throw_row['SPEED'] == '':
+         speed_list = [{NA_STRING:1}]
+      else:
+         speed_list = [{NA_STRING:0}]
+      SPEED_INCREMENT = 4
+      for speed in range(SPEED_BALL_MIN, SPEED_BALL_MAX+SPEED_INCREMENT,SPEED_INCREMENT):
+         if speed == original_speed:
+            speed_list.append({speed:1})
+         else:
+            speed_list.append({speed:0})
+      
+      this_row_throw_list.append(speed_list)
+
+      # populate elevation
+      # current_app.logger.debug(f"make_drill_options throw_row['ELEVATION']='{throw_row['ELEVATION']}'.")
+      try:
+         original_loft = int(throw_row['ELEVATION'])
+      except:
+         original_loft = 0
+         current_app.logger.debug(f"make_drill_options exception on loft {throw_row['ELEVATION']}; setting to NA")
+
+      if 'NA' in throw_row['ELEVATION'] or throw_row['ELEVATION'] == '':
+         loft_list = [{NA_STRING:1}]
+      else:
+         loft_list = [{NA_STRING:0}]
+      ELEVATION_INCREMENT = 3
+      for loft in range(int(ELEVATION_ANGLE_BALL_MIN), int(ELEVATION_ANGLE_BALL_MAX)+ELEVATION_INCREMENT,ELEVATION_INCREMENT):
+         if loft == original_loft:
+            loft_list.append({loft:1})
+         else:
+            loft_list.append({loft:0})
+      
+      this_row_throw_list.append(loft_list)
+
+      # populate spin
+      # current_app.logger.debug(f"make_drill_options throw_row['ELEVATION']='{throw_row['ELEVATION']}'.")
+      try:
+         original_spin = int(throw_row['SPIN'])
+      except:
+         original_spin = ''
+         current_app.logger.debug(f"make_drill_options exception on spin {throw_row['SPIN']}; setting to NA")
+
+      if 'NA' in throw_row['SPIN'] or throw_row['SPIN'] == '':
+         spin_speed_list = [{NA_STRING:1}]
+         spin_type_list = [{NA_STRING:1}]
+      else:
+         spin_speed_list = [{NA_STRING:0}]
+         spin_type_list = [{NA_STRING:0}]
+      SPIN_INCREMENT = 250
+      for spin in range(0, SPIN_BALL_MAX+SPIN_INCREMENT,SPIN_INCREMENT):
+         if type(original_spin) is int and spin == abs(original_spin):
+            spin_speed_list.append({spin:1})
+         else:
+            spin_speed_list.append({spin:0})
+      
+      this_row_throw_list.append(spin_speed_list)
+
+      for i in range(0, 2):
+         if i == 0:
+            spin_type = "Plus"
+         else:   
+            spin_type = "Minus"
+         if type(original_spin) is int and \
+            ((original_spin < 0 and spin_type == "Minus") or (original_spin >= 0 and spin_type == "Plus")):
+            spin_type_list.append({spin_type:1})
+         else:
+            spin_type_list.append({spin_type:0})
+      this_row_throw_list.append(spin_type_list)
 
       all_rows_throw_list.append(this_row_throw_list)
      
@@ -266,6 +361,9 @@ def save_drill(request_form, id):
          current_row += 1
          column_list = []
       upper_value = value.upper().replace(' ','_')
+      if upper_value == NA_STRING:
+         upper_value = ''
+
       # decode specific columns: combine court+angle into ROTTYPE
       if col_num == 1 and upper_value == "RAND_GRD":
             column_list.append('RAND_GROUND')
@@ -279,15 +377,31 @@ def save_drill(request_form, id):
          else:
             column_list.append(upper_value)
 
-      elif col_num == 3:
+      elif col_num == 3: #court
          if column_list[-1] == 'FH' or column_list[-1] == 'BH':
             column_list[-1] = column_list[-1][0] + value
+ 
+      # col_num == 4: #delay and col_num == 5: #scoring method can just use append
+ 
+      elif col_num == 7: #speed:  add blank for the comment before adding speed:
+         column_list.append('')
+         column_list.append(upper_value)
+   
+      elif col_num == 9: #spin
+         this_spin = upper_value # append the spin speed after the type (plus/minus) is determined by column 10
+
+      elif col_num == 10: #spin type
+         # current_app.logger.debug(f"col_num={col_num}  column_list={column_list}")
+         if upper_value == 'MINUS':
+            this_spin = '-' + this_spin
+         column_list.append(this_spin)
+
       else:
          column_list.append(upper_value)
- 
       # current_app.logger.debug(f"key={key}  item[0]={int(item[0])} item[1]={item[1]} current_row={current_row}  column_list={column_list}")
 
    # append last row:
+   current_app.logger.debug(f"column_list= {column_list}")
    if len(column_list) > 0:
       row_string = "," + ",".join(column_list)
       row_string_list.append(row_string)
