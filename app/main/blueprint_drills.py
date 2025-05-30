@@ -182,6 +182,11 @@ def custom():
          # current_app.logger.debug(f"EDIT_DRILL: drill_item_dict={drill_item_dict}")
          selection_list.append(drill_item_dict)
 
+   if len(selection_list) < 12:
+      allow_copy = True
+   else:
+      allow_copy = False
+
    return render_template(SELECT_TEMPLATE, \
       home_button = my_home_button, \
       page_title = "Select Drill", \
@@ -189,6 +194,7 @@ def custom():
       footer_center = display_customization_dict['title'], \
       url_for_post = DRILL_URL, \
       enable_edit_button = True, \
+      enable_copy_button = allow_copy, \
       choices = selection_list, \
       # page_specific_js = get_drill_info_js \
    )

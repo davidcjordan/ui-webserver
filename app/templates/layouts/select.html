@@ -27,6 +27,8 @@
     </button>
     {%- if enable_edit_button is defined %}
       <button type="submit" name="Edit"><img src="/static/edit.png"></button>
+    {%- endif %}
+    {%- if enable_copy_button %}
       <button type="submit" name="Copy"><img src="/static/copy.png"></button>
     {%- endif %}
   </div>
