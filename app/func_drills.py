@@ -46,7 +46,12 @@ def get_drill_workout_info(id, file_type=drill_file_prefix):
 
 
 def read_drill_csv(drill_id):
-   drill_info = {}
+
+   from collections import OrderedDict
+   exception_throw_list = [OrderedDict([('SHOT_TYPE', 'PASS'), ('ROTARY_TYPE', 'R4'), ('DELAY', '2.0'), \
+                                        ('SCORE_METHOD', 'VOLLEY'), ('LEVEL', 'SAME'), ('COMMENT', ''), \
+                                        ('SPEED', ''), ('ELEVATION', ''), ('SPIN', '')])]
+   # current_app.logger.info(f"exception_throw_list={exception_throw_list}")   
 
    if isinstance(drill_id, str):
       int_drill_id = int(drill_id)
@@ -54,7 +59,7 @@ def read_drill_csv(drill_id):
       int_drill_id = drill_id
    else:
       current_app.logger.error(f"drill_id {drill_id} is type={type(drill_id)} (not str or int)")
-      return drill_info
+      return exception_throw_list
 
    if int_drill_id >= CUSTOM_DRILL_NUMBER_START and int_drill_id <= CUSTOM_DRILL_NUMBER_END:
       file_path = f'{settings_dir}/{drill_file_prefix}{int_drill_id:03}.csv'
@@ -70,7 +75,8 @@ def read_drill_csv(drill_id):
          column_names = column_names_string.split(',')
          # current_app.logger.debug(f"column_names: {column_names}")
    except:
-      current_app.logger.error(f"read_drill_csv: Error reading '{file_path}'")
+      current_app.logger.error(f"read_drill_csv: Error reading '{file_path}'; returning a dummy throw list")
+      return exception_throw_list
 
    throw_list = []
    if 'SHOT_TYPE' in column_names and 'ROTARY_TYPE' in column_names:
@@ -85,9 +91,13 @@ def read_drill_csv(drill_id):
                   # current_app.logger.info(f"row={i} contents={row}")
                i += 1 
       except:
-         current_app.logger.error(f"read_drill_csv: Error parsing '{file_path}'")
+         current_app.logger.error(f"read_drill_csv: Error parsing '{file_path}'; returning a dummy throw list")
+         return exception_throw_list
    else:
-      current_app.logger.error(f"read_drill_csv: SHOT_TYPE and ROTARY_TYPE not on '{file_path}'")
+      current_app.logger.error(f"read_drill_csv: SHOT_TYPE and ROTARY_TYPE not in '{file_path}'; returning a dummy throw list")
+      return exception_throw_list
+
+   # current_app.logger.info(f"throw_list={throw_list}")   
    return throw_list
 
 def make_drill_options(raw_throw_list):
@@ -209,43 +219,26 @@ def make_drill_options(raw_throw_list):
       # compare file's level to list to select the proper option.
       try:
          original_level_float = float(throw_row['LEVEL'])
+         # current_app.logger.info(f"Level is float = {original_level_float}")
       except:
-         original_level_float = EASIER_LEVEL_THAN_BOOMER
-         current_app.logger.debug(f"make_drill_options exception on level {throw_row['LEVEL']}, setting to EASY")
-
-      if original_level_float == SAME_LEVEL_AS_BOOMER:
-         level_list = [{"Same":1}]
-      else:
-         level_list = [{"Same":0}]
-
-      if original_level_float == EASIER_LEVEL_THAN_BOOMER:
-         level_list.append({"Easy":1})
-      else:
-         level_list.append({"Easy":0})
-
-      if original_level_float == HARDER_LEVEL_THAN_BOOMER:
-         level_list.append({"Hard":1})
-      else:
-         level_list.append({"Hard":0})
+         original_level_float = 0
+         if throw_row['LEVEL'] == SAME_LEVEL_AS_BOOMER:
+            level_list["Same"] = 1
+         if throw_row['LEVEL'] == EASIER_LEVEL_THAN_BOOMER:
+            level_list["Easy"] = 1
+         if throw_row['LEVEL'] == HARDER_LEVEL_THAN_BOOMER:
+            level_list["Hard"] = 1
 
       for level in range(LEVEL_MIN, LEVEL_MAX+5,5):
-         if level == original_level_float:
+         if level == (original_level_float*10):
             level_list.append({level/10:1})
          else:
             level_list.append({level/10:0})
 
       this_row_throw_list.append(level_list)
 
-      # if original_level_float is None:
-      #    for idx, level in enumerate(level_list):
-      #       level_key = list(level.keys())[0]
-      #       if throw_row['LEVEL'] == level_key.upper():
-      #          level_list[idx][level_key] = 1
-      # this_row_throw_list.append(level_list)
-
       # populate speed
       # current_app.logger.debug(f"make_drill_options throw_row['SPEED']='{throw_row['SPEED']}'.")
-
       try:
          original_speed = int(throw_row['SPEED'])
       except:
