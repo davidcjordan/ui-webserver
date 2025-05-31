@@ -168,7 +168,7 @@ def custom():
             custom_drill_list.append(file_path)
 
    if len(custom_drill_list) == 0:
-      os.system(f'cp {DRILL_FILES_PATH}/DRL004.csv {CUSTOM_DRILL_FILES_PATH}/{EXAMPLE_CUSTOM_DRILL_FILENAME}')
+      os.system(f'cp {DRILL_FILES_PATH}/DRL900.csv {CUSTOM_DRILL_FILES_PATH}/{EXAMPLE_CUSTOM_DRILL_FILENAME}')
       custom_drill_list.append(EXAMPLE_CUSTOM_DRILL_FILENAME)
 
    for file_name in custom_drill_list:
@@ -543,6 +543,10 @@ def edit_drill():
    if 'drill_id' in request.args:
       drill_id = request.args['drill_id']
       raw_throw_list = read_drill_csv(drill_id)
+      if len(raw_throw_list) < 1:
+         current_app.logger.error(f"drill {request.args['drill_id']} had no throw (shot) rows.")
+         raw_throw_list = read_drill_csv(900)
+
       # current_app.logger.info(f"raw_throw_list= {raw_throw_list}")
       this_drill_info = get_drill_workout_info(drill_id) #default is to get drill info
       drill_name = ""
@@ -551,9 +555,6 @@ def edit_drill():
    else:
       current_app.logger.error(f"drill_id not in EDIT_DRILL_URL request_args: {request.args}")
       return redirect(CUSTOM_SELECTION_URL)
-
-   if len(raw_throw_list) == 0:
-      current_app.logger.error(f"drill {request.args['drill_id']} had no throw (shot) rows.")
 
    all_rows_throw_list = make_drill_options(raw_throw_list)
    # current_app.logger.info(f"all_rows_throw_list= {all_rows_throw_list}")
