@@ -122,7 +122,7 @@ def make_drill_options(raw_throw_list):
 
       # rotary-type column: 2 pull-downs (1) which court; (2) angle if FH or BH
       # court_list = [{"FH":0}, {"BH":0},{"Center":0}, {"Inverse":0},{"Random":0},{"RandFH":0},{"RandBH":0},{"Rand4":0},{"Rand6":0}]
-      court_list= [{'FH':0},{'BH':0}]
+      court_list= []
       is_FH_BH = False
       for rtype in rotary_setting_e:
          if '_FILLER' in rtype.name or '_END' in rtype.name:
@@ -144,19 +144,23 @@ def make_drill_options(raw_throw_list):
             court_name = 'Rand4'
          elif court_name_raw == 'R6':
             court_name = 'Rand6'
-
-         if throw_row['ROTARY_TYPE'].startswith('F'):
-            court_list[0]['FH'] = 1
-            is_FH_BH = True
-         elif throw_row['ROTARY_TYPE'].startswith('B'):
-            court_list[1]['BH'] = 1
-            is_FH_BH = True
-         
+        
          if throw_row['ROTARY_TYPE'] == court_name_raw:
             court_list.append({court_name:1})
          else:
             court_list.append({court_name:0})
-      
+
+         # add FH, BH after the Center court in order to make Center be the default and dash be the court
+         if court_name_raw == 'CENTER':
+            if throw_row['ROTARY_TYPE'].startswith('F'):
+               court_list.append({'FH':1})
+            else:
+               court_list.append({'FH':0})
+            if throw_row['ROTARY_TYPE'].startswith('B'):
+               court_list.append({'BH':1})
+            else:
+               court_list.append({'BH':0})
+                
          # current_app.logger.debug(f"rtype={rtype.name} throw_row['ROTARY_TYPE']={throw_row['ROTARY_TYPE']} court_list={court_list}")
 
       this_row_throw_list.append(court_list)
