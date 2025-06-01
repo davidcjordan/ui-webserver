@@ -16,7 +16,7 @@ document.getElementById("add_row").addEventListener("click", function (event) {
   cell.textContent = newRowNumber;
   cell.className = "Cell";
 
-  for (let i = 1; i < 7; i++) {
+  for (let i = 1; i < 11; i++) {
     const select_list = document.getElementById('column-' + i); 
     if (select_list == null) {
       console.log("select_list is null")
@@ -28,6 +28,7 @@ document.getElementById("add_row").addEventListener("click", function (event) {
       select_list.innerHTML +
       '</select>' 
   }
+  initEventListeners();
 }, false);
 
 document.getElementById("del_row").addEventListener("click", function (event) {
@@ -81,16 +82,21 @@ function dropDownChanged(event) {
   const fields = name.split('-');
   const event_selector_row = fields[0];
   const event_selector_column = fields[1];
-  let target_selector_column = '3'; // assume will change angle
+  // target_selector_column is the column that will change based on the event_selector_column
+  // e.g. if event_selector_column is 2 (court), then target_selector_column is 3 (angle)
+  let target_selector_columns = ['3']; // assume will change angle
   if (event_selector_column === '1') {
-    target_selector_column = '7'; // otherwise change speed, loft, spin
+    target_selector_columns = ['7','8','9','10']; // otherwise change speed, loft, spin
   }
 
   const selectors = document.querySelectorAll("select");
   for (let i = 0; i < selectors.length; i++) {
+    // if (i < 2) {
+    //   console.log("Selector ", i, " = ", selectors[i]);
+    // }
     if ((selectors[i].name.split('-')[0] === event_selector_row) &&
-        (selectors[i].name.split('-')[1] === target_selector_column)) {
-      // console.log('matched ', event_selector_row, target_selector_column);
+        target_selector_columns.includes(selectors[i].name.split('-')[1])) {
+        // console.log('matched ', event_selector_row, target_selector_columns, event_selector_column);
       if (event_selector_column === '2') {
         if (value === 'FH' || value === 'BH') {
           if (selectors[i].value === '-') {
@@ -99,9 +105,26 @@ function dropDownChanged(event) {
         } else {
           selectors[i].value = '-';
         }
-      } //else if event_selector_column === '1'   <TODO: check for Custom
-      // else if event_selector_column === '4'  <TODO: make sure angle is correct for court-type
-    }
+        } else if (event_selector_column === '1') {
+          // change from Custom to something else should set to '-----'
+          // change from something else to Custom should set to a value based on the column
+          if (value !== 'Custom') {
+            // console.log("value is not Custom, so setting to -----");
+            selectors[i].value = '------';
+          } else {
+            // console.log("should set column ", selectors[i].name.split('-')[1], "to a value");
+            if (selectors[i].name.split('-')[1] === '7') {
+              selectors[i].value = '40'; // speed
+            } else if (selectors[i].name.split('-')[1] === '8') {
+              selectors[i].value = '20'; // loft
+            } else if (selectors[i].name.split('-')[1] === '9') {
+              selectors[i].value = '1000'; // spin
+            } else if (selectors[i].name.split('-')[1] === '10') {
+              selectors[i].value = 'Plus'; // spin type
+            }
+          }
+        }
+     }
   }
 
 }
