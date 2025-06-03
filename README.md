@@ -17,27 +17,12 @@ A mouse and keyboard will not be available - the only input will be the touchscr
 
 For development using VS Code, install the Microsoft Python Extension in order to run under VScode control.
 
-git clone https://github.com/davidcjordan/ui-webserver
+git clone https://github.com/davidcjordan/ui-webserver presumably to a ~/repos directory.
 
-Currently another repository has to be cloned: https://github.com/davidcjordan/control_ipc_utils 
+https://github.com/davidcjordan/control_ipc_utils should be cloned to ~/repos.  The scripts in this repository use scripts and defines in the control_ipc_utils to send messages to the base in order to set/get information.  
 
-should be cloned to /home/pi/repos.  web-ctrl.py uses python scripts in this repository to send messages to the base in order to set/get information.
+A virtual environment (venv) is used to install gunicorn and flask.  The after_boot.sh script (in the boomer_supporting_files repo) creates and installs the correct versions.
 
-NEW (using gunicorn within a virtual environment) - THIS IS DONE by after_boot.sh (boomer_supporting_files
-```
-python3 -m venv venv
-. venv/bin/activate
-python3 -m pip install gunicorn==20.1.0 eventlet==0.30.2
-python3 -m pip install flask
-python3 -m pip install flask-socketio <-appears to be included with flask
-```
-
-OLD (using waitress):
-```
-python3 -m pip install flask-socketio
-python3 -m pip install eventlet
-python3 -m pip install waitress
-```
 jquery.js is already installed on Raspbian, but a symbolic link needs to be made.  Run the following script which is the app directory.
 ```
 ./make_links.sh
@@ -55,7 +40,7 @@ Couldn't get the following to work, so instead installed socket.io client using 
 So now it's:
    `<script src="/static/js/socket.io.js"></script>`
  
-To install the client, the following was done:
+The client is already in this repo; the following is just for reference on how the client was installed:
 ```
 sudo apt update
 sudo apt install nodejs npm
@@ -64,14 +49,25 @@ cp /home/pi/node_modules/socket.io-client/dist/socket.io.js .
 cp /home/pi/node_modules/socket.io-client/dist/socket.io.js.map .
 ```
 
-
 # Other dependencies:
 
 git clone https://github.com/davidcjordan/drills to ~/boomer should have already been performed. The file *ui_drill_selection_lists.py* in the drills directory is used by the UI to present a subset of drills to select.
 
 # Implementation notes:
 
-## Starting the web server using gunicorn:
+## starting, stopping and visibility
+
+The UI web server is started by systemd when the system boots.  Refer to boomer_supporting_files/base_gui.service
+
+The Chromium browser is launched full screen on the desktop with a home page is http://localhost:1111.  This so the UI appears on the touchscreen.  However, the webpage can be reached by remote browsers by setting the address to base_ip:1111 where the base_id can either be an address on your local network or a tailscale address.  This allows coding and debugging all from 1 computer without having to physically interact with the touchscreen (the touchscreen should be used for final testing).  Browsers have a 'developer mode' that allows setting the window size to 1280x800, using the javascript console, and reviewing the page elements.
+
+There are 2 aliases for stopping and starting the uim uistop & uistart, defined in boomer_supporting_files.
+
+The UI logs to /run/shm/ui.log
+
+The UI needs to be restarted in order to see python or html (template) changes.  It does not have to be restarted for javascript modifications.  Not sure about CSS changes.
+
+### (OLD, for reference) Starting the web server using gunicorn:
 Use the following to start it from shell:
 ```
 gunicorn  --config gunicorn.conf.py --log-config gunicorn_log.conf "app:create_app()"
