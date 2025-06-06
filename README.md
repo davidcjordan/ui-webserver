@@ -145,7 +145,9 @@ The edit_drill.js has scripts for handling a click of row add and delete.  It al
 ## Workout Editor
 Workouts are a csv with 3 columns: Drill number, Minutes to run the drill and a comment played before starting the drill.
 
-Since a pulldown with a lot of entries is a bit awkward, I would recommend the pulldown be limited to 20 or so drills.  IMO, the drill name/title should be in the pull-down, not the drill number.  Probably the Custom Drills should take up the first selection entries.
+Since a pulldown with a lot of entries is a bit awkward, I would recommend the pulldown be limited to 20 or so drills.  IMO, the drill name/title should be in the pull-down, not the drill number.  Probably the Custom Drills should take up the first selection entries. An implementation would be to have a limited list of the popular drills (drill numbers below 90) as the default drill selection for the workout, and  pre-pend any Custom Drills that are in the this_boomers_data.  (DRL4xx.csv)
+
+The custom workout csv files should be stored in this_boomers_data, which is the directory that should have some form of back-up to maintain configuration options.
 
 The workout editor would be modeled after the Drill editor:
 - A 'Custom' button would be added to the workout row on the home screen.
