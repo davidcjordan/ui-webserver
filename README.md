@@ -61,7 +61,7 @@ The UI web server is started by systemd when the system boots.  Refer to boomer_
 
 The Chromium browser is launched full screen on the desktop with a home page is http://localhost:1111.  This so the UI appears on the touchscreen.  However, the webpage can be reached by remote browsers by setting the address to base_ip:1111 where the base_id can either be an address on your local network or a tailscale address.  This allows coding and debugging all from 1 computer without having to physically interact with the touchscreen (the touchscreen should be used for final testing).  Browsers have a 'developer mode' that allows setting the window size to 1280x800, using the javascript console, and reviewing the page elements.
 
-There are 2 aliases for stopping and starting the uim uistop & uistart, defined in boomer_supporting_files.
+There are 2 aliases for stopping and starting the ui: uistop & uistart, defined in boomer_supporting_files.  uistop takes a multiple seconds if a browser is connected to the ui-webserver. To make uistop fast, then do 'pkill -o Chromium' for the touchscreen browser, and if using a remote browser, go to a different webpage, e.g. example.com.
 
 The UI logs to /run/shm/ui.log
 
@@ -87,7 +87,7 @@ The base template has a section for page specific javascripts & css, as well as 
 * Main (POST)-> game_options
 
 ## New way of Drill selection
-There are 3 pages, and maybe 4 in the future:
+There are 4 pages:
 * Recents: a persisted list of 10 or so drills the user has used recently.  Persisted in this_boomers_data/recents.json  Pre-populated with drills commonly used when Boomer is first installed.
 * Select: uses radio buttons to select between line drills and drill categories (practice objective, stroke type, level)
 * Beep: has radio buttons to determine which drill to use
@@ -99,7 +99,7 @@ A 'div' will be created at the top of the drill selection page (uses the choice_
 ## Old way of Drill selection 
 Refer to [Drill Categorization and Filtering](https://docs.google.com/document/d/1V0n3HToN0-XzfUT8dVTWYwKsZZYaLfdsvD9uuKcMHIQ)
 
-### Lists of Drills/Workflows
+### Lists of Drills/Workouts 
 Without filtering a drill list is as follows:
 ```
 drill_list_test = [\
@@ -107,18 +107,6 @@ drill_list_test = [\
    {'id': '800', 'name': 'Test servoing'},\
 ...]
 ```
-
-## Drill Editing
-Since the touchpad keyboard is not easy to use, the drill titles are 'Custom Drill N', where you can have up to 10 custom drills.
-
-There is one custom drill to start with.  More custom drills can be created by clicking the 'duplicate' icon.
-
-Since the ROTTYPE enum was so long, I separated it into 2 fields: "Court" and "Angle" in order to make the drop-down menu shorter.
-
-There are icons for adding a row and deleting the last row.  Currently there is no dialog asking which row to delete.
-
-The numeric inputs, like Delay, are drop-down instead of number picker.  This was easier to implement and more consistent with the editting view. I selected the delays available. I figure nobody will notice a granularity of 100 milliseconds in the delay field.
-
 
 ### Filters
 Filters are used to reduce the number of buttons (drills or workflows) the user can select from - to shrink the list of drills from an overwhelming number.
@@ -138,6 +126,34 @@ When a filter_list is provided, and the drill_list includes filter_values, the s
 ```
 data-Type="Development"
 ```
+
+## Drill Editor
+Since the touchpad keyboard is not easy to use, the drill titles are 'Custom Drill N', where you can have up to 10 custom drills.
+
+If there are no DRL4*.csv files in the this_boomers_data directory, then DRL401.csv is created by copying DRL900.csv from the drills repo to DRL401.csv in order to have one custom drill to start with.  More custom drills can be created by clicking the 'duplicate' icon.
+
+Since the ROTTYPE enum was so long, I separated it into 2 fields: "Court" and "Angle" in order to make the drop-down menu shorter.
+
+There are icons for adding a row and deleting the last row.  Currently there is no dialog asking which row to delete.
+
+The numeric inputs, like Delay, are drop-down instead of number picker.  This was easier to implement and more consistent with the editing view. I selected the delays available figuring nobody will notice a granularity of 100 milliseconds in the delay field.
+
+The Comment column in custom drills currently cannot be populated.  If this was implemented, then a short list of sound files would be used.
+
+The edit_drill.js has scripts for handling a click of row add and delete.  It also handles when the shot_type changes to or from CUSTOM: when CUSTOM is selected, defaults are filled in for speed, loft and spin.  When other shot types are selected, then speed, loft and spin are populated with '------' in order to show they are not relevant.  6 dashes are used in order to keep the pull-down selector wide enough that it can be scrolled - although scrolling using touchscreen is a bit awkward.
+
+## Workout Editor
+Workouts are a csv with 3 columns: Drill number, Minutes to run the drill and a comment played before starting the drill.
+
+Since a pulldown with a lot of entries is a bit awkward, I would recommend the pulldown be limited to 20 or so drills.  IMO, the drill name/title should be in the pull-down, not the drill number.  Probably the Custom Drills should take up the first selection entries.
+
+The workout editor would be modeled after the Drill editor:
+- A 'Custom' button would be added to the workout row on the home screen.
+- EDIT_WORKOUT_URL, EDIT_WORKOUT_DONE_URL, COPY_WORKOUT_URL would be added to defines.py
+- a new template 'workout_show' would be generated, or the current 'drill_show' would be modified to support both drills and workouts
+- CUSTOM_SELECTION_URL would need to be changed to CUSTOM_DRILL_SELECTION_URL and a CUSTOM_WORKOUT_SELECTION_URL added
+- edit_workout() function needs to be added.
+
 
 ## Disabling the context pop-up in kiosk mode
 refer to https://stackoverflow.com/questions/28222548/how-to-disable-context-menu-on-right-click-long-touch-in-a-kiosk-mode-of-chrome
