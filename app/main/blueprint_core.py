@@ -27,7 +27,7 @@ def read_display_customization_file():
       with open(f'{settings_dir}/ui_customization.json') as f:
          customization_dict = json.load(f)
    except:
-      customization_dict = {"title": "Boomer #1", "icon": "/static/favicon.ico"}
+      customization_dict = {"title": "", "icon": "/static/favicon.ico"}
    return customization_dict
 
 def read_base_settings_from_file():
@@ -94,7 +94,7 @@ def index():
       {"value": "Settings", "onclick_url": GAME_OPTIONS_URL, "id": "game_settings", "html_after": html_horizontal_rule},\
       # {"value": "Help", "id": "game_help_button", "html_after": html_horizontal_rule},\
       {"html_before": "Drill:", "value": "Recents", "onclick_url": RECENTS_URL},\
-      {"value": "Select", "onclick_url": DRILL_SELECT_TYPE_URL},\
+      {"value": "Select", "onclick_url": DRILL_LIST_URL},\
       {"value": "Beep", "onclick_url": BEEP_SELECTION_URL},\
       {"value": "Custom", "onclick_url": CUSTOM_SELECTION_URL, "html_after": html_horizontal_rule},\
       {"value": "Workouts", "onclick_url": SELECT_WORKOUT_URL, "html_after": html_horizontal_rule}, \
@@ -205,6 +205,17 @@ def done():
       installation_icon = display_customization_dict['icon'], \
       onclick_choices = onclick_choice_list, \
       footer_center = display_customization_dict['title'])
+
+@blueprint_core.route(DRILL_LIST_URL, methods=DEFAULT_METHODS)
+def drill_list_screen():
+   if 'icon' not in display_customization_dict:
+      read_display_customization_file()
+
+   return render_template(DRILL_LIST_TEMPLATE, \
+      home_button = my_home_button, \
+      page_title = "Drill Select Screen")
+      # installation_icon = display_customization_dict['icon'], \
+      # footer_center = display_customization_dict['title'])
 
 
 def write_base_settings_to_file():

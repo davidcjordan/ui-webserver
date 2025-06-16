@@ -1,0 +1,148 @@
+{% extends "layouts/base.html" %}
+
+{%- block selections %} 
+Ground: 1-19  Volley: 30-34  Serve: 40-44  Beep: 50-59  Trans: 80-89
+<br>Net: 20-29  Over: 35-39  Mini: 45-49  Line: 60-79  Custom: 100-199
+
+{%- endblock %} 
+
+{%- block control %} 
+<style>
+    .container2 {
+      padding-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: left;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      font-size: 30px;
+      padding: 10px 24px;
+      cursor: pointer;
+      user-select: none;
+      background-color: #555758;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      height: 72px;
+    }
+
+    .btn:hover {
+      background-color: #6a6c6d;
+    }
+
+    #numberInput {
+      font-size: 30px;
+      width: 100px;
+      padding: 10px;
+      color: black;
+      height: 50px;
+    }
+    
+    #playbutton {
+      height: 75px;
+      width: 75px;
+    }
+    
+    #playbuttonContainer {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+    
+    #playbuttonContainer:disabled img {
+      opacity: 0.4;
+    cursor: not-allowed;
+}
+    
+</style>
+<form id="numberForm" method="POST" action="/drill">
+  <div class="container2">
+    <div class="button-row">
+      <button class="btn" type="button" onclick="changeValue(-1)">−</button>
+      <button class="btn" type="button" onclick="changeValue(1)">+</button>
+
+      <button class="btn" type="button" onclick="appendDigit('0')">0</button>
+      <button class="btn" type="button" onclick="appendDigit('1')">1</button>
+      <button class="btn" type="button" onclick="appendDigit('2')">2</button>
+      <button class="btn" type="button" onclick="appendDigit('3')">3</button>
+      <button class="btn" type="button" onclick="appendDigit('4')">4</button>
+      <button class="btn" type="button" onclick="appendDigit('5')">5</button>
+      <button class="btn" type="button" onclick="appendDigit('6')">6</button>
+      <button class="btn" type="button" onclick="appendDigit('7')">7</button>
+      <button class="btn" type="button" onclick="appendDigit('8')">8</button>
+      <button class="btn" type="button" onclick="appendDigit('9')">9</button>
+      <button class="btn" type="button" onclick="backspace()">⌫</button>
+      
+    </div>
+
+    <input type="text" id="numberInput" name="choice_id" readonly />
+    <button type="submit" id="playbuttonContainer"> <img src="/static/start.png" id="playbutton"> </button>
+  </div>
+  </form>
+  
+  <div id="drill_list_placeholder"></div> <!--Javascript will place the drill list before this-->
+  <script src="/static/js/create_drill_list.js" defer></script>
+  
+  <script>
+    const input = document.getElementById('numberInput');
+    const playButton = document.getElementById('playbuttonContainer');
+
+    function appendDigit(digit) {
+      input.value += digit;
+      updatePlayButtonState();
+    }
+
+    function backspace() {
+      input.value = input.value.slice(0, -1);
+      updatePlayButtonState();
+    }
+
+    function changeValue(delta) {
+      const current = parseInt(input.value || "0", 10);
+      const next = current + delta;
+      input.value = next.toString();
+      updatePlayButtonState();
+    }
+    
+    function updatePlayButtonState() {
+      const value = parseInt(input.value, 10);
+      const isValid = Number.isInteger(value) && value >= 1 && value <= 999;
+      playButton.disabled = !isValid;
+      
+      if(isValid){
+        e = document.getElementById("drillblock" + value); //get the drill block
+        e.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', updatePlayButtonState); // Ensure button state is correct on load
+  </script>
+  
+  
+
+{%- endblock %} 
+
+{%- block page_specific_styles %} 
+   <link rel="stylesheet" href="/static/css/tables.css">
+{%- endblock %} 
+
+{%- block page_specific_js %} 
+<!-- <script">
+   document.getElementById("test").addEventListener("click", function (e) {
+      socket.emit("fault_request");
+      // console.log("emitted fault_request")
+   }, false);
+</script> -->
+{%- endblock %} 

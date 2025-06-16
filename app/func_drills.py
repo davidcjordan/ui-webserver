@@ -5,6 +5,7 @@ drill class definitions, and read drill files
 from flask import current_app
 import csv
 import os
+import re
 
 from app.main.defines import *
 import sys
@@ -443,3 +444,26 @@ def save_drill(request_form, id):
          return False
 
    return True
+
+#Returns a python list of drills and their descriptions, used to display the drill list
+def get_drill_list():
+   drills = [] #create a list that will store the drill data
+   pattern = re.compile(r'^DRL(\d+)\.csv$', re.IGNORECASE) #regular expression to match the filenames
+   
+   for filename in os.listdir('/home/pi/repos/drills'): #go through all the files in the drills directory
+      match = pattern.match(filename) #see if it matches
+      if match:
+         number = int(match.group(1)) #save the drill number
+         filepath = os.path.join(directory, filename) 
+         try:
+            with open(filepath, 'r', encoding='utf-8') as f: #try to open file
+               name = f.readline().strip() #first line is the name
+               description = f.readline().strip() #second line is the Desciption
+               drills.append({'number': number,'name': name,'description': description}) #create a dictionary with data and append it
+         except Exception as e:
+            print(f"Error reading {filename}: {e}")
+               
+   #drills.append({'number': 1,'name': 'test drill 1','description': 'description 1'}) #example test data, bypassing file system
+   #drills.append({'number': 2,'name': 'test drill 2','description': 'description 2'})
+   drills.sort(key=lambda x: x['number']) # Sort by number
+   return drills

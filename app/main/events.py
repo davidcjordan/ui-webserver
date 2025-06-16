@@ -4,6 +4,8 @@ from flask_socketio import emit
 from .. import socketio
 import json
 import time
+import re
+import os
 
 from app.main.defines import *
 from app.func_base import check_base, send_pause_resume_to_base, send_settings_to_base, get_game_state, send_game_help_to_base, send_servo_params
@@ -49,6 +51,36 @@ def handle_get_drill(data):
          current_app.logger.warning(f"no description for drill number={drill_id}")
    else:
       current_app.logger.error(f"no drill number in get_drill_desc message")
+
+@socketio.on('get_drill_list') #triggered by create_drill_list.js
+def handle_get_drill_list():
+   #current_app.logger.info('Handle get drill list has started')
+   
+   drills = [] #create a list that will store the drill data
+   pattern = re.compile(r'^DRL(\d+)\.csv$', re.IGNORECASE) #regular expression to match the filenames
+   directory = '/home/pi/repos/drills'
+   for filename in os.listdir(directory): #go through all the files in the drills directory
+      match = pattern.match(filename) #see if it matches
+      if match:
+         number = int(match.group(1)) #save the drill number
+         filepath = os.path.join(directory, filename) 
+         try:
+            with open(filepath, 'r', encoding='utf-8') as f: #try to open file
+               name = f.readline().strip().replace('"','') #first line is the name
+               description = f.readline().strip().replace('"','') #second line is the Desciption
+               
+               drills.append({'number': number,'name': name,'description': description}) #create a dictionary with data and append it
+         except Exception as e:
+            print(f"Error reading {filename}: {e}")
+               
+   #drills.append({'number': 1,'name': 'test drill 1','description': 'description 1'})
+   #drills.append({'number': 2,'name': 'test drill 2','description': 'description 2'})
+   drills.sort(key=lambda x: x['number']) # Sort by number
+   #s = str(f"Emitting result: {drills}")
+   #current_app.logger.info(s)
+   emit('drill_list',drills) #received by create_drill_list.js
+   #current_app.logger.info('Handle get drill list has finished')
+
 
 
 @socketio.on('get_updates')

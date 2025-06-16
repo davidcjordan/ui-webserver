@@ -23,6 +23,8 @@ nav, section {
 body {
   font: 40px sans-serif; 
   background-color: black;
+  padding: 0px;
+  overflow: hidden;
 }
 .container {
   background: grey;
@@ -91,20 +93,28 @@ body {
 }
 
 .footer-left, .footer-center, .footer-right {
-  display: inline-block;
-  margin: 0px;
   background: #555758;  
-  width: 32%;         
-  min-height: 50px; 
+  width: 33%;         
+  height: 50px;
+  box-sizing: border-box;
+  padding: 2px 15px 0px 15px;
 }
 .footer-left {
   text-align: left;
 }
 .footer-center {
   background: #acb3b9;
+  margin: auto;
 }
 .footer-right {
   text-align: right;
+}
+
+.footer {
+  height: 50px;
+  overflow: hidden;
+  display: flex;
+  justify-content: space-between;
 }
 
 /* could not set width using calc(var(--icon-button-raw) + 8)
