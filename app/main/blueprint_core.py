@@ -216,7 +216,15 @@ def drill_list_screen():
       page_title = "Drill Select Screen")
       # installation_icon = display_customization_dict['icon'], \
       # footer_center = display_customization_dict['title'])
+      
+@blueprint_core.route(WORKOUT_RESULT_URL, methods=DEFAULT_METHODS)
+def workout_result_screen():
+   if 'icon' not in display_customization_dict:
+      read_display_customization_file()
 
+   return render_template(WORKOUT_RESULT_TEMPLATE, \
+      home_button = my_home_button, \
+      page_title = "Workout Results")
 
 def write_base_settings_to_file():
    try:

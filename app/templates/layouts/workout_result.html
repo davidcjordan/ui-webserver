@@ -1,0 +1,102 @@
+{% extends "layouts/base.html" %}
+
+{%- block selections %} 
+
+{%- endblock %} 
+
+{%- block control %} 
+
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      max-width: 830px;
+      margin-top: 56px;
+      font-size: 30px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+      width: 10px;
+    }
+
+    /* Remove all borders from first column (category names) */
+    td:first-child {
+      border: none;
+      font-weight: bold;
+      text-align: right;
+      background-color: transparent;
+    }
+
+    /* Empty header cell (above category names) has no border */
+    th:first-child {
+      border: none;
+      background-color: transparent;
+    }
+  </style>
+
+
+  <table>
+    <colgroup>
+      <col span="1" style="">
+      <col span="1" style="width: 25%;">
+      <col span="1" style="width: 25%;">
+    </colgroup>
+    <thead>
+      <tr>
+        <th></th>
+        <th>Speed (mph)</th>
+        <th>Score</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Forehand</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>Backhand</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>Forehand Volley</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>Backhand Volley</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>Overhead</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>Serve</td>
+        <td>—</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+  
+
+{%- endblock %} 
+
+{%- block page_specific_styles %} 
+   <link rel="stylesheet" href="/static/css/tables.css">
+{%- endblock %} 
+
+{%- block page_specific_js %} 
+<!-- <script">
+   document.getElementById("test").addEventListener("click", function (e) {
+      socket.emit("fault_request");
+      // console.log("emitted fault_request")
+   }, false);
+</script> -->
+{%- endblock %} 

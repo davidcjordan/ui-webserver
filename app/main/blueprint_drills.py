@@ -242,7 +242,6 @@ def drill_select_type():
       page_specific_js = radio_button_disable_js \
    )
 
-
 @blueprint_drills.route(BEEP_SELECTION_URL, methods=DEFAULT_METHODS)
 def beep_selection():
    from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
