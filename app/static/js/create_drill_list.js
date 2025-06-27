@@ -35,7 +35,7 @@ function handleDrillList(data) {
   form.action = "/drill"; // Replace with your actual URL
 
   data.every(drill => {
-    if(drill.number > 500) return false; //break
+    if(drill.number > 200) return false; //break
     const drillBlock = document.createElement("div");
     drillBlock.style.marginBottom = "15px";
     drillBlock.id = "drillblock" + drill.number;

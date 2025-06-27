@@ -97,7 +97,9 @@ Ground: 1-19  Volley: 30-34  Serve: 40-44  Beep: 50-59  Trans: 80-89
     const playButton = document.getElementById('playbuttonContainer');
 
     function appendDigit(digit) {
-      input.value += digit;
+      if(input.value.length < 4){
+        input.value += digit;
+      }
       updatePlayButtonState();
     }
 
@@ -109,21 +111,25 @@ Ground: 1-19  Volley: 30-34  Serve: 40-44  Beep: 50-59  Trans: 80-89
     function changeValue(delta) {
       const current = parseInt(input.value || "0", 10);
       const next = current + delta;
-      input.value = next.toString();
+      if(next.toString().length <= 4){
+        input.value = next.toString();
+      }
       updatePlayButtonState();
     }
     
     function updatePlayButtonState() {
       const value = parseInt(input.value, 10);
-      const isValid = Number.isInteger(value) && value >= 1 && value <= 999;
+      const isValid = Number.isInteger(value) && value >= 1 && value <= 199;
       playButton.disabled = !isValid;
       
       if(isValid){
         e = document.getElementById("drillblock" + value); //get the drill block
-        e.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
+        if(e != null){
+          e.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
       }
     }
     
