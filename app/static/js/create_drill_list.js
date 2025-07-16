@@ -56,7 +56,7 @@ function handleDrillList(data) {
     number.style.minWidth = "30px";
 
     // Drill name
-    const title = document.createElement("span"); // Use <span> instead of <strong> to preserve font sizing
+    const title = document.createElement("span");
     title.textContent = drill.name;
 
     titleContainer.appendChild(number);
@@ -64,17 +64,23 @@ function handleDrillList(data) {
 
     // Submit on click of number/name
     titleContainer.addEventListener("click", function () {
+      const input = document.getElementById("numberInput");
+      if (input) {
+        input.value = drill.number;
+        checkValue();
+      }
+        
+      //Code to submit form instantly, instead of just entering the number
       // Remove any previous choice_id inputs
-      form.querySelectorAll('input[name="choice_id"]').forEach(el => el.remove());
-
+      // form.querySelectorAll('input[name="choice_id"]').forEach(el => el.remove());
       // Add new hidden input
-      const hiddenInput = document.createElement("input");
-      hiddenInput.type = "hidden";
-      hiddenInput.name = "choice_id";
-      hiddenInput.value = drill.number;
-      form.appendChild(hiddenInput);
-
-      form.submit();
+      // const hiddenInput = document.createElement("input");
+      // hiddenInput.type = "hidden";
+      // hiddenInput.name = "choice_id";
+      // hiddenInput.value = drill.number;
+      // form.appendChild(hiddenInput);
+      // form.submit();
+      
     });
 
     // Drill description

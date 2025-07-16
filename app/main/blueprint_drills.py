@@ -750,19 +750,25 @@ def edit_drill_done():
       installation_icon = display_customization_dict['icon'], \
       onclick_choices = [{"value": "OK", "onclick_url": CUSTOM_SELECTION_URL}], \
       footer_center = display_customization_dict['title'])
-
-
-@blueprint_drills.route(COPY_DRILL_URL, methods=DEFAULT_METHODS)
+      
+@blueprint_drills.route(COPY_DRILL_URL, methods=['POST'])
 def copy_drill():
    from app.main.blueprint_core import display_customization_dict
 
-   # current_app.logger.debug(f"EDIT_DRILL_URL request_form: {request.form}")
-   current_app.logger.debug(f"COPY_DRILL_URL request_args: {request.args}")
-
-   new_drill_id = 410
+   destination_id = 410
+   source_id = 0
    custom_drill_id_list = []
+   message = 'Copy Failed'
+   if 'source_id' in request.form and 'destination_id' in request.form:
+      #this is an new drill copy function which specifies the source and destination. It operates on /home/pi/repos/drills, as Dave requested
+      source_id= int(request.form['source_id'])
+      destination_id = int(request.form['destination_id'])
+      if(source_id >= 1 and source_id <= 199 and destination_id >= 100 and destination_id <=199):
+         os.system(f'cp /home/pi/repos/drills/DRL{source_id:03}.csv /home/pi/repos/drills/DRL{destination_id:03}.csv')
+         message = f"Copied Drill {source_id} to Drill {destination_id}"
 
    if 'drill_id' in request.args:
+      #this is Toms original copy function, it only takes the source. The destination is calculated from the existing custom drills
       drill_id = request.args['drill_id']
       # figure out the next available DRL number
       all_files = os.listdir(CUSTOM_DRILL_FILES_PATH)
@@ -771,24 +777,36 @@ def copy_drill():
          if file.startswith(drill_file_prefix) and file.endswith('.csv'):
             custom_drill_id_list.append(file[3:6])
       custom_drill_id_list.sort(reverse=True)
-      new_drill_id = int(custom_drill_id_list[0]) + 1
+      destination_id = int(custom_drill_id_list[0]) + 1
       old_custom_number = int(drill_id) - CUSTOM_DRILL_NUMBER_START
-      new_custom_number = int(new_drill_id) - CUSTOM_DRILL_NUMBER_START
-      # current_app.logger.debug(f"custom files: {custom_drill_id_list}  new_drill_id= {new_drill_id}")
-      os.system(f'cp {CUSTOM_DRILL_FILES_PATH}/DRL{drill_id}.csv {CUSTOM_DRILL_FILES_PATH}/DRL{new_drill_id}.csv')
-      cmd = f"sed -i '1!b;s/{old_custom_number}/{new_custom_number}/' {CUSTOM_DRILL_FILES_PATH}/DRL{new_drill_id}.csv"
+      new_custom_number = int(destination_id) - CUSTOM_DRILL_NUMBER_START
+      os.system(f'cp {CUSTOM_DRILL_FILES_PATH}/DRL{drill_id}.csv {CUSTOM_DRILL_FILES_PATH}/DRL{destination_id}.csv')
+      cmd = f"sed -i '1!b;s/{old_custom_number}/{new_custom_number}/' {CUSTOM_DRILL_FILES_PATH}/DRL{destination_id}.csv"
       current_app.logger.debug(f"sed cmd: {cmd}")
       os.system(cmd)
-   else:
-      current_app.logger.error(f"drill_id not in COPY_DRILL_URL request_args: {request.args}")
-      
-      #TODO: redirect
+      source_id = int(request.args['drill_id'])
+      messsage = f"Copied Drill {source_id} to Drill {destination_id}"
 
    return render_template(CHOICE_INPUTS_TEMPLATE, \
-      page_title = f"Copied Drill {request.args['drill_id']} to Drill {new_drill_id}", \
+      page_title = message, \
       installation_icon = display_customization_dict['icon'], \
-      onclick_choices = [{"value": "OK", "onclick_url": CUSTOM_SELECTION_URL}], \
+      onclick_choices = [{"value": "OK", "onclick_url": MAIN_URL}], \
       footer_center = display_customization_dict['title'])
+      
+@blueprint_drills.route(DESTINATION_SELECT_URL, methods=DEFAULT_METHODS)
+def copy_drill_select():
+   from app.main.blueprint_core import display_customization_dict
+   
+   source_id = "???"
+   if 'choice_id' in request.form:
+      source_id = request.form['choice_id']
+
+   return render_template(DESTINATION_SELECT_TEMPLATE, \
+      source_id = source_id, \
+      home_button = my_home_button, \
+      page_title = f"Copy Drill {source_id}", \
+      installation_icon = display_customization_dict['icon'], \
+      )
 
 def round_to_nearest_half_int(num):
     return round(num * 2) / 2

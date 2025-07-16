@@ -94,9 +94,7 @@ def index():
       {"value": "Settings", "onclick_url": GAME_OPTIONS_URL, "id": "game_settings", "html_after": html_horizontal_rule},\
       # {"value": "Help", "id": "game_help_button", "html_after": html_horizontal_rule},\
       {"html_before": "Drill:", "value": "Recents", "onclick_url": RECENTS_URL},\
-      {"value": "Select", "onclick_url": DRILL_LIST_URL},\
-      {"value": "Beep", "onclick_url": BEEP_SELECTION_URL},\
-      {"value": "Custom", "onclick_url": CUSTOM_SELECTION_URL, "html_after": html_horizontal_rule},\
+      {"value": "Select", "onclick_url": DRILL_LIST_URL, "html_after": html_horizontal_rule},\
       {"value": "Workouts", "onclick_url": SELECT_WORKOUT_URL, "html_after": html_horizontal_rule}, \
       {"value": "Settings", "onclick_url": SETTINGS_URL}
    ]
