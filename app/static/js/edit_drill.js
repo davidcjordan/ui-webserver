@@ -4,7 +4,7 @@ document.getElementById("add_row").addEventListener("click", function (event) {
   const table = document.getElementById('drill_table');
   const newRowNumber = table.rows.length;
 
-  const rowLimit = 10;
+  const rowLimit = 100;
   if (newRowNumber > rowLimit) {
     console.log("Not adding row; limit is " + rowLimit + "rows.")
     return;
@@ -28,6 +28,9 @@ document.getElementById("add_row").addEventListener("click", function (event) {
       select_list.innerHTML +
       '</select>' 
   }
+  
+  row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  
   initEventListeners();
 }, false);
 

@@ -17,13 +17,23 @@
       padding-inline: 0;
       border: none;
    }
+   #scrollBox {
+      max-height: 499px; /* todo make this automatic */
+      overflow-y: auto;
+      border: 1px solid rgb(204, 204, 204);
+      padding: 0px 10px;
+      margin-top: 10px;
+   }
+   
+   input {
+      height: 100px;
+   }
 
 </style>
    
 <form action="/edit_drill_done?drill_id={{ request.args.get('drill_id') }}" method="post">
-<div>
+<div id="scrollBox">
    <table style="font-size:0.8em" id="drill_table" class="Table">
-      <p></p>
       <thead>
          <tr class="Heading">
             <th class="Cell">#</th>

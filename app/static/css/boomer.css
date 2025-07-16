@@ -31,24 +31,33 @@ body {
 }
 .header {
   background-color: #555758;
-  max-height: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
 }
-.header-icon, .header-h1 {
-  display: inline-block;
-  width: 6%;
-}
+
 .header-icon {
+  width: 6%;
   margin: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 90px;
+  box-sizing: border-box;
 }
-/* removed:
-  margin-block-start: 0em !important;
-  margin-block-end: 0em !important;
-  margin-inline-start: 0px !important;
-  margin-inline-end: 0px !important;
-*/
+
 .header-h1 {
   width: 84%;
   text-align: center;
+  height: 90px;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 10px;
+  overflow: hidden;
+  display: flex;
 }
 
 .para-nomargin {

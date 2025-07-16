@@ -316,6 +316,18 @@ def select_drill():
       page_specific_js = get_drill_info_js \
    )
  
+@blueprint_drills.route(DRILL_LIST_URL, methods=DEFAULT_METHODS)
+def drill_list_screen():
+   from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
+   if 'icon' not in display_customization_dict:
+      read_display_customization_file()
+
+   return render_template(DRILL_LIST_TEMPLATE, \
+      home_button = my_home_button, \
+      page_title = "Drill Select Screen", \
+      installation_icon = display_customization_dict['icon'])
+      # footer_center = display_customization_dict['title'])
+ 
 @blueprint_drills.route(DRILL_URL, methods=DEFAULT_METHODS)
 def drill():
    from app.main.blueprint_core import display_customization_dict  # using 'global customization_dict' did not work
@@ -536,9 +548,6 @@ def drill():
 def edit_drill():
    from app.main.blueprint_core import display_customization_dict
 
-   # current_app.logger.debug(f"EDIT_DRILL_URL request_form: {request.form}")
-   #current_app.logger.debug(f"EDIT_DRILL_URL request_args: {request.args}")
-
    drill_id = 0 #not a valid ID
    
    if 'drill_id' in request.args:
@@ -553,7 +562,6 @@ def edit_drill():
          current_app.logger.error(f"drill {request.args['drill_id']} had no throw (shot) rows.")
          raw_throw_list = read_drill_csv(900)
 
-      # current_app.logger.info(f"raw_throw_list= {raw_throw_list}")
       this_drill_info = get_drill_workout_info(drill_id) #default is to get drill info
       drill_name = ""
       if ('name' in this_drill_info):
@@ -566,7 +574,7 @@ def edit_drill():
    # current_app.logger.info(f"all_rows_throw_list= {all_rows_throw_list}")
 
    return render_template('/layouts/drill_show.html', \
-      page_title = "Edit Drill: " + drill_name, \
+      page_title = drill_name, \
       throw_list = all_rows_throw_list, \
       home_button = my_home_button, \
       installation_icon = display_customization_dict['icon'], \
