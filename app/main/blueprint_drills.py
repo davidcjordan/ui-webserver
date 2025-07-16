@@ -537,10 +537,17 @@ def edit_drill():
    from app.main.blueprint_core import display_customization_dict
 
    # current_app.logger.debug(f"EDIT_DRILL_URL request_form: {request.form}")
-   current_app.logger.debug(f"EDIT_DRILL_URL request_args: {request.args}")
+   #current_app.logger.debug(f"EDIT_DRILL_URL request_args: {request.args}")
 
+   drill_id = 0 #not a valid ID
+   
    if 'drill_id' in request.args:
       drill_id = request.args['drill_id']
+      
+   if 'choice_id' in request.form:
+      drill_id = request.form['choice_id']
+      
+   if drill_id != 0:
       raw_throw_list = read_drill_csv(drill_id)
       if len(raw_throw_list) < 1:
          current_app.logger.error(f"drill {request.args['drill_id']} had no throw (shot) rows.")
