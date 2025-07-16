@@ -18,7 +18,7 @@
       border: none;
    }
    #scrollBox {
-      max-height: 499px; /* todo make this automatic */
+      max-height: 515px; /* todo make this automatic */
       overflow-y: auto;
       border: 1px solid rgb(204, 204, 204);
       padding: 0px 10px;
@@ -26,8 +26,46 @@
    }
    
    input {
-      height: 100px;
+      height: 90px;
    }
+   
+    .button-row {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: nowrap;
+      overflow: hidden;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+   .btn {
+      font-size: 30px;
+      padding: 10px 19px;
+      cursor: pointer;
+      user-select: none;
+      background-color: #555758;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      height: 68px;
+    }
+
+   .btn:hover {
+      background-color: #6a6c6d;
+    }
+    
+   .imageButtonContainer {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+    
+   .imageButtonContainer img {
+      height: 75px;
+      width: 75px;
+   }
+   
+   
 
 </style>
    
@@ -69,10 +107,25 @@
       </tbody>
    </table>
 </div>
-<div class="x-save">
-   <input type="image" id="add_row" src="/static/add_row.png"/>
-   <input type="image" id="del_row" src="/static/del_row.png"/>
-   <input type="image" name="submit" src="/static/save.png"/>
+<div class="button-row">
+
+   <button class="btn" type="button" onclick="changeValue(-1)">−</button>
+   <button class="btn" type="button" onclick="changeValue(1)">+</button>
+   <button class="btn" type="button" onclick="appendDigit('0')">0</button>
+   <button class="btn" type="button" onclick="appendDigit('1')">1</button>
+   <button class="btn" type="button" onclick="appendDigit('2')">2</button>
+   <button class="btn" type="button" onclick="appendDigit('3')">3</button>
+   <button class="btn" type="button" onclick="appendDigit('4')">4</button>
+   <button class="btn" type="button" onclick="appendDigit('5')">5</button>
+   <button class="btn" type="button" onclick="appendDigit('6')">6</button>
+   <button class="btn" type="button" onclick="appendDigit('7')">7</button>
+   <button class="btn" type="button" onclick="appendDigit('8')">8</button>
+   <button class="btn" type="button" onclick="appendDigit('9')">9</button>
+   <button class="btn" type="button" onclick="backspace()">⌫</button>
+   <input type="image" class="imageButtonContainer" id="add_row" src="/static/add_row.png"/>
+   <input type="image" class="imageButtonContainer" id="del_row" src="/static/del_row.png"/>
+   <input type="image" class="imageButtonContainer" name="submit" src="/static/save.png"/>
+   
 </div>
 </form>
 {%- endblock %} 
