@@ -28,6 +28,12 @@ body {
 }
 .container {
   background: grey;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1280px;
+  height: 800px;
 }
 .header {
   background-color: #555758;
@@ -124,6 +130,10 @@ body {
   overflow: hidden;
   display: flex;
   justify-content: space-between;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
 }
 
 /* could not set width using calc(var(--icon-button-raw) + 8)
