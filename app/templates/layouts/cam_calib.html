@@ -16,7 +16,7 @@
       {%- endfor %}
     </form>
     <input type="submit" value="Cancel" onclick="window.location.href='/';">
-    <input type="submit" id="submitButton" form="court_coordinates" value="Submit All Points" disabled>
+    <input type="submit" id="submitButton" form="court_coordinates" value="Submit All Points">
     <input type="hidden" id="image_path" value="{{image_path}}">
   </div>
   <div class="calibration_controls">
@@ -29,9 +29,9 @@
       <p id="current_x" style="min-width:150px;"></p>
       <p id="current_y" style="min-width:120px;"></p>
       <hr style="height:2px;margin-top:2px;margin-bottom:2px">
-      <p id="current_point_label" style="min-width:462px;" class="blink_me"></p>
-      <input type="button" id="setButton" value="Set" onclick="setPoint()">
-      <input type="button" id="skipButton" value="Skip" onclick="goToNextPoint()">
+      <p id="current_point_label" style="min-width:462px;"></p>
+      <input type="button" id="setButton" value="Prev" onclick="goToPoint(-1)">
+      <input type="button" id="skipButton" value="Next" onclick="goToPoint(1)">
     </div>
   </div>
 </div>

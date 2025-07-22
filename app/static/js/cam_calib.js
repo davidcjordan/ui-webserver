@@ -247,13 +247,16 @@ function drawCursorInZoom8() {
    zoomed8Context.stroke();   
  }
 
-function goToNextPoint() {
-   currentCoordinate += 2;
+function goToPoint(change) {
+   
+   currentCoordinate += 2*change;
    if (currentCoordinate >= 13) {
      currentCoordinate = STARTING_POINT * 2;
-     let submitButton = document.getElementById("submitButton");
-     submitButton.disabled = false;
    }
+   if(currentCoordinate < 4){
+      currentCoordinate = 12;
+   }
+   
    refreshImage();
    var nextPoint_x = parseInt(document.getElementById(coordinateArray[currentCoordinate].id).value)
    var nextPoint_y = parseInt(document.getElementById(coordinateArray[currentCoordinate+1].id).value)
@@ -276,8 +279,7 @@ function goToNextPoint() {
    document.getElementById(coordinateId).value = centerOfZoomed.x;
    coordinateId = coordinateArray[currentCoordinate+1].id
    document.getElementById(coordinateId).value = centerOfZoomed.y;
-
-   goToNextPoint();    
+   
    drawCourtLines();
 }
 
@@ -315,18 +317,22 @@ function setPointLabel() {
  function move_down() {
    backgroundPosition.top += 1;
    moveLensBoundaryCheck();
+   setPoint();
  }
  function move_up() {
    backgroundPosition.top -= 1;
    moveLensBoundaryCheck();
+   setPoint();
  }
  function move_right() {
    backgroundPosition.left += 1;
    moveLensBoundaryCheck();
+   setPoint();
  }
  function move_left() {
    backgroundPosition.left -= 1;
    moveLensBoundaryCheck();
+   setPoint();
  }
 
  // zoomed image (lens) displays the rectangle that has been touched
@@ -347,6 +353,7 @@ function setPointLabel() {
    backgroundPosition.top = (2*pos.y) - (lensDiv.offsetWidth);
    backgroundPosition.left = (2*pos.x) - (lensDiv.offsetHeight);
    moveLensBoundaryCheck();
+   setPoint();
  }
 
  function moveLensBoundaryCheck() {
