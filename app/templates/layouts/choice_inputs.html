@@ -4,8 +4,7 @@
 {%- block selections %}
 <div>
   {%- for choice in onclick_choices %}
-    {%-if choice['html_before'] %}
-    {{choice['html_before']}}{%- endif %}
+    {%-if choice['html_before'] %}\n    {{choice['html_before']}}{%- endif %}
     <input class="block_b" type="submit" name="choice" value="{{choice['value']}}"
       onclick="window.location.href='{{choice['onclick_url']}}
       {%- if choice['param_name'] %}?{{choice['param_name']}}={{choice['param_value']}}{%- endif %}';"
@@ -14,8 +13,7 @@
       >{%- if choice['html_after'] %}{{choice['html_after']}}{%- endif %}
   {%- endfor %}
 
-  {%- if radio_options is defined %}
-    {%- for fieldset in radio_options %}
+  {%- if radio_options is defined %}\n    {%- for fieldset in radio_options %}
     <fieldset class="radio-slider-buttons" id="{{fieldset['name']}}">
       <legend>{{fieldset['legend']}}:</legend>
         {%- for button in fieldset['buttons'] %}
@@ -31,13 +29,54 @@
   {%- if url_for_post is defined %}
   <form method="post" action="{{url_for_post}}">
     {%- for choice in form_choices %}
-    <input class="block_b" type="submit" name="choice" value="{{choice['value']}}"></input>
+    <input class="block_b" type="submit" name="choice" value="{{choice['value']}}"
+      {%- if choice['disabled'] %} disabled {%- endif %} 
+      {%- if choice['id'] %} id="{{choice['id']}}"{%- endif %}
+      >
     {%- endfor %}
   </form>
   {%- endif %}
+
+  <hr style="margin: 40px 0; border: 1px solid #444;">
+
+  <div class="wifi-config-form">
+    <p style="font-size: 1.2em; margin-bottom: 20px;">Network Setup</p>
+    <form method="post" action="{{ url_for('blueprint_core.save_wifi') }}">
+      <div style="margin-bottom: 20px;">
+        <label for="wifi_ssid" style="display: block; margin-bottom: 5px;">SSID (Network Name):</label>
+        <input type="text" id="wifi_ssid" name="ssid" placeholder="Enter SSID" 
+               style="width: 80%; height: 60px; color: black; font-size: 30px; border-radius: 8px; padding: 5px;">
+      </div>
+      <div style="margin-bottom: 30px;">
+        <label for="wifi_password" style="display: block; margin-bottom: 5px;">Password:</label>
+        <input type="password" id="wifi_password" name="password" placeholder="Enter Password" 
+               style="width: 80%; height: 60px; color: black; font-size: 30px; border-radius: 8px; padding: 5px;">
+      </div>
+      <input class="block_b" type="submit" value="Connect Wi-Fi">
+    </form>
+  </div>
 </div>
 {%- endblock %}
 
-{%- block page_specific_styles %} 
-   <link rel="stylesheet" href="/static/css/radio-slider.css">
-{%- endblock %} 
+{%- block control %}
+  {%- if home_button_only is defined %}
+    <div class="start-stop">
+      <button type="submit" onclick="window.location.href='/';">
+        <img src="/static/home.png">
+      </button>
+    </div>
+  {%- endif %}
+{%- endblock %}
+
+{%- block page_specific_styles %}
+  {%- if radio_options is defined %}
+    <link rel="stylesheet" href="/static/css/radio-slider.css">
+  {%- endif %}
+{%- endblock %}
+
+{%- block page_specific_js %}
+  {%- if radio_options is defined %}
+    <script src="/static/js/radio-button-emit.js" defer></script>
+    <script src="/static/js/radio-button-disable.js" defer></script>
+  {%- endif %}
+{%- endblock %}
