@@ -24,7 +24,7 @@ body {
   font: 40px sans-serif; 
   background-color: black;
   padding: 0px;
-  overflow: hidden;
+  /*overflow: hidden;*/
 }
 .container {
   background: grey;
@@ -85,6 +85,12 @@ body {
 .section {
   width: 100%;
   min-height: 636px;
+}
+
+.section {
+  height: 620px; /* 800px total - 90px header - 90px footer */
+  overflow-y: auto;
+  padding: 10px;
 }
 
 /* vertical-align: middle; */
