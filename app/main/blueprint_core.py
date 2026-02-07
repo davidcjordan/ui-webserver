@@ -244,3 +244,21 @@ def set_previous_drill_id(value):
    previous_drill_id = value
    current_app.logger.info(f'Change calibration_value: previous={previous_id} new={previous_drill_id}')
 
+@blueprint_core.route('/save_wifi', methods=['POST'])
+def save_wifi():
+    # 1. Capture the data
+    ssid = request.form.get('ssid')
+    password = request.form.get('password')
+
+    if ssid and password:
+        base_settings_dict['wifi_ssid'] = ssid
+        base_settings_dict['wifi_password'] = password
+        
+        try:
+            os.system(f"sudo wpa_passphrase \"{ssid}\" \"{password}\" | sudo tee -a /etc/wpa_supplicant/wpa_supplicant.conf")
+            os.system("sudo wpa_cli -i wlan0 reconfigure")
+            current_app.logger.info(f"SUCCESS: Settings saved for {ssid}")
+        except Exception as e:
+            print(f"WRITE ERROR: {e}")
+
+    return redirect('/settings')
