@@ -477,11 +477,11 @@ def drill():
       drill_stepper_options = { \
          LEVEL_PARAM:{"legend":"Level", "dflt":base_settings_dict[LEVEL_PARAM]/LEVEL_UI_FACTOR, \
             "min":LEVEL_MIN/LEVEL_UI_FACTOR, "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
-         SPEED_MOD_PARAM:{"legend":"Speed", "dflt":base_settings_dict[SPEED_MOD_PARAM], \
+         SPEED_MOD_PARAM:{"legend":"Speed %", "dflt":100, \
             "min":SPEED_MOD_MIN, "max":SPEED_MOD_MAX, "step":SPEED_MOD_STEP}, \
-         DELAY_MOD_PARAM:{"legend":"Delay", "dflt":base_settings_dict[DELAY_MOD_PARAM]/DELAY_UI_FACTOR, \
+         DELAY_MOD_PARAM:{"legend":"Delay Mod", "dflt":0, \
             "min":DELAY_MOD_MIN/DELAY_UI_FACTOR, "max":DELAY_MOD_MAX/DELAY_UI_FACTOR, "step":DELAY_UI_STEP/DELAY_UI_FACTOR}, \
-         ELEVATION_MOD_PARAM:{"legend":"Height", "dflt":base_settings_dict[ELEVATION_MOD_PARAM], \
+         ELEVATION_MOD_PARAM:{"legend":"Height Mod", "dflt":0, \
             "min":ELEVATION_ANGLE_MOD_MIN, "max":ELEVATION_ANGLE_MOD_MAX, "step":ELEVATION_ANGLE_MOD_STEP} \
       }
    else:
@@ -648,11 +648,11 @@ def workout():
       drill_stepper_options = { \
          LEVEL_PARAM:{"legend":"Level", "dflt":base_settings_dict[LEVEL_PARAM]/LEVEL_UI_FACTOR, \
             "min":LEVEL_MIN/LEVEL_UI_FACTOR, "max":LEVEL_MAX/LEVEL_UI_FACTOR, "step":LEVEL_UI_STEP/LEVEL_UI_FACTOR}, \
-         SPEED_MOD_PARAM:{"legend":"Speed", "dflt":base_settings_dict[SPEED_MOD_PARAM], \
+         SPEED_MOD_PARAM:{"legend":"Speed %", "dflt":100, \
             "min":SPEED_MOD_MIN, "max":SPEED_MOD_MAX, "step":SPEED_MOD_STEP}, \
-         DELAY_MOD_PARAM:{"legend":"Delay", "dflt":base_settings_dict[DELAY_MOD_PARAM]/DELAY_UI_FACTOR, \
+         DELAY_MOD_PARAM:{"legend":"Delay Mod", "dflt":0, \
             "min":DELAY_MOD_MIN/DELAY_UI_FACTOR, "max":DELAY_MOD_MAX/DELAY_UI_FACTOR, "step":DELAY_UI_STEP/DELAY_UI_FACTOR}, \
-         ELEVATION_MOD_PARAM:{"legend":"Height", "dflt":base_settings_dict[ELEVATION_MOD_PARAM], \
+         ELEVATION_MOD_PARAM:{"legend":"Height Mod", "dflt":0, \
             "min":ELEVATION_ANGLE_MOD_MIN, "max":ELEVATION_ANGLE_MOD_MAX, "step":ELEVATION_ANGLE_MOD_STEP} \
       }
          

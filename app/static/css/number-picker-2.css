@@ -1,22 +1,21 @@
-/*
-  ? is the following necessary?
-  *,
-  *:before,
-  *:after {
-	-webkit-box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	box-sizing: border-box;
-	-webkit-appearance: none;
-	-moz-appearance: none;
-	appearance: none;
-  }
-*/
-
 /* The important part */
-[type="number"]::-webkit-inner-spin-button,
+/*[type="number"]::-webkit-inner-spin-button,
 [type="number"]::-webkit-outer-spin-button {
 	-webkit-appearance: none;
 	height: auto;
+}
+*/
+/* Hide the spin buttons */
+/* Chrome, Safari, Edge */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
 }
 
 .stepper {
@@ -27,7 +26,13 @@
 	justify-content: flex-end;
 	gap: 10px;
 	margin-top: 10px;
+	font-size:35px;
 }
+
+.stepper label {
+	font-size:28px;
+}
+
 .stepper input {
 	font-size: 55px;
 	font-weight: bold;
@@ -37,6 +42,9 @@
 	background: transparent;
 	padding: 0px;
 	color: black;
+	user-select: none;
+	pointer-events: none;
+	caret-color: transparent;
 }
 /* used to have padding: 0.2em !important; */
 .stepper button {
