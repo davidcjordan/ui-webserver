@@ -201,10 +201,10 @@ body {
 }
 
 .block_b {
-  width: 21vw;
-  font-size: 4vw;
-  padding: 1vw;
-  border: 1vw solid #494949;
+  width: 268px;
+  font-size: 50px;
+  padding: 13px;
+  border: 13px solid #494949;
   border-radius: 8px;
   display: inline-block;
   transition: all 0.3s ease 0s;
@@ -256,11 +256,4 @@ body {
   background-color: #555555;
   color: white;
   border-radius: 8px;
-}
-
-@media screen and (max-width: 600px) {
-    .block_b {
-        width: 80vw;
-        font-size: 8vw;
-    }
 }
