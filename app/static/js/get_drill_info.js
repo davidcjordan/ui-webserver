@@ -1,10 +1,6 @@
 
 // Create & insert drill description div
-descriptDiv = document.createElement("DIV");
-descriptDiv.setAttribute("class", "para-nomargin");
-descriptDiv.id = "drill_desc"
-placeHolder.parentElement.insertBefore(descriptDiv, placeHolder);
-descriptDiv.innerHTML = "<p>"
+descriptDiv = document.getElementById("drill_desc");
 
 const urlParams = new URLSearchParams(location.search);
 // for (const [key, value] of urlParams) {
