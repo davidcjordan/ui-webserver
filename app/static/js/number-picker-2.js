@@ -22,22 +22,25 @@ for (i = 0; i < inc.length; i++) {
 }
 
 // Stepper Increment Function with Min/Max
+// s represent the change, and m represents the limit in the direction of the change
 function stepperInput(id, s, m) {
   var el = document.getElementById(id);
   // console.log("ID %s -- Step: %f  -- min/max: %f", id, s, m);
   var updated = new Boolean(false);
-  var currentValue = parseFloat(el.value);
+  var currentValue = parseFloat(el.value); //both of these variables can contain floating point rounding errors.
+  var newValue;
   if (s > 0) {
     if (currentValue < m) {
-      el.value = currentValue + s;
+      newValue = currentValue + s;
       updated = true;
     }
   } else {
     if (currentValue > m) {
-      el.value = currentValue + s;
+      newValue = currentValue + s;
       updated = true;
     }
-  }  
+  }
+  el.value = Number(newValue.toFixed(1)).toString(); //Rounds to 0.1 eliminating floating point errors
   // emit data to webserver to update base IF the page does not have a form
   // the drill & game pages do not have forms, the cam_position page does.
   if (updated) {
