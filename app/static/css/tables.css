@@ -1,52 +1,40 @@
-.Table {
-  display: table;
-  /* font-size: smaller; */
+td {
+  border: solid;
+  border-width: thin;
+  text-align: center;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 12px;
+  padding-bottom: 12px;
 }
 
-.Table thead th {
-  position: sticky;
-  top: 0;
-  background-color: #555758;
-}
-
-.Title {
+td.Title {
   /*display: table-caption;*/
   text-align: center;
   font-weight: bold;
   /* line-height: 10px; */
 }
 
-.Heading {
-  /*display: table-row;*/
-  font-weight: bold;
+td.ColHeading {
+  /*font-weight: bold;*/
   text-align: center;
-  line-height: 0.9;
-  padding-left: 5px;
-  padding-right: 5px;
+  border: none;
+  padding-left:25px;
+  padding-right:25px;
 }
-.Row {
-  /*display: table-row;*/
-}
-.Col1Row1Cell {
+
+td.corner {
   /*display: table-cell;*/
   border: none;
 }
-.Col1Cell {
+
+td.RowHeading {
   /*display: table-cell;*/
-  border: solid;
-  border-width: thin;
   text-align: right;
+  border: none;
 }
-.Cell
-{
-  /*display: table-cell;*/
-  border: solid;
-  border-width: thin;
-  text-align: center;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-select {
+
+td select {
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #010101;

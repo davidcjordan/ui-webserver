@@ -2,63 +2,34 @@
 
 {%- block stats %} 
 <div class="statistics-display">
-  <p class="para-nomargin" id="server">TBD's serve</p>
-  <div class="Table">
-    <!-- <div class="Title">
-      <p>Game Score</p>
-    </div> -->
-    <div class="Heading">
-      <div class="Col1Row1Cell">
-        <p></p>
-      </div>
-      <div class="Cell">
-        <p>Set</p>
-      </div>
-      <div class="Cell">
-        <p>Game</p>
-      </div>
-      <div class="Cell">
-        <p>Points</p>
-      </div>
-      <div class="Cell">
-        <p>Tie Points</p>
-      </div>
-    </div>
-    <div class="Row">
-      <div class="Col1Cell">
-        <p>Boomer</p>
-      </div>
-      <div class="Cell">
-        <p id="b_sets">0</p>
-      </div>
-      <div class="Cell">
-        <p id="b_games">0</p>
-      </div>
-      <div class="Cell">
-        <p id="b_pts">0</p>
-      </div>
-      <div class="Cell">
-        <p id="b_t_pts">0</p>
-      </div>
-    </div>
-    <div class="Row">
-      <div class="Col1Cell">
-        <p>Player</p>
-      </div>
-      <div class="Cell">
-        <p id="p_sets">0</p>
-      </div>
-      <div class="Cell">
-        <p id="p_games">0</p>
-      </div>
-      <div class="Cell">
-        <p id="p_pts">0</p>
-      </div>
-      <div class="Cell">
-        <p id="p_t_pts">0</p>
-      </div>
-    </div>
-  </div>
+  <p class="para-nomargin" id="server" style="margin-bottom:30px;">TBD's serve</p>
+  <table class="Table">
+    <tr>
+      <td class="corner"></td>
+      <td class="ColHeading">Boomer</td>
+      <td class="ColHeading">Player</td>
+    </tr>
+    <tr>
+      <td class="RowHeading">Set</td>
+      <td id="b_sets">0</td>
+      <td id="p_sets">0</td>
+    </tr>
+    <tr>
+      <td class="RowHeading">Game</td>
+      <td id="b_games">0</td>
+      <td id="p_games">0</td>
+    </tr>
+    <tr>
+      <td class="RowHeading">Points</td>
+      <td id="b_pts">0</td>
+      <td id="p_pts">0</td>
+    </tr>
+    <tr>
+      <td class="RowHeading">Tie Points</td>
+      <td id="b_t_pts">0</td>
+      <td id="p_t_pts">0</td>
+    </tr> 
+  </table>
 </div>
 {%- endblock %} 
 
