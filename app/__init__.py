@@ -19,6 +19,7 @@ def create_app(debug=False):
       from app.main.blueprint_camera import blueprint_camera
       from app.main.blueprint_drills import blueprint_drills
       from app.main.blueprint_games import blueprint_games
+      from app.main.blueprint_wifi import blueprint_wifi
 
    # app.config['SECRET_KEY'] configured in gunicorn.conf.py
    
@@ -68,6 +69,7 @@ def create_app(debug=False):
    app.register_blueprint(blueprint_camera)
    app.register_blueprint(blueprint_drills)
    app.register_blueprint(blueprint_games)
+   app.register_blueprint(blueprint_wifi)
 
    # refer to: https://github.com/miguelgrinberg/python-engineio/issues/142
    # the following magically fixed socketio failures logged on the browser console

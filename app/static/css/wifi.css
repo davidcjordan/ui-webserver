@@ -1,0 +1,391 @@
+/* WiFi page (wifi.html).  Sized for the 1280x800 touchscreen: the panels fill the space between
+   the header (90px) and footer (50px); the connect dialog covers the whole 1280x800 container. */
+
+.wifi-page [hidden], .wifi-dialog[hidden], .wifi-dialog [hidden] {
+  display: none !important;
+}
+
+.wifi-page {
+  display: flex;
+  gap: 12px;
+  height: 644px;
+}
+
+.wifi-panel {
+  background-color: #555758;
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.wifi-status-panel {
+  width: 500px;
+  flex: 0 0 500px;
+}
+.wifi-networks-panel {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.wifi-panel-title {
+  font-size: 34px;
+  font-weight: bold;
+  flex: 1 1 auto;
+}
+
+.wifi-button {
+  font-size: 28px;
+  height: 58px;
+  padding: 0 20px;
+  background-color: #444444;
+  border: 3px solid #333333;
+  border-radius: 8px;
+  color: white;
+  white-space: nowrap;
+}
+.wifi-button:active {
+  background-color: #222222;
+}
+.wifi-button:disabled {
+  color: #888888;
+  background-color: #3a3a3a;
+}
+.wifi-button-primary {
+  background-color: #225c1b;
+  border-color: #17410f;
+}
+.wifi-button-danger {
+  background-color: #7a2323;
+  border-color: #561616;
+}
+
+/* signal strength icon: 4 bars, data-bars="0".."4" lights that many */
+.wifi-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  width: 44px;
+  height: 36px;
+  flex: 0 0 44px;
+}
+.wifi-bars i {
+  display: block;
+  width: 8px;
+  margin-right: 3px;
+  background-color: #3c3c3c;
+  border-radius: 2px;
+}
+.wifi-bars i:nth-child(1) { height: 25%; }
+.wifi-bars i:nth-child(2) { height: 50%; }
+.wifi-bars i:nth-child(3) { height: 75%; }
+.wifi-bars i:nth-child(4) { height: 100%; }
+.wifi-bars[data-bars="1"] i:nth-child(-n+1) { background-color: #e07a3a; }
+.wifi-bars[data-bars="2"] i:nth-child(-n+2) { background-color: #e0c23a; }
+.wifi-bars[data-bars="3"] i:nth-child(-n+3),
+.wifi-bars[data-bars="4"] i:nth-child(-n+4) { background-color: lightgreen; }
+.wifi-bars-big {
+  width: 76px;
+  height: 64px;
+  flex: 0 0 76px;
+}
+.wifi-bars-big i {
+  width: 14px;
+  margin-right: 5px;
+}
+
+/* --- status panel --- */
+.wifi-status-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #6a6c6d;
+}
+.wifi-status-text {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.wifi-state {
+  font-size: 34px;
+  font-weight: bold;
+}
+.wifi-ssid {
+  font-size: 30px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wifi-summary {
+  font-size: 22px;
+  color: #dddddd;
+}
+
+.wifi-message {
+  font-size: 24px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background-color: #444444;
+}
+.wifi-message-busy {
+  background-color: #2b4a6b;
+}
+.wifi-message-ok {
+  background-color: #225c1b;
+}
+.wifi-message-error {
+  background-color: #7a2323;
+}
+
+.wifi-details {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  margin-top: 8px;
+  font-size: 22px;
+  min-height: 0;
+}
+.wifi-detail-title {
+  font-weight: bold;
+  color: #cfe8ff;
+  margin: 10px 0 2px 0;
+}
+.wifi-detail-title:first-child {
+  margin-top: 0;
+}
+.wifi-detail-row {
+  display: flex;
+  padding: 3px 0;
+  border-bottom: 1px solid #626466;
+}
+.wifi-detail-label {
+  flex: 0 0 190px;
+  color: #d6d6d6;
+}
+.wifi-detail-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* --- network list --- */
+.wifi-networks-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+.wifi-scan-state {
+  font-size: 24px;
+  color: #dddddd;
+}
+.wifi-network-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
+}
+.wifi-net {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 66px;
+  padding: 4px 12px;
+  margin-bottom: 8px;
+  background-color: #444444;
+  border: 3px solid #3a3a3a;
+  border-radius: 8px;
+  box-sizing: content-box;
+}
+.wifi-net:active {
+  background-color: #222222;
+}
+.wifi-net-connected {
+  background-color: #225c1b;
+  border-color: #17410f;
+}
+.wifi-net-unsupported, .wifi-net-out-of-range {
+  opacity: 0.6;
+}
+.wifi-net-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.wifi-net-name {
+  font-size: 30px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wifi-net-sub {
+  font-size: 20px;
+  color: #dddddd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wifi-net-right {
+  text-align: right;
+  font-size: 22px;
+  white-space: nowrap;
+}
+.wifi-badge {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 0 8px;
+  font-size: 18px;
+  border-radius: 4px;
+  background-color: #17410f;
+  border: 1px solid lightgreen;
+}
+.wifi-badge-saved {
+  background-color: #3a3a3a;
+  border-color: #aaaaaa;
+}
+.wifi-empty {
+  font-size: 26px;
+  color: #dddddd;
+  padding: 20px 4px;
+}
+
+/* --- connect dialog --- */
+.wifi-dialog {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  background-color: #3a3a3a;
+  padding: 14px 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wifi-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #555758;
+}
+.wifi-dialog-titles {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.wifi-dialog-title {
+  font-size: 36px;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wifi-dialog-info {
+  font-size: 22px;
+  color: #dddddd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wifi-field-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 58px;
+}
+.wifi-field-label {
+  flex: 0 0 210px;
+  font-size: 28px;
+}
+.wifi-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 52px;
+  font-size: 32px;
+  padding: 0 12px;
+  color: white;
+  background-color: #1e1e1e;
+  border: 3px solid #666666;
+  border-radius: 8px;
+  font-family: monospace;
+}
+.wifi-input:focus {
+  outline: none;
+}
+.wifi-input.wifi-input-active {
+  border-color: lightgreen;
+}
+.wifi-input::placeholder {
+  color: #8a8a8a;
+  font-family: sans-serif;
+  font-size: 24px;
+}
+.wifi-segmented {
+  display: flex;
+  gap: 6px;
+}
+.wifi-segment {
+  font-size: 26px;
+  height: 52px;
+  padding: 0 18px;
+  background-color: #444444;
+  border: 3px solid #333333;
+  border-radius: 8px;
+  color: white;
+}
+.wifi-segment.wifi-segment-selected {
+  background-color: #225c1b;
+  border-color: lightgreen;
+}
+.wifi-dialog-message {
+  font-size: 24px;
+  min-height: 30px;
+  color: #ffd27f;
+}
+.wifi-dialog-message.wifi-dialog-message-error {
+  color: #ff9a9a;
+}
+
+/* on-screen keyboard */
+.wifi-keyboard {
+  margin-top: auto;
+}
+.wifi-key-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.wifi-key {
+  flex: 0 0 94px;
+  height: 60px;
+  font-size: 30px;
+  font-family: monospace;
+  color: white;
+  background-color: #5a5a5a;
+  border: 2px solid #484848;
+  border-radius: 8px;
+  padding: 0;
+}
+.wifi-key:active {
+  background-color: #1e1e1e;
+}
+.wifi-key-wide {
+  flex-basis: 150px;
+  font-family: sans-serif;
+  font-size: 26px;
+  background-color: #4a4a4a;
+}
+.wifi-key-space {
+  flex-basis: 470px;
+}
+.wifi-key-on {
+  background-color: #225c1b;
+  border-color: lightgreen;
+}
+.wifi-key-locked {
+  background-color: #225c1b;
+  border-color: white;
+  text-decoration: underline;
+}

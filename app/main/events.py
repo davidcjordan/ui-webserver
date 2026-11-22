@@ -12,6 +12,7 @@ from app.func_base import check_base, send_pause_resume_to_base, send_settings_t
 from app.main.blueprint_core import write_base_settings_to_file
 from app.func_drills import get_drill_workout_info
 from app.main.blueprint_camera import scp_court_png
+from app import func_wifi
 
 import sys
 sys.path.append(f'{user_dir}/{repos_dir}/control_ipc_utils')
@@ -106,7 +107,8 @@ def handle_get_updates(data):
       # else:
       #   current_app.logger.debug(f"base_state is not FAULTED; its={base_state}")
  
-      if ((base_state == base_state_e.FAULTED) and (current_page != FAULTS_URL)):
+      # the WiFi page doesn't use the base, so don't yank the user off it (e.g. mid-password) on a fault
+      if ((base_state == base_state_e.FAULTED) and (current_page != FAULTS_URL) and (current_page != WIFI_URL)):
          update_dict['new_url'] = FAULTS_URL
 
       if ((base_state != base_state_e.FAULTED) and (current_page == FAULTS_URL)):
@@ -197,6 +199,46 @@ def handle_change_params(data):          # change_params() is the event callback
 def handle_game_help():
    current_app.logger.info(f'received game_help')
    send_game_help_to_base()
+
+
+# --- WiFi page (wifi.js) ---
+@socketio.on('wifi_get_status')
+def handle_wifi_get_status():
+   emit('wifi_status', func_wifi.get_status())
+
+
+@socketio.on('wifi_scan')
+def handle_wifi_scan(data=None):
+   # replies with the cached scan results right away, then again after a fresh scan.
+   # data = {'rescan': False} just re-sends the current results (e.g. after connecting)
+   rescan = not (isinstance(data, dict) and data.get('rescan') is False)
+   result = func_wifi.get_networks()
+   result['scanning'] = rescan and result['ok']
+   emit('wifi_networks', result)
+   if result['scanning']:
+      scan_ok, scan_error = func_wifi.request_scan()
+      if scan_ok:
+         socketio.sleep(func_wifi.SCAN_WAIT_SECONDS)
+      result = func_wifi.get_networks()
+      result['scanning'] = False
+      if not scan_ok:
+         result['error'] = scan_error
+      emit('wifi_networks', result)
+
+
+@socketio.on('wifi_connect')
+def handle_wifi_connect(data):
+   # don't log 'data': it contains the password
+   ok, message = func_wifi.start_connect(data)
+   current_app.logger.info(f"wifi_connect: {message}")
+   emit('wifi_connect_ack', {'ok': ok, 'message': message})
+
+
+@socketio.on('wifi_forget')
+def handle_wifi_forget(data):
+   ok, message = func_wifi.forget_network(data)
+   current_app.logger.info(f"wifi_forget: {message}")
+   emit('wifi_forget_result', {'ok': ok, 'message': message})
 
 
 def textify_faults_table(faults_table):

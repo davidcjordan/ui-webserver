@@ -156,6 +156,19 @@ The workout editor would be modeled after the Drill editor:
 - CUSTOM_SELECTION_URL would need to be changed to CUSTOM_DRILL_SELECTION_URL and a CUSTOM_WORKOUT_SELECTION_URL added
 - edit_workout() function needs to be added.
 
+## WiFi page
+Settings -> Network: WiFi opens /wifi (blueprint_wifi.py, wifi.html, wifi.js, wifi.css).  The left panel shows the connection status and link details (signal, link quality, bit rates, traffic counters, IP/gateway/DNS, etc.); the right panel lists the networks found by scanning.  Tapping a network opens a dialog with an on-screen keyboard for the password.  "Other..." connects to a hidden network.  Saved networks can be reconnected without re-entering the password, or forgotten.
+
+Buster manages WiFi with dhcpcd + wpa_supplicant, so app/func_wifi.py uses `wpa_cli` (and `iw`, `ip` and /proc/net/wireless for the details).  No sudo is needed, provided the stock /etc/wpa_supplicant/wpa_supplicant.conf settings are present:
+```
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+```
+and the user running the web server (pi) is in the `netdev` group.  `update_config=1` is what lets new networks be saved so they survive a reboot.  A WiFi country must be set (raspi-config -> Localisation Options -> WLAN Country), otherwise WiFi is blocked by rfkill; connecting attempts `sudo -n rfkill unblock wifi`.
+
+Connecting: the new network is added and selected; if it connects it is saved (WPA passwords are stored as the derived PSK, not plain text) and the other saved networks are re-enabled.  If it fails (e.g. wrong password, detected when wpa_supplicant temporarily disables the network), it is removed and the Pi goes back to its previous network.  Supported: open, WPA/WPA2/WPA3-transition personal, enterprise (PEAP or TTLS with MSCHAPv2; the server certificate is not verified).  WPA3-only networks are attempted but may not work with the Pi's WiFi on Buster.  WEP is not supported.
+
+The socketio events are wifi_get_status, wifi_scan, wifi_connect and wifi_forget (events.py).  The WiFi page is not redirected to the faults page when the base is faulted, so a fault doesn't interrupt someone typing a password.  Note that switching networks will drop a remote browser that is connected over WiFi.
 
 ## Disabling the context pop-up in kiosk mode
 refer to https://stackoverflow.com/questions/28222548/how-to-disable-context-menu-on-right-click-long-touch-in-a-kiosk-mode-of-chrome

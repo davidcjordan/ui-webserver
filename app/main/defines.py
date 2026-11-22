@@ -25,6 +25,7 @@ TEST_SCREEN_URL = '/test_screen'
 DRILL_LIST_URL = '/drill_list'
 WORKOUT_RESULT_URL = '/workout_result'
 DESTINATION_SELECT_URL = '/destination_select'
+WIFI_URL = '/wifi'
 
 from flask import Markup
 my_home_button = Markup('          <button type="submit" onclick="window.location.href=\'/\';"> \
@@ -48,6 +49,10 @@ FAULTS_TEMPLATE = '/layouts' + FAULTS_URL + '.html'
 DRILL_LIST_TEMPLATE = '/layouts' + DRILL_LIST_URL + '.html'
 WORKOUT_RESULT_TEMPLATE = '/layouts' + WORKOUT_RESULT_URL + '.html'
 DESTINATION_SELECT_TEMPLATE = '/layouts/destination_select.html'
+WIFI_TEMPLATE = '/layouts' + WIFI_URL + '.html'
+
+# WiFi interface managed by the WiFi page; None = auto-detect (wlan0 on a Pi 4)
+WIFI_INTERFACE = None
 
 ONCLICK_MODE_KEY = 'mode'
 ONCLICK_MODE_WORKOUT_VALUE = 'workouts'

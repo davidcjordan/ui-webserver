@@ -1,0 +1,77 @@
+{% extends "layouts/base.html" %}
+{#
+  WiFi page: left = connection status & link details, right = networks found by scanning.
+  Tapping a network opens the connect dialog, which covers the screen and has an on-screen
+  keyboard (there is no physical keyboard on the touchscreen).  Everything dynamic is filled in
+  by /static/js/wifi.js using the wifi_* socketio events.
+#}
+
+{%- block selections %}
+<div class="wifi-page">
+  <div class="wifi-panel wifi-status-panel">
+    <div class="wifi-status-summary">
+      <span id="wifi_status_bars" class="wifi-bars wifi-bars-big" data-bars="0"><i></i><i></i><i></i><i></i></span>
+      <div class="wifi-status-text">
+        <div id="wifi_state" class="wifi-state">Checking WiFi&hellip;</div>
+        <div id="wifi_ssid" class="wifi-ssid"></div>
+        <div id="wifi_summary" class="wifi-summary"></div>
+      </div>
+    </div>
+    <div id="wifi_status_error" class="wifi-message wifi-message-error" hidden></div>
+    <div id="wifi_job" class="wifi-message" hidden></div>
+    <div id="wifi_details" class="wifi-details"></div>
+  </div>
+
+  <div class="wifi-panel wifi-networks-panel">
+    <div class="wifi-networks-header">
+      <span class="wifi-panel-title">Networks</span>
+      <span id="wifi_scan_state" class="wifi-scan-state"></span>
+      <button type="button" class="wifi-button" id="wifi_other_button">Other&hellip;</button>
+      <button type="button" class="wifi-button" id="wifi_scan_button">Scan</button>
+    </div>
+    <div id="wifi_network_error" class="wifi-message wifi-message-error" hidden></div>
+    <div id="wifi_network_note" class="wifi-message" hidden></div>
+    <div id="wifi_network_list" class="wifi-network-list"></div>
+  </div>
+</div>
+
+<div id="wifi_dialog" class="wifi-dialog" hidden>
+  <div class="wifi-dialog-header">
+    <div class="wifi-dialog-titles">
+      <div id="wifi_dialog_title" class="wifi-dialog-title"></div>
+      <div id="wifi_dialog_info" class="wifi-dialog-info"></div>
+    </div>
+    <button type="button" class="wifi-button wifi-button-danger" id="wifi_forget_button">Forget</button>
+    <button type="button" class="wifi-button" id="wifi_cancel_button">Cancel</button>
+    <button type="button" class="wifi-button wifi-button-primary" id="wifi_connect_button">Connect</button>
+  </div>
+
+  <div id="wifi_row_ssid" class="wifi-field-row">
+    <label class="wifi-field-label" for="wifi_ssid_input">Network name</label>
+    <input type="text" id="wifi_ssid_input" class="wifi-input" maxlength="32"
+      autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+  </div>
+  <div id="wifi_row_security" class="wifi-field-row">
+    <span class="wifi-field-label">Security</span>
+    <div class="wifi-segmented" id="wifi_security">
+      <button type="button" class="wifi-segment" data-security="psk">Password</button>
+      <button type="button" class="wifi-segment" data-security="open">None</button>
+      <button type="button" class="wifi-segment" data-security="eap">Enterprise</button>
+    </div>
+  </div>
+  <div id="wifi_row_identity" class="wifi-field-row">
+    <label class="wifi-field-label" for="wifi_identity_input">Username</label>
+    <input type="text" id="wifi_identity_input" class="wifi-input"
+      autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+  </div>
+  <div id="wifi_row_password" class="wifi-field-row">
+    <label class="wifi-field-label" for="wifi_password_input">Password</label>
+    <input type="password" id="wifi_password_input" class="wifi-input"
+      autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <button type="button" class="wifi-button" id="wifi_show_password">Show</button>
+  </div>
+
+  <div id="wifi_dialog_message" class="wifi-dialog-message"></div>
+  <div id="wifi_keyboard" class="wifi-keyboard"></div>
+</div>
+{%- endblock %}

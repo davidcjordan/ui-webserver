@@ -134,7 +134,9 @@ def settings():
    # value is the label of the button
    onclick_choice_list = [\
       {"html_before": "Check:", \
-         "value": "Cameras", "onclick_url": CAM_VERIF_URL, "html_after": html_horizontal_rule}, \
+         "value": "Cameras", "onclick_url": CAM_VERIF_URL}, \
+      {"html_before": Markup("&nbsp;Network:"), \
+         "value": "WiFi", "onclick_url": WIFI_URL, "html_after": html_horizontal_rule}, \
       {"html_before": "Calibrate:", \
          "value": "Thrower", "onclick_url": THROWER_CALIB_SELECTION_URL}, \
       {"value": "Left Camera", "onclick_url": CAM_LOCATION_URL, "param_name": CAM_SIDE_ID, "param_value": CAM_SIDE_LEFT_LABEL}, \
