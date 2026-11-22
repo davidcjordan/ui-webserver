@@ -123,6 +123,7 @@ def faults():
       read_display_customization_file()
 
    return render_template(FAULTS_TEMPLATE, \
+      home_button = my_home_button, \
       page_title = "Problems Detected")
       # installation_icon = display_customization_dict['icon'], \
       # footer_center = display_customization_dict['title'])

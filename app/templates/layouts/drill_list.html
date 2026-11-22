@@ -101,6 +101,14 @@ Ground: 1-19  Volley: 30-34  Serve: 40-44  Beep: 50-59  Trans: 80-89
     const playButton = document.getElementById('playButtonContainer');
     const editButton = document.getElementById('editButtonContainer');
     const copyButton = document.getElementById('copyButtonContainer');
+    var drillNumberValid = false;
+
+    // the play button is disabled for an invalid drill number, or while the base is faulted
+    // (base_faulted and the base_faulted_change event are in state_update.js)
+    function updatePlayButton() {
+      playButton.disabled = !drillNumberValid || base_faulted;
+    }
+    document.addEventListener('base_faulted_change', updatePlayButton);
 
     function appendDigit(digit) {
       if(input.value.length < 4){
@@ -134,7 +142,8 @@ Ground: 1-19  Volley: 30-34  Serve: 40-44  Beep: 50-59  Trans: 80-89
       const isValid = Number.isInteger(value) && value >= 1 && value <= 199;
       const isEditable = Number.isInteger(value) && value >= 100 && value <= 199;
       
-      playButton.disabled = !isValid;
+      drillNumberValid = isValid;
+      updatePlayButton();
       copyButton.disabled = !isValid;
       editButton.disabled = !isEditable;
       

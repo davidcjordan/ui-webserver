@@ -53,6 +53,8 @@ def game_options():
       page_title = "Select Game Mode Options", \
       installation_icon = display_customization_dict['icon'], \
       url_for_post = GAME_URL, \
+      # same ID as the Play button on the main page, so it's disabled the same way (soft_fault in state_update.js)
+      start_button_id = "game_button", \
       # optional_form_begin = Markup('<form action ="' + GAME_URL + '" method="post">'), \
       # optional_form_end = Markup('</form>'), \
 

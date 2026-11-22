@@ -107,16 +107,16 @@ def handle_get_updates(data):
       # else:
       #   current_app.logger.debug(f"base_state is not FAULTED; its={base_state}")
  
-      # the WiFi page doesn't use the base, so don't yank the user off it (e.g. mid-password) on a fault
-      if ((base_state == base_state_e.FAULTED) and (current_page != FAULTS_URL) and (current_page != WIFI_URL)):
-         update_dict['new_url'] = FAULTS_URL
-
-      if ((base_state != base_state_e.FAULTED) and (current_page == FAULTS_URL)):
-         update_dict['new_url'] = MAIN_URL
- 
-      if ((base_state == base_state_e.FAULTED) and (current_page == FAULTS_URL)):
-         #TODO: if (len(faults_table) != len(previous_faults_table)):
-         emit('faults_update', json.dumps(textify_faults_table(faults_table)))
+      # A fault doesn't redirect to FAULTS_URL, and the faults page isn't left when the fault clears:
+      # the footer shows "Status: Faulted" with a warning icon, and tapping it opens the faults page (state_update.js).
+      if (current_page == FAULTS_URL):
+         if (base_state == base_state_e.FAULTED):
+            #TODO: if (len(faults_table) != len(previous_faults_table)):
+            faults_list = textify_faults_table(faults_table)
+         else:
+            # the fault cleared: send an empty table so the faults page doesn't keep showing the old faults
+            faults_list = []
+         emit('faults_update', json.dumps(faults_list))
 
       if (((current_page == GAME_URL) or (current_page == DRILL_URL) or (current_page == WORKOUT_URL) or (current_page == MOTOR_CALIB_URL)) and
          (base_state == base_state_e.IDLE)):

@@ -168,7 +168,16 @@ and the user running the web server (pi) is in the `netdev` group.  `update_conf
 
 Connecting: the new network is added and selected; if it connects it is saved (WPA passwords are stored as the derived PSK, not plain text) and the other saved networks are re-enabled.  If it fails (e.g. wrong password, detected when wpa_supplicant temporarily disables the network), it is removed and the Pi goes back to its previous network.  Supported: open, WPA/WPA2/WPA3-transition personal, enterprise (PEAP or TTLS with MSCHAPv2; the server certificate is not verified).  WPA3-only networks are attempted but may not work with the Pi's WiFi on Buster.  WEP is not supported.
 
-The socketio events are wifi_get_status, wifi_scan, wifi_connect and wifi_forget (events.py).  The WiFi page is not redirected to the faults page when the base is faulted, so a fault doesn't interrupt someone typing a password.  Note that switching networks will drop a remote browser that is connected over WiFi.
+The socketio events are wifi_get_status, wifi_scan, wifi_connect and wifi_forget (events.py).  Note that switching networks will drop a remote browser that is connected over WiFi.
+
+## Faults page
+When the base is faulted, the UI stays on the current page (it used to redirect to /faults).  The footer shows "Status: Faulted" followed by a yellow warning icon (static/warning.svg), and tapping the status opens /faults (state_update.js adds a 'faulted' class to the status, which makes it tappable).  The status text is only rewritten when the state changes, so that a tap isn't lost.
+
+While the base is faulted, the play buttons on the Recents, Workouts and Drill Select (drill list) pages are disabled.  state_update.js keeps base_faulted up to date and disables buttons that have the class 'disable-when-faulted' (select.html).  The drill list's play button is also disabled for an invalid drill number, so drill_list.html combines both checks itself, and re-checks on the 'base_faulted_change' event.
+
+The game Play buttons (on the main page and the Game Settings page, both with the ID 'game_button') are disabled when the base reports soft fault 1 (tracking faulted) instead: state_update.js handles 'soft_fault' in the state updates.
+
+The faults page has a home button to leave it.  The faults page isn't left automatically when the fault clears; instead the server sends an empty faults table, so the old faults are cleared from the page.
 
 ## Disabling the context pop-up in kiosk mode
 refer to https://stackoverflow.com/questions/28222548/how-to-disable-context-menu-on-right-click-long-touch-in-a-kiosk-mode-of-chrome

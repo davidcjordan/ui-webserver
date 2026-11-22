@@ -37,7 +37,7 @@
 {%- block control %}
   <!-- <button type="submit" class="submit-button">Set</button> -->
   <div class="start-stop">
-    <button type="submit">
+    <button type="submit"{%- if start_button_id is defined %} id="{{start_button_id}}"{%- endif %}>
       <img src="/static/start.png">
     </button>
   </div>

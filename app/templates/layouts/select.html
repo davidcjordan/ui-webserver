@@ -32,7 +32,7 @@
 
 {%- block control %}
   <div class="start-stop">
-    <button type="submit">
+    <button type="submit" class="disable-when-faulted">
       <img src="/static/start.png">
     </button>
     {%- if enable_edit_button is defined %}

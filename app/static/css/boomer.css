@@ -124,6 +124,20 @@ body {
 .footer-right {
   text-align: right;
 }
+/* when faulted, the status shows a warning icon and tapping it opens the faults page (state_update.js) */
+.footer-left.faulted {
+  cursor: pointer;
+  white-space: nowrap;
+}
+.fault-icon {
+  height: 36px;
+  margin-left: 12px;
+  vertical-align: -4px;
+}
+/* dim disabled play buttons (disabled by state_update.js for a fault, or a tracking fault for game) */
+.start-stop button:disabled img {
+  opacity: 0.4;
+}
 
 .footer {
   height: 50px;

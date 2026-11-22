@@ -14,6 +14,38 @@ if (data_get_update["page"] === "") {
   data_get_update["page"] = "home"
 }
 
+// The faults page is not opened automatically when the base is faulted.  Instead the status in the
+// footer shows a warning icon after "Faulted", and tapping the status opens the faults page.
+var FAULTED_STATE = 'Faulted';
+var FAULTS_PAGE_URL = '/faults';
+var FAULT_ICON_HTML = '<img class="fault-icon" src="/static/warning.svg" alt="Warning">';
+// the status is only rewritten when it changes, so that a tap on it isn't lost by replacing it mid-tap
+var displayed_base_state = null;
+
+var base_state_element = document.getElementById('base_state');
+if (base_state_element != null) {
+  base_state_element.addEventListener('click', function() {
+    if (base_state_element.classList.contains('faulted') && (window.location.pathname !== FAULTS_PAGE_URL)) {
+      location.href = FAULTS_PAGE_URL;
+    }
+  });
+}
+
+// Play buttons with the class 'disable-when-faulted' are disabled while the base is faulted (hard fault).
+// A page that also disables its play button for its own reasons (drill_list.html) doesn't use the class:
+// it includes base_faulted in its own check, and re-checks on the 'base_faulted_change' event.
+var base_faulted = false;
+function set_base_faulted(faulted) {
+  if (faulted === base_faulted) {
+    return;
+  }
+  base_faulted = faulted;
+  document.querySelectorAll('.disable-when-faulted').forEach(function(button) {
+    button.disabled = faulted;
+  });
+  document.dispatchEvent(new Event('base_faulted_change'));
+}
+
 socket.on('connect', function() {
   console.log("Sending client_connected from page: " + data_get_update["page"])
   socket.emit('client_connected', JSON.stringify(data_get_update));
@@ -38,15 +70,23 @@ socket.on('state_update', function(data) {
       if (IdToUpdate == null) {
         console.log("error: element=" + key + " was not found on page")
       } else {
-        if (data[key] == 'Outofballs') {
-          IdToUpdate.innerHTML = "Status: Out Of Balls";
-          // if (Idmessage != null) {
-          //   Idmessage.innerHTML = "Add balls to hopper";
-          // } else {
-          //   console.log("No header-message element")
-          // }
-        } else {
-          IdToUpdate.innerHTML = "Status: " + data[key];
+        if (data[key] !== displayed_base_state) {
+          displayed_base_state = data[key];
+          if (data[key] == 'Outofballs') {
+            IdToUpdate.innerHTML = "Status: Out Of Balls";
+            // if (Idmessage != null) {
+            //   Idmessage.innerHTML = "Add balls to hopper";
+            // } else {
+            //   console.log("No header-message element")
+            // }
+          } else if (data[key] == FAULTED_STATE) {
+            IdToUpdate.innerHTML = "Status: " + data[key] + FAULT_ICON_HTML;
+          } else {
+            IdToUpdate.innerHTML = "Status: " + data[key];
+          }
+          // the 'faulted' class makes the status tappable (see the click listener above)
+          IdToUpdate.classList.toggle("faulted", data[key] == FAULTED_STATE);
+          set_base_faulted(data[key] == FAULTED_STATE);
         }
         // set pause/resume icon on game/drill/workout active pages
         var IdPauseResume = document.getElementById("pause-resume");
@@ -89,18 +129,15 @@ socket.on('state_update', function(data) {
         }
       })
     } else if (key === 'soft_fault') {
-      // disable GAME mode button on main screen if tracking is faulted
+      // disable the GAME mode Play button if tracking is faulted: the ID game_button is on the
+      // main screen's Play button and on the Game Settings start button (other pages don't have it)
       // console.log("soft_fault=" + data[key] + "; page_id=" + page_id)
-      if (page_id.length === 0) {
-        var IdToUpdate = document.getElementById("game_button");
-        if (IdToUpdate) {
-          if (data[key] == 1) {
-            IdToUpdate.disabled = true;
-          } else {
-            IdToUpdate.disabled = false;
-          }
+      var IdToUpdate = document.getElementById("game_button");
+      if (IdToUpdate) {
+        if (data[key] == 1) {
+          IdToUpdate.disabled = true;
         } else {
-          console.log("No element with ID: game_button")
+          IdToUpdate.disabled = false;
         }
       }
     } else {
